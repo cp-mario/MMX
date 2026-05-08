@@ -326,11 +326,16 @@ document.addEventListener('DOMContentLoaded', () => {
        * HIGHLIGHT CURRENT PAGE
        * Adds an "active" class to the link of the current page
        * Allows CSS styling to show which page is being viewed
+       * Skips highlighting for index page (home)
        */
       const currentPath = path.replace(/^\//, ""); // Remove leading slash
+      
+      // Don't highlight anything if on index page (home)
+      const isIndexPage = currentPath === "" || currentPath === "/" || currentPath === "index.html" || currentPath.endsWith("/index.html");
+      
       const links = document.querySelectorAll("#sidebar-menu a");
       links.forEach(a => {
-        if (a.href.endsWith(currentPath)) {
+        if (!isIndexPage && a.href.endsWith(currentPath)) {
           a.classList.add("active"); // Mark this link as the current page
         }
       });
