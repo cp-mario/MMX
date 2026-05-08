@@ -50,6 +50,66 @@ function generateIndexRecursive(sourceDir, rootDir) {
 }
 
 /**
+ * Generates sitemap.xml with relative URLs
+ * @param {string} pagesDir - Directory containing HTML files
+ * @param {string} outputDir - Output directory for sitemap
+ */
+function generateSitemap(pagesDir, outputDir) {
+  const urls = [];
+  
+  function scanDirectory(dir, prefix = "./") {
+    const items = fs.readdirSync(dir);
+    
+    for (const item of items) {
+      const fullPath = path.join(dir, item);
+      const stat = fs.statSync(fullPath);
+      
+      if (stat.isDirectory()) {
+        scanDirectory(fullPath, prefix + item + "/");
+      } else if (item.endsWith(".html") && item !== "index.html") {
+        const url = prefix + item;
+        urls.push(url);
+      }
+    }
+  }
+  
+  if (fs.existsSync(pagesDir)) {
+    scanDirectory(pagesDir);
+  }
+  
+  // Sort URLs alphabetically
+  urls.sort();
+  
+  // Generate sitemap XML with relative URLs
+  let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+`;
+  
+  // Add root index.html
+  sitemap += `  <url>
+    <loc>./index.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+`;
+  
+  for (const url of urls) {
+    sitemap += `  <url>
+    <loc>${url}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+`;
+  }
+  
+  sitemap += `</urlset>`;
+  
+  const sitemapPath = path.join(outputDir, "sitemap.xml");
+  fs.writeFileSync(sitemapPath, sitemap, "utf8");
+  return urls.length + 1;
+}
+
+/**
  * Main orchestrator for processing documentation project
  * @param {string} sourceDir - Input directory with .mmx files
  * @param {string} outputDir - Output directory for generated HTML
@@ -155,11 +215,16 @@ function processProjectStructure(sourceDir, outputDir, options = {}) {
     stats.processed++;
   }
 
-  // Generate index.json for navigation
+
+  // Generate index.json for navigation (in assetsInternos)
   const indexData = generateIndexRecursive(pagesDest, pagesDest);
   const indexPath = path.join(outputDir, "assetsInternos", "index.json");
   fs.writeFileSync(indexPath, JSON.stringify(indexData, null, 2), "utf8");
   log(`Generated index: assetsInternos/index.json`);
+
+  // Generate sitemap.xml with relative URLs
+  const sitemapCount = generateSitemap(pagesDest, outputDir);
+  log(`Generated sitemap.xml with ${sitemapCount} URLs`);
 
   log(`\nSummary:`);
   log(`Converted: ${stats.processed}`);
