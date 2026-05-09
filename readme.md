@@ -59,7 +59,8 @@ your-project/
 ├── config.json
 ├── index.mmx
 ├── assets/ ← optional
-│   └──logo.png 
+│   └──logo.png ← the documentation logo
+│   └──title.png ← the documentation title, if dont exists, it will be the title text
 └── pages/
     ├── introduction.mmx
     ├── getting-started.mmx

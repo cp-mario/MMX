@@ -11,6 +11,8 @@ import { parseMCFG } from "./scripts/MCFGParser.js";
 import { minifyJs } from "./scripts/minifiers/minifyJs.js";
 import { minifyCss } from "./scripts/minifiers/minifyCss.js";
 
+
+//General config
 const CONFIG = parseMCFG(fs.readFileSync('./config.mcfg', 'utf-8'))
 
 const __filename = fileURLToPath(import.meta.url);
@@ -429,11 +431,12 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
   let pageTitle = title; // Default to content title
   let version = ""; // Default empty version
   let lang = "en" //Default english lang
+  let configData
   const configPath = path.join(projectDir, "config.mcfg");
   if (fs.existsSync(configPath)) {
     try {
       const configContent = fs.readFileSync(configPath, "utf8");
-      const configData = parseMCFG(configContent);
+      configData = parseMCFG(configContent);
       if (configData.title) {
         pageTitle = configData.title;
       }
@@ -449,6 +452,22 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
   }
 
   const prefix = calculatePrefix(outputPath, outputRoot);
+
+  // Handle titleImage - replace title text with image if enabled
+  let titleImageHtml = "";
+  const assetsDir = path.join(projectDir, "assets");
+  if (fs.existsSync(assetsDir)) {
+    const files = fs.readdirSync(assetsDir);
+    const titleImageFile = files.find(f => 
+      f.toLowerCase().startsWith("title.") && 
+      !fs.statSync(path.join(assetsDir, f)).isDirectory()
+    );
+    if (titleImageFile) {
+      const imagePath = prefix + "assets/" + titleImageFile;
+      titleImageHtml = `<img src="${imagePath}" alt="${configData.title}" id="sidebar-title-image">`;
+    }
+  }
+
   
 
   //If any plyr elements (Audio or video) make the html load it
@@ -471,10 +490,16 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
     highlightCSSTheme = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">'
 
   }
+
+  let sidebarTitle = pageTitle
+  if (titleImageHtml.length > 0){
+    sidebarTitle = titleImageHtml
+  }
+
   
   let finalTemplate = template
     .replaceAll("{{title}}", title)
-    .replaceAll("{{pageTitle}}", pageTitle)
+    .replaceAll("{{sidebarTitle}}", sidebarTitle)
     .replaceAll("{{version}}", version)
     .replaceAll("{{content}}", htmlContent)
     .replaceAll("{{singlePageScript}}", singleFileContent)
