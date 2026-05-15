@@ -422,8 +422,7 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
   const media = detectMediaContent(content);
 
   // Title from content heading (for <title> tag)
-  const titleMatch = content.match(/^# (.+)$/m);
-  const title = titleMatch ? titleMatch[1] : "Documentation";
+  const headerTitle = content.match(/^# (.+)$/m)?.[1] || "Documentation";
 
   // Get project directory from inputPath (handles root index.mmx, pages/*.mmx, and pages/subfolder/*.mmx)
   const inputDir = path.dirname(inputPath);
@@ -439,17 +438,19 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
   }
   
   // Try to read title and version from project's config.mcfg
-  let pageTitle = title; // Default to content title
+  let pageTitle = headerTitle; // Default to content title
   let version = ""; // Default empty version
   let lang = "en" //Default english lang
   let configData
   const configPath = path.join(projectDir, "config.mcfg");
+  let configTitle = ""; // For browser title
   if (fs.existsSync(configPath)) {
     try {
       const configContent = fs.readFileSync(configPath, "utf8");
       configData = parseMCFG(configContent);
       if (configData.title) {
         pageTitle = configData.title;
+        configTitle = configData.title;
       }
       if (configData.version) {
         version = configData.version;
@@ -461,6 +462,9 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
       // Ignore config parse errors, use default values
     }
   }
+
+  // Build browser title: "Header - Documentation Name"
+  const title = configTitle ? `${headerTitle} - ${configTitle}` : headerTitle;
 
   const prefix = calculatePrefix(outputPath, outputRoot);
 
