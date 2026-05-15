@@ -3,6 +3,8 @@
  * Regex patterns for MMX to HTML conversion
  */
 
+import { normalizePageHref } from "./kebabCase.js";
+
 // Track used heading IDs for auto-generation with duplicates
 const usedHeadingIds = new Map();
 
@@ -203,7 +205,8 @@ export const PATTERNS = {
     {
       regex: /\[([^\]]+)\]\(([^)]+)\)/g,
       replace: (match, text, href) => {
-        return `<a target="_blank" href="${href}">${text}</a>`;
+        const normalizedHref = normalizePageHref(href);
+        return `<a target="_blank" href="${normalizedHref}">${text}</a>`;
       }
     },
 

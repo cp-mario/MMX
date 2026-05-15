@@ -10,6 +10,7 @@ import { mmxToHtml } from "./scripts/parser.js";
 import { parseMCFG } from "./scripts/MCFGParser.js";
 import { minifyJs } from "./scripts/minifiers/minifyJs.js";
 import { minifyCss } from "./scripts/minifiers/minifyCss.js";
+import { toKebabCase, normalizePageHref } from "./scripts/kebabCase.js";
 
 
 //General config
@@ -36,14 +37,16 @@ function generateIndexRecursive(sourceDir, rootDir) {
       result.push({
         type: "folder",
         name: item,
-        path: path.relative(rootDir, fullPath),
+        path: toKebabCase(path.relative(rootDir, fullPath)),
         children: generateIndexRecursive(fullPath, rootDir)
       });
-    } else if (item.endsWith(".html")) {
+    } else if (item.endsWith('.mmx')) {
+      const relativePath = path.relative(rootDir, fullPath);
+      const safePath = toKebabCase(relativePath).replace(/\.mmx$/i, '.html');
       result.push({
         type: "file",
-        name: item.replace(".html", ""),
-        path: path.relative(rootDir, fullPath)
+        name: item.replace(/\.mmx$/i, ""),
+        path: safePath
       });
     }
   }
@@ -219,7 +222,7 @@ function processProjectStructure(sourceDir, outputDir, options = {}) {
 
 
   // Generate index.json for navigation (in assetsInternos)
-  const indexData = generateIndexRecursive(pagesDest, pagesDest);
+  const indexData = generateIndexRecursive(pagesSource, pagesSource);
   const indexPath = path.join(outputDir, "assetsInternos", "index.json");
   fs.writeFileSync(indexPath, JSON.stringify(indexData, null, 2), "utf8");
   log(`Generated index: assetsInternos/index.json`);
@@ -287,20 +290,25 @@ function processPagesRecursive(sourceDir, outputDir, stats, options) {
 
   for (const item of items) {
     const srcPath = path.join(sourceDir, item);
-    const destPath = path.join(outputDir, item);
     const stat = fs.statSync(srcPath);
+    const safeItem = stat.isDirectory()
+      ? toKebabCase(item)
+      : item.endsWith('.mmx')
+        ? toKebabCase(item)
+        : item;
+    const destPath = path.join(outputDir, safeItem);
 
     if (stat.isDirectory()) {
       if (!fs.existsSync(destPath)) fs.mkdirSync(destPath, { recursive: true });
-      processPagesRecursive(srcPath, destPath, stats, { 
-        deleteOriginals, 
-        log, 
+      processPagesRecursive(srcPath, destPath, stats, {
+        deleteOriginals,
+        log,
         outputRoot
       });
 
     } else if (item.endsWith('.mmx')) {
       try {
-        const htmlName = item.replace('.mmx', '.html');
+        const htmlName = safeItem.replace(/\.mmx$/i, '.html');
         const htmlDest = path.join(outputDir, htmlName);
 
         log(`${item} → ${htmlName}`);
@@ -312,6 +320,7 @@ function processPagesRecursive(sourceDir, outputDir, stats, options) {
         stats.errors++;
       }
     } else {
+      if (!fs.existsSync(path.dirname(destPath))) fs.mkdirSync(path.dirname(destPath), { recursive: true });
       fs.copyFileSync(srcPath, destPath);
       stats.copied++;
     }
@@ -345,9 +354,11 @@ function calculatePrefix(outputPath, outputRoot) {
  * @returns {string} HTML with corrected paths
  */
 function applyPathPrefix(html, prefix) {
-  const notExternal = '(?!https?://|//|mailto:|tel:)';
-  
-  return html
+  const normalizedHtml = html.replace(/(href=)(["'])([^"']*pages\/[^"']+)\2/g, (match, prefix, quote, href) => {
+    return `${prefix}${quote}${normalizePageHref(href)}${quote}`;
+  });
+
+  return normalizedHtml
     .replace(/(src=["'])(assets\/[^"']+)/g, `$1${prefix}$2`)
     .replace(/<a\s+target="_blank"\s+href=["'](pages\/[^"']+)["']/g, 
       `<a target="_self" href="${prefix}$1"`)
