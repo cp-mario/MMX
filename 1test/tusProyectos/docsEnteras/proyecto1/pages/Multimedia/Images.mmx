@@ -12,5 +12,6 @@ Basic sintax:
 It will look like this:
 
 ![An alternative text if the image does not load](assets/foto.png)
+![An alternative text if the image does not load](https://placehold.net/main.svg)
 [Here](pages/File sources and paths.html) you can see more detailed the supported image sources
 The images will fill the width of the content and with a click you can zoom it

@@ -245,17 +245,6 @@ pre.multiline-code.noCopy .copy-btn{
     display: none;
 }
 
-/* Medium zoom */
-
-.medium-zoom-overlay, .medium-zoom-image--opened{
-    z-index: 1000;
-}
-
-.medium-zoom-overlay{
-    background: #000000cc !important;
-}
-
-
 
 /* Tables */
 main table {

@@ -14,7 +14,6 @@
  * Dependencies:
  * - highlight.js (hljs) - Syntax highlighting for code blocks
  * - Plyr.js - Video/audio player
- * - medium-zoom - Image zoom on click
  */
 
 
@@ -516,7 +515,6 @@ codes.forEach(el => {
 // ============================================================================
 /**
  * Initialize media players and image zoom after DOM is ready
- * medium-zoom: Click on images to zoom in/out
  * Plyr.js: Initialize video and audio players
  */
 
@@ -524,7 +522,7 @@ codes.forEach(el => {
 document.addEventListener('DOMContentLoaded', () => {
   const images = document.querySelectorAll('.img');
   if (images.length > 0){
-    mediumZoom('.img');
+    imageZoom('.img');
   }
 
   // Plyr.js: Initialize video and audio players

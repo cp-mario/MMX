@@ -493,9 +493,9 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
     plyrJS = '<script src="https://cdn.jsdelivr.net/npm/plyr@3.8.4/dist/plyr.polyfilled.min.js"></script>'
   }
 
-  let mediumZoomJS = "";
+  let imageZoom = "";
   if (media.anyImage) {
-    mediumZoomJS = '<script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js"></script>'
+    imageZoom = `<script src="${prefix}assetsInternos/imageZoom.js"></script>`;
   }
 
   let highlightJS = "";
@@ -522,7 +522,7 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
     .replaceAll("{{lang}}", lang)
     .replaceAll("{{plyrCSS}}", plyrCSS)
     .replaceAll("{{plyrJS}}", plyrJS)
-    .replaceAll("{{mediumZommJS}}", mediumZoomJS)
+    .replaceAll("{{imageZoom}}", imageZoom)
     .replaceAll("{{highlightJS}}", highlightJS)
     .replaceAll("{{highlightCSSTheme}}", highlightCSSTheme);
 
