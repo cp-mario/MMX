@@ -36,9 +36,6 @@ const imageZoom = (selector) => {
         opacity: 1;
         pointer-events: auto;
       }
-      .zoom-no-scroll {
-        overflow: hidden !important;
-      }
     `;
     document.head.appendChild(style);
   }
@@ -59,9 +56,7 @@ const imageZoom = (selector) => {
     
     activeImg.style.transform = 'none';
     overlay.classList.remove('is-visible');
-    
-    // Devolver el scroll al body inmediatamente al empezar a cerrar
-    document.body.classList.remove('zoom-no-scroll');
+
     
     activeImg.addEventListener('transitionend', () => {
       if (activeImg && !overlay.classList.contains('is-visible')) {
@@ -81,10 +76,7 @@ const imageZoom = (selector) => {
         closeZoom();
         return;
       }
-
-      // Hide scrollbars BEFORE calculating dimensions
-      document.body.classList.add('zoom-no-scroll');
-
+      
       activeImg = img;
       img.classList.add('zoom-active');
       overlay.classList.add('is-visible');
