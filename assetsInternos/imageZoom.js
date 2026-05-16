@@ -117,4 +117,18 @@ const imageZoom = (selector) => {
       closeZoom();
     }
   }, { passive: false });
+
+  // Close zoom on touch/scroll on mobile devices
+  const closeOnTouch = (e) => {
+    if (activeImg) {
+      // Only close on actual touch movement, not taps
+      if (e.type === 'touchmove' || e.type === 'scroll') {
+        closeZoom();
+      }
+    }
+  };
+
+  // Touch events for mobile
+  window.addEventListener('touchmove', closeOnTouch, { passive: true });
+  window.addEventListener('scroll', closeOnTouch, { passive: true });
 };
