@@ -18,7 +18,7 @@ const imageZoom = (selector) => {
         z-index: 99999 !important;
         cursor: zoom-out !important;
         transition: transform 0.3s cubic-bezier(0.2, 0, 0.2, 1) !important;
-        border-radius: 0px !important;
+        border-radius: 1px !important;
       }
       .zoom-overlay {
         position: fixed;
@@ -76,7 +76,7 @@ const imageZoom = (selector) => {
         closeZoom();
         return;
       }
-      
+
       activeImg = img;
       img.classList.add('zoom-active');
       overlay.classList.add('is-visible');
@@ -92,9 +92,9 @@ const imageZoom = (selector) => {
       const translateX = (windowWidth / 2) - (rect.left + rect.width / 2);
       const translateY = (windowHeight / 2) - (rect.top + rect.height / 2);
 
-      // 10px MARGIN: Subtract 20px from total available (10px on each side)
-      const maxAvailableWidth = windowWidth - 20;
-      const maxAvailableHeight = windowHeight - 20;
+      // 10px MARGIN: Subtract 30px from total available (20px on each side)
+      const maxAvailableWidth = windowWidth - 30;
+      const maxAvailableHeight = windowHeight - 30;
 
       // Calculate maximum scale respecting the 10px margin
       const scaleX = maxAvailableWidth / rect.width;
