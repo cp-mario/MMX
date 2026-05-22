@@ -79,6 +79,5 @@ You can see how it is and more info included the MM sintaxis in https://cp-mario
 
 
 This proyect uses:
-https://github.com/sampotts/plyr
 https://github.com/highlightjs/highlight.js/
 https://fonts.google.com/

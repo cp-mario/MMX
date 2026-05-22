@@ -169,7 +169,7 @@ code:not([data-auto]) {
     margin: 2px;
 }
 
-.plyr {
+.vs-wrapper {
     border-radius: var(--border-radius-base);
     margin-block: 16px; /* Margen arriba y abajo del video */
 }

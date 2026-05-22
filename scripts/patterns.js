@@ -139,7 +139,7 @@ export const PATTERNS = {
       regex: /^!!!\(([^)]+)\)(?:\s+([\w\-\s]+))?\s*$/gm, 
       replace: (match, src, classes) => {
         const cls = classes ? ` ${classes.trim().split(/\s+/).join(' ')}` : '';
-        return `<div class="audio${cls}"><audio src="${src}" controls style="width:100%"></audio></div>`;
+        return `<div class="audio${cls}"><audio src="${src}"></audio></div>`;
       }
     },
 
@@ -148,7 +148,7 @@ export const PATTERNS = {
       regex: /^!!\(([^)]+)\)(?:\s+([\w\-\s]+))?\s*$/gm, 
       replace: (match, src, classes) => {
         const clsAttr = classes ? ` class="${classes.trim().split(/\s+/).join(' ')}"` : '';
-        return `<video src="${src}" controls${clsAttr} style="width:100%"></video>`;
+        return `<video src="${src}"></video>`;
       }
     },
 

@@ -134,12 +134,12 @@ function processProjectStructure(sourceDir, outputDir, options = {}) {
   const stats = { processed: 0, errors: 0, copied: 0 };
 
   // Copy internal assets
-  const assetsInternosSource = path.join(__dirname, "assetsInternos");
-  const assetsInternosDest = path.join(outputDir, "assetsInternos");
+  const intAssetsSource = path.join(__dirname, "intAssets");
+  const intAssetsDest = path.join(outputDir, "intAssets");
 
-  if (fs.existsSync(assetsInternosSource)) {
+  if (fs.existsSync(intAssetsSource)) {
     // Insert MCFGParser into script.js at runtime
-    const scriptJsSource = path.join(assetsInternosSource, "script.js");
+    const scriptJsSource = path.join(intAssetsSource, "script.js");
     const mcfgParserSource = path.join(__dirname, "scripts", "MCFGParser.js");
     
     if (fs.existsSync(scriptJsSource) && fs.existsSync(mcfgParserSource)) {
@@ -164,20 +164,20 @@ function processProjectStructure(sourceDir, outputDir, options = {}) {
       }
       
       // Write the modified script.js
-      if (!fs.existsSync(assetsInternosDest)) {
-        fs.mkdirSync(assetsInternosDest, { recursive: true });
+      if (!fs.existsSync(intAssetsDest)) {
+        fs.mkdirSync(intAssetsDest, { recursive: true });
       }
-      fs.writeFileSync(path.join(assetsInternosDest, "script.js"), scriptContent, 'utf-8');
+      fs.writeFileSync(path.join(intAssetsDest, "script.js"), scriptContent, 'utf-8');
       log(`script.js copied${CONFIG.minifyScripts ? ' (minified)' : ''}`);
     }
     
-    // Copy rest of assetsInternos (excluding script.js which we handled)
-    const items = fs.readdirSync(assetsInternosSource);
+    // Copy rest of intAssets (excluding script.js which we handled)
+    const items = fs.readdirSync(intAssetsSource);
     for (const item of items) {
       if (item === 'script.js') continue; // Already handled
       
-      const srcPath = path.join(assetsInternosSource, item);
-      const destPath = path.join(assetsInternosDest, item);
+      const srcPath = path.join(intAssetsSource, item);
+      const destPath = path.join(intAssetsDest, item);
       const stat = fs.statSync(srcPath);
       
       if (stat.isDirectory()) {
@@ -194,7 +194,7 @@ function processProjectStructure(sourceDir, outputDir, options = {}) {
         fs.copyFileSync(srcPath, destPath);
       }
     }
-    log(`assetsInternos/ copied`);
+    log(`intAssets/ copied`);
   }
 
   // Copy project assets
@@ -221,11 +221,11 @@ function processProjectStructure(sourceDir, outputDir, options = {}) {
   }
 
 
-  // Generate index.json for navigation (in assetsInternos)
+  // Generate index.json for navigation (in intAssets)
   const indexData = generateIndexRecursive(pagesSource, pagesSource);
-  const indexPath = path.join(outputDir, "assetsInternos", "index.json");
+  const indexPath = path.join(outputDir, "intAssets", "index.json");
   fs.writeFileSync(indexPath, JSON.stringify(indexData, null, 2), "utf8");
-  log(`Generated index: assetsInternos/index.json`);
+  log(`Generated index: intAssets/index.json`);
 
   // Generate sitemap.xml with relative URLs
   const sitemapCount = generateSitemap(pagesDest, outputDir);
@@ -374,7 +374,7 @@ function applyPathPrefix(html, prefix) {
 //If it's single file insert the script in the html else leave it in blank
 let singleFileContent = "";
 if (CONFIG.singleFile) {
-  const scriptPath = path.join(__dirname, "assetsInternos", "script.js");
+  const scriptPath = path.join(__dirname, "intAssets", "script.js");
   if (fs.existsSync(scriptPath)) {
     const scriptContent = fs.readFileSync(scriptPath, "utf8");
     singleFileContent = `<script>${scriptContent}</script>`;
@@ -485,17 +485,17 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
 
   
 
-  //If any plyr elements (Audio or video) make the html load it
-  let plyrCSS = "";
-  let plyrJS = "";
+  //If any player elements (Audio or video) make the html load it
+  let playerCSS = "";
+  let playerJS = "";
   if (media.anyVideo || media.anyAudio) {
-    plyrCSS = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.8.4/dist/plyr.css"/>';
-    plyrJS = '<script src="https://cdn.jsdelivr.net/npm/plyr@3.8.4/dist/plyr.polyfilled.min.js"></script>'
+    playerCSS = `<link rel="stylesheet" href="${prefix}intAssets/player/playerStyle.css"/>`;
+    playerJS = `<script src="${prefix}intAssets/player/playerScript.js"></script>`;
   }
 
   let imageZoom = "";
   if (media.anyImage) {
-    imageZoom = `<script src="${prefix}assetsInternos/imageZoom.js"></script>`;
+    imageZoom = `<script src="${prefix}intAssets/imageZoom.js"></script>`;
   }
 
   let highlightJS = "";
@@ -520,8 +520,8 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
     .replaceAll("{{singlePageScript}}", singleFileContent)
     .replaceAll("{{prefix}}", prefix)
     .replaceAll("{{lang}}", lang)
-    .replaceAll("{{plyrCSS}}", plyrCSS)
-    .replaceAll("{{plyrJS}}", plyrJS)
+    .replaceAll("{{playerCSS}}", playerCSS)
+    .replaceAll("{{playerJS}}", playerJS)
     .replaceAll("{{imageZoom}}", imageZoom)
     .replaceAll("{{highlightJS}}", highlightJS)
     .replaceAll("{{highlightCSSTheme}}", highlightCSSTheme);

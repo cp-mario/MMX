@@ -1,0 +1,329 @@
+/**
+ * ============================================================
+ * MINIMAL MEDIA PLAYER - STYLESHEET
+ * ============================================================
+ * Responsive, smooth styling for video and audio players
+ * with custom controls, progress tracking, and fullscreen support
+ * ============================================================
+ */
+
+/**
+ * CSS VARIABLES - Centralized theme configuration
+ * Update these to customize the player appearance
+ */
+:root {
+    --bg: #2a2a2a;              /* Primary background color */
+    --black: #000;              /* Pure black for overlays */
+    --white: #fff;              /* Pure white for text/icons */
+    --accent: #60a5fa;          /* Accent color for progress/interactive elements */
+    --accent-dark: #3b82f6;     /* Darker accent for hover indicator */
+    --transition: .2s ease;     /* Standard animation duration */
+}
+
+/**
+ * PLAYER WRAPPER - Main container
+ * Base styles for all player instances
+ */
+.vs-wrapper {
+    position: relative;
+    background: var(--black);
+    border-radius: 5px;
+    overflow: hidden;
+    user-select: none;          /* Prevent text selection during interaction */
+}
+
+/**
+ * VIDEO CENTERING & RESPONSIVE SCALING
+ * Ensures video is centered and scales proportionally
+ */
+.vs-wrapper:has(video) {
+    display: flex;
+    justify-content: center;    /* Center video horizontally */
+    align-items: center;        /* Center video vertically */
+    width: 100%;
+    height: max-content;
+    min-height: 60px;          /* Minimum height to prevent collapse */
+}
+
+/**
+ * VIDEO SCALING
+ * Maintains aspect ratio with letterboxing when needed
+ */
+.vs-wrapper video {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;        /* Scale without cropping, shows black bars */
+    background: var(--black);
+    display: block;
+}
+/**
+ * AUDIO PLAYER BACKGROUND
+ */
+.vs-wrapper audio {
+    background: var(--bg);
+}
+
+
+
+/**
+ * HIDDEN INTERFACE STATE
+ * Hide controls and cursor during video playback when inactive
+ */
+.vs-wrapper.hide-interface {
+    cursor: none;               /* Hide cursor during playback */
+}
+
+.vs-wrapper.hide-interface .vs-controls {
+    opacity: 0 !important;
+    transform: translateY(8px) !important;
+    pointer-events: none;       /* Prevent interaction with hidden controls */
+}
+
+
+
+/**
+ * CONTROLS BAR - Positioned at bottom with gradient background
+ * Smooth fade in/out animation on hover, pause, or audio mode
+ */
+.vs-controls {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: linear-gradient(to top, rgba(0, 0, 0, .8), transparent);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity var(--transition), transform var(--transition);
+}
+
+/**
+ * Show controls on hover, when paused, or in audio mode
+ */
+.vs-wrapper:hover .vs-controls,
+.vs-wrapper.paused .vs-controls,
+.vs-wrapper.audio-mode .vs-controls {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/**
+ * CONTROL BUTTONS - Play, Pause, Volume, Fullscreen
+ */
+.vs-btn {
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    border-radius: 8px;
+    transition: background var(--transition);
+    flex-shrink: 0;             /* Prevent button shrinking */
+}
+
+/**
+ * Fullscreen button styling adjustment
+ */
+.in-fullscreen {
+    border-radius: 0px !important;  /* Square corners in fullscreen */
+}
+
+/**
+ * Button hover effect
+ */
+.vs-btn:hover {
+    background: rgba(255, 255, 255, .12);
+}
+
+/**
+ * SVG icons within buttons
+ */
+.vs-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+/**
+ * PROGRESS BAR CONTAINER
+ * Interactive element for seeking through media
+ */
+.vs-progress {
+    flex: 1;                    /* Take remaining space */
+    height: 5px;
+    background: rgba(255, 255, 255, .15);
+    border-radius: 999px;       /* Pill-shaped */
+    position: relative;
+    cursor: pointer;
+    transition: height 0.2s ease, transform 0.2s ease;
+}
+
+/**
+ * Expanded progress bar on hover or when mouse is near
+ * Grows 4px up and 4px down (8px total)
+ */
+.vs-progress.hover {
+    height: 13px;
+    transform: scaleY(1);
+}
+
+/**
+ * PROGRESS BAR FILL
+ * Shows current playback progress
+ */
+.vs-progress-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0%;                  /* Set dynamically via JavaScript */
+    background: var(--accent);
+    border-radius: 999px;
+    transition: width 0.05s linear; /* Smooth but responsive */
+}
+
+/**
+ * PROGRESS HOVER INDICATOR
+ * Shows circle and time when hovering over progress bar
+ */
+.vs-progress-hover {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 12px;
+    height: 12px;
+    background: var(--accent-dark);
+    border-radius: 50%;
+    opacity: 0;
+    transition: transform 0.1s ease, opacity 0.1s ease;
+    pointer-events: none;
+}
+
+.vs-progress-hover.visible {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.vs-progress-hover-time {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    margin-bottom: 3px;
+    pointer-events: none;
+    opacity: 0;
+    animation: showTime 0.1s ease forwards;
+}
+
+@keyframes showTime {
+    to {
+        opacity: 1;
+    }
+}
+
+/**
+ * VOLUME SLIDER
+ * Cross-browser volume control with custom styling
+ */
+.vs-volume {
+    width: 90px;
+    appearance: none;           /* Remove default styling */
+    height: 4px;
+    border-radius: 999px;       /* Pill-shaped */
+    background: rgba(255, 255, 255, .15);
+    outline: none;
+    cursor: pointer;
+}
+
+.vs-wrapper.vs-small-screen .vs-volume {
+    position: absolute;
+    bottom: 40px;  /* Position above the volume button */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;  /* Slightly wider */
+    height: 6px;   /* Slightly taller */
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 10;
+    display: none; /* Hidden by default */
+    pointer-events: none; /* Don't interact when hidden */
+}
+
+.vs-wrapper.vs-small-screen .vs-volume.visible {
+    opacity: 1;
+    display: block;
+    pointer-events: auto;
+}
+
+.vs-wrapper.vs-small-screen .vs-volume:hover {
+    opacity: 1;
+}
+
+.vs-wrapper.vs-small-screen .vs-volume:not(:hover) {
+    opacity: 1;
+}
+
+.vs-wrapper.vs-small-screen .vs-volume::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-top: -5px;  /* Center thumb */
+}
+
+.vs-wrapper.vs-small-screen .vs-volume::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: none;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-top: -5px;  /* Center thumb */
+}
+
+/**
+ * AUDIO MODE - Special styling for audio players
+ * Shows controls permanently and hides the audio element itself
+ */
+.vs-wrapper.audio-mode {
+    background: var(--bg);
+    padding: 14px;
+}
+
+/**
+ * Audio controls are always visible (not hidden on inactivity)
+ */
+.vs-wrapper.audio-mode .vs-controls {
+    position: relative;
+    opacity: 1;
+    transform: none;
+    background: none;           /* Remove gradient background */
+    padding: 0;
+}
+
+/**
+ * Hide native audio element (use custom controls instead)
+ */
+.vs-wrapper.audio-mode audio {
+    display: none;
+}
+
+.displayNone{
+    display: none;
+}

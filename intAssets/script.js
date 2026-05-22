@@ -13,7 +13,6 @@
  * 
  * Dependencies:
  * - highlight.js (hljs) - Syntax highlighting for code blocks
- * - Plyr.js - Video/audio player
  */
 
 
@@ -190,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
   cargarMenuHamburguesa();
 
   // Load index.json and build menu
-  fetch(prefix + "assetsInternos/index.json")
+  fetch(prefix + "intAssets/index.json")
     .then(res => {
       if (!res.ok) throw new Error("Could not load index.json");
       return res.json();
@@ -515,7 +514,7 @@ codes.forEach(el => {
 // ============================================================================
 /**
  * Initialize media players and image zoom after DOM is ready
- * Plyr.js: Initialize video and audio players
+ * Player: Initialize video and audio players
  */
 
 
@@ -525,16 +524,16 @@ document.addEventListener('DOMContentLoaded', () => {
     imageZoom('.img');
   }
 
-  // Plyr.js: Initialize video and audio players
+  // Player.js: Initialize video and audio players
   // Only initialize if elements exist
   const videos = document.querySelectorAll('video');
   if (videos.length > 0) {
-    Plyr.setup('video');
+    videoStyle("video");
   }
 
   const audios = document.querySelectorAll('audio');
   if (audios.length > 0) {
-    Plyr.setup('audio');
+    videoStyle(".audio");
   }
 });
 
