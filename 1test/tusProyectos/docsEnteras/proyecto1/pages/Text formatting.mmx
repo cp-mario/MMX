@@ -183,3 +183,16 @@ some text [External page(it opens in another tab)](https://example.com) some tex
 [Documentation page (it opens in this tab)](pages/Multimedia/Audios.html)
 [Header(it scrolls the content to the header)](#Title) 
 [File sources and paths h2 (it opens in this tab)](pages/File sources and paths.html#header2)
+
+Also you can write a link without that sintaxis and it will appear the link just as.
+:::code
+https://example.com
+https://example.com/example
+example.com
+example.com/example
+:::
+
+**Examples:**
+
+https://example.com https://example.com/example
+example.com example.com/example
