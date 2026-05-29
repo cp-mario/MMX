@@ -6,10 +6,18 @@
 
 /* Paletas de colores y medidas comunes */
 :root {
-    --border-color: #a7a7a7;
-    --border-radius-base: 5px;
-    --border-width: 1px;
+  --border-color: #a7a7a7;
+  --border-radius-base: 5px;
+  --border-width: 1px;
+  --background-color: #f3f7fb;
 }
+
+
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: #444 var(--background-color);
+}
+
 
 
 hr {
