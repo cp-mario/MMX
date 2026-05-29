@@ -41,10 +41,18 @@ export function mmxToHtml(mmx) {
   const extractedInlineCode = extractInlineCode(result);
   result = extractedInlineCode.html;
 
-  // Step 6: Apply inline formatting (this will NOT affect protected code blocks or inline code)
+  // Step 5.5: Extract and protect HTML attributes BEFORE applying inline patterns
+  // This prevents URL linkification from corrupting attribute values like path="..."
+  const extractedAttributes = extractHtmlAttributes(result);
+  result = extractedAttributes.html;
+
+  // Step 6: Apply inline formatting (this will NOT affect protected code blocks, inline code, or attributes)
   for (const { regex, replace } of PATTERNS.inline) {
     result = result.replace(regex, replace);
   }
+
+  // Step 6.5: Restore HTML attributes after inline patterns have been applied
+  result = restoreHtmlAttributes(result, extractedAttributes.attributes);
 
   // Step 7: Restore inline code with proper formatting
   result = restoreInlineCode(result, extractedInlineCode.inlineBlocks);
@@ -496,6 +504,39 @@ function extractInlineCode(html) {
 function restoreInlineCode(html, inlineBlocks) {
   for (const block of inlineBlocks) {
     html = html.replace(block.key, block.value);
+  }
+  return html;
+}
+
+/**
+ * Extracts HTML attributes (especially URLs in attributes) and replaces with placeholders
+ * This prevents inline patterns from processing URLs inside attribute values
+ * @param {string} html - HTML content with attributes
+ * @returns {Object} { html, attributes }
+ */
+function extractHtmlAttributes(html) {
+  const attributes = [];
+  let i = 0;
+
+  // Match all HTML attributes that contain URLs (path="...", src="...", href="...")
+  html = html.replace(/\b(path|src|href)="([^"]*)"/g, (match) => {
+    const key = `%%HTML_ATTR_${i++}%%`;
+    attributes.push({ key, value: match });
+    return key;
+  });
+
+  return { html, attributes };
+}
+
+/**
+ * Restores HTML attributes by replacing placeholders
+ * @param {string} html - HTML with placeholders
+ * @param {Array} attributes - Extracted attributes
+ * @returns {string} HTML with restored attributes
+ */
+function restoreHtmlAttributes(html, attributes) {
+  for (const attr of attributes) {
+    html = html.replace(attr.key, attr.value);
   }
   return html;
 }

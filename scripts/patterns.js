@@ -232,9 +232,9 @@ export const PATTERNS = {
 
     // Auto-detect and linkify plain URLs
     // Matches: https://..., http://..., www...., and domain.com patterns
-    // Does NOT match URLs already inside <a> tags (checks for closing tags)
+    // Does NOT match URLs already inside <a> tags, href attributes, or path attributes
     {
-      regex: /(?<!href=")(?<!href=')(?<!<a[^>]*)\b(https?:\/\/[^\s<>"\[\]()]+|www\.[^\s<>"\[\]()]+|[a-zA-Z0-9][\w\-]*\.(?:com|org|net|edu|gov|io|co|uk|de|fr|es|it|ru|cn|jp|au|ca|in|br|mx|se|ch|nl|be|at|cz|pl|tr|kr|tw|hk|sg|my|th|ph|vn|id|nz|gr|pt|ie|dk|no|fi|is|hu|ro|bg)[^\s<>"\[\]()]*)\b(?!["\]>])/gi,
+      regex: /(?<!href=")(?<!href=')(?<!path=")(?<!path=')(?<!<a[^>]*)\b(https?:\/\/[^\s<>"\[\]()]+|www\.[^\s<>"\[\]()]+|[a-zA-Z0-9][\w\-]*\.(?:com|org|net|edu|gov|io|co|uk|de|fr|es|it|ru|cn|jp|au|ca|in|br|mx|se|ch|nl|be|at|cz|pl|tr|kr|tw|hk|sg|my|th|ph|vn|id|nz|gr|pt|ie|dk|no|fi|is|hu|ro|bg)[^\s<>"\[\]()]*)\b(?!["\]>])/gi,
       replace: (match, url) => {
         // Ensure URL has a protocol
         let finalUrl = url;
