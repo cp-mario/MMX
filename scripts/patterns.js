@@ -33,6 +33,12 @@ function generateHeadingId(text, explicitId) {
   return `${baseSlug}-${count}`;
 }
 
+function createHeadingWithLinkIcon(level, text, id) {
+  const linkIcon = `<svg class="heading-link-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Copy link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
+  
+  return `<h${level} id="${id}">${text}<button class="heading-link-btn" data-heading-id="${id}" title="Copy link to header">${linkIcon}</button></h${level}>`;
+}
+
 export function resetHeadingIdTracker() {
   usedHeadingIds.clear();
 }
@@ -44,9 +50,8 @@ export const PATTERNS = {
       regex: /^###### (.*?)\s*(?:%\{(.+?)\}%\s*)?$/gm, 
       replace: (match, text, id) => {
         const generatedId = generateHeadingId(text, id);
-        return id 
-          ? `<h6 id="${id}">${text}</h6>` 
-          : `<h6 id="${generatedId}">${text}</h6>`;
+        const finalId = id || generatedId;
+        return createHeadingWithLinkIcon(6, text, finalId);
       }
     },
 
@@ -55,9 +60,8 @@ export const PATTERNS = {
       regex: /^##### (.*?)\s*(?:%\{(.+?)\}%\s*)?$/gm, 
       replace: (match, text, id) => {
         const generatedId = generateHeadingId(text, id);
-        return id 
-          ? `<h5 id="${id}">${text}</h5>` 
-          : `<h5 id="${generatedId}">${text}</h5>`;
+        const finalId = id || generatedId;
+        return createHeadingWithLinkIcon(5, text, finalId);
       }
     },
 
@@ -66,9 +70,8 @@ export const PATTERNS = {
       regex: /^#### (.*?)\s*(?:%\{(.+?)\}%\s*)?$/gm, 
       replace: (match, text, id) => {
         const generatedId = generateHeadingId(text, id);
-        return id 
-          ? `<h4 id="${id}">${text}</h4>` 
-          : `<h4 id="${generatedId}">${text}</h4>`;
+        const finalId = id || generatedId;
+        return createHeadingWithLinkIcon(4, text, finalId);
       }
     },
 
@@ -77,9 +80,8 @@ export const PATTERNS = {
       regex: /^### (.*?)\s*(?:%\{(.+?)\}%\s*)?$/gm, 
       replace: (match, text, id) => {
         const generatedId = generateHeadingId(text, id);
-        return id 
-          ? `<h3 id="${id}">${text}</h3>` 
-          : `<h3 id="${generatedId}">${text}</h3>`;
+        const finalId = id || generatedId;
+        return createHeadingWithLinkIcon(3, text, finalId);
       }
     },
 
@@ -88,9 +90,8 @@ export const PATTERNS = {
       regex: /^## (.*?)\s*(?:%\{(.+?)\}%\s*)?$/gm, 
       replace: (match, text, id) => {
         const generatedId = generateHeadingId(text, id);
-        return id 
-          ? `<h2 id="${id}">${text}</h2>` 
-          : `<h2 id="${generatedId}">${text}</h2>`;
+        const finalId = id || generatedId;
+        return createHeadingWithLinkIcon(2, text, finalId);
       }
     },
 
@@ -99,9 +100,8 @@ export const PATTERNS = {
       regex: /^# (.*?)\s*(?:%\{(.+?)\}%\s*)?$/gm, 
       replace: (match, text, id) => {
         const generatedId = generateHeadingId(text, id);
-        return id 
-          ? `<h1 id="${id}">${text}</h1>` 
-          : `<h1 id="${generatedId}">${text}</h1>`;
+        const finalId = id || generatedId;
+        return createHeadingWithLinkIcon(1, text, finalId);
       }
     },
 

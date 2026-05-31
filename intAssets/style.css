@@ -551,3 +551,56 @@ th.vertical-title{
     background-color: transparent;
   }
 }
+
+/* ============================================================================
+ * HEADING LINK ICON - Copy-to-clipboard link button for headers
+ * ============================================================================ */
+
+/* Button styling for heading links */
+.heading-link-btn {
+  opacity: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  transition: opacity 0.3s ease;
+}
+
+.heading-link-btn:hover {
+  transform: scale(1.08);
+}
+
+
+/* SVG icon inside the button */
+.heading-link-icon {
+  display: inline-block;
+}
+
+/* Show the button on hover over any heading */
+:is(h1, h2, h3, h4, h5, h6):hover .heading-link-btn {
+  opacity: 1;
+}
+
+
+.is-copying{
+  opacity: 1;
+}
+
+
+@keyframes fadein{
+  from{
+    opacity: 0;
+  }
+  to{
+    opacity: 1;
+  }
+}
+
+@keyframes fadeout{
+  from{
+    opacity: 1;
+  }
+  to{
+    opacity: 0;
+  }
+}

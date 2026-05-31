@@ -931,3 +931,52 @@ function setupHeaderNavigatorToggle() {
 // Note: Toggle button setup is now handled by updateHeaderNavigatorState()
 // which is called on load and on resize via updateHeaderNavigatorState()
 // No separate setup needed here
+
+// ============================================================================
+// STEP 11: Heading link copy-to-clipboard functionality
+// ============================================================================
+/**
+ * Adds event listeners to heading link buttons
+ * Clicking the link icon copies the heading's URL to clipboard
+ * Shows visual feedback on successful copy
+ */
+document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('click', (e) => {
+    // Check if the clicked element is a heading link button
+    if (e.target.closest('.heading-link-btn')) {
+      const btn = e.target.closest('.heading-link-btn');
+      const headingId = btn.getAttribute('data-heading-id');
+      
+      if (!headingId) return;
+      
+      // Create the full URL with the heading anchor
+      const url = window.location.href.split('#')[0] + '#' + headingId;
+      
+      // Prevent multiple clicks while copying
+      if (btn.classList.contains('is-copying')) return;
+      btn.classList.add('is-copying');
+      
+      // Store original content
+      const originalContent = btn.innerHTML;
+      
+      // Copy to clipboard
+      try {
+        navigator.clipboard.writeText(url);
+        
+        // Show success SVG
+        btn.innerHTML = `<svg class="heading-link-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Copied!"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/><path d="m16 20.5 2.5 2.5 4.5-4.5" stroke-width="1.7"/></svg>`;
+        
+        // Revert after 1 seconds
+        setTimeout(() => {
+          btn.innerHTML = originalContent;
+          btn.classList.remove('is-copying');
+        }, 1000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+        // Revert on error
+        btn.innerHTML = originalContent;
+        btn.classList.remove('is-copying');
+      }
+    }
+  });
+});
