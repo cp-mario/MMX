@@ -23,7 +23,7 @@ sidebarBottomText = "The text next to the version on the bottom of the sidebar"
 > The lang uses the BCP 47 standar (https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)
 
 > [!NOTE]
-> If you change the sidebar bottom text, it would be appreciated if you mention somewhere that you created the documentation with MMX and include a link to the GitHub.
+> If you change the sidebar bottom text, it would be appreciated if you mention somewhere that you created the documentation with MMX and include a link to the GitHub. And don't put texts longer than 20 characters.
 
 
 ### `assets/` (optional)  
