@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <!-- Titulo añadido desde main.js al generar el html --> 
+    <!-- Tittle added from main.js when generating the html --> 
     <title>{{title}}</title>
 
     <script>
@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="{{prefix}}intAssets/style.css">
     <link rel="stylesheet" href="{{prefix}}intAssets/styleSidebar.css">
 
-    <!-- Estilos y scripts externos/internos, si son necesarios -->
+    <!-- Scripts and styles if necesary -->
 
     {{imageZoom}}
 
@@ -31,7 +31,7 @@
     {{highlightJS}}
     {{highlightCSSTheme}}
     
-    <!-- Enlazar el script, el css y el css de la sidebar, y calacular la distancia a la raiz para tener el prefijo (prefix) --> 
+    <!-- Link the script, the CSS, and the sidebar CSS, and calculate the distance to the root to get the prefix --> 
     <!-- Inline critical layout to reduce CLS by reserving space for the sidebar on desktop -->
     <style>
       @media (min-width: 1000px) {
@@ -67,17 +67,17 @@
 
   </head>
     <body>
-        <!-- Boton de sacar la sidebar -->
+        <!-- Open sidebar button -->
         <button id="icon-btn2" title="Open sidebar">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M3 6h18M3 12h18M3 18h18" stroke="black" stroke-width="2"/>
           </svg>
         </button>
         <main>
-            <!-- Donde se insertara el contenido de la pagina --> 
+            <!-- Where the page content will be inserted in compilation --> 
             {{content}}
         </main>
-        <!-- Aqui empieza la sidebar --> 
+        <!-- Here starts the sidebar HTML --> 
         <nav id="sidebar">
           <div id="div-titulo">
             <a id="sidebar-title" href = '/'>{{sidebarTitle}}</a>
@@ -90,10 +90,10 @@
           <div id="sidebar-menu"></div>
 
           <div id="versionDiv">
-            <div id="madeWithMMX">Made with <a target="_blank" href="https://github.com/cp-mario/MMX">MMX</a></div>
+            <div id="sidebarBottomText">{{sidebarBottomText}}</div>
             <div id="version">{{version}}</div>
           </div>
         </nav>
-        <!-- Aqui termina la sidebar --> 
+        <!-- Here ends the sidebar --> 
     </body>
 </html>

@@ -524,7 +524,8 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
     .replaceAll("{{playerJS}}", playerJS)
     .replaceAll("{{imageZoom}}", imageZoom)
     .replaceAll("{{highlightJS}}", highlightJS)
-    .replaceAll("{{highlightCSSTheme}}", highlightCSSTheme);
+    .replaceAll("{{highlightCSSTheme}}", highlightCSSTheme)
+    .replaceAll("{{sidebarBottomText}}", configData.sidebarBottomText);
 
     
   

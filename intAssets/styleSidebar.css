@@ -187,14 +187,14 @@ desde script.js al main) */
   color: #0073d7 !important;
 }
 
-#madeWithMMX {
+#sidebarBottomText {
   text-align: left;
 }
 
-#madeWithMMX a:hover{
+#sidebarBottomText a:hover{
   text-decoration: underline;
 }
 
-#madeWithMMX a{
+#sidebarBottomText a{
   color: #390042 !important;
 }

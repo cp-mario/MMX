@@ -15,7 +15,16 @@ It must contain:
 ```ini
 title = "The title of your documentation"
 version = "v1.1(The version)"
+lang = "en"
+sidebarBottomText = "The text next to the version on the bottom of the sidebar"
+
 ```
+> [!NOTE]
+> The lang uses the BCP 47 standar (https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)
+
+> [!NOTE]
+> If you change the sidebar bottom text, it would be appreciated if you mention somewhere that you created the documentation with MMX and include a link to the GitHub.
+
 
 ### `assets/` (optional)  
 A folder for images, videos, or any other resources.  
