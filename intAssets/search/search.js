@@ -179,28 +179,63 @@
     function render(state, q) {
       if (state.noMatch || !state.results.length) { R.innerHTML = '<div class="sidebar-search-empty">No results for "' + esc(q) + '"</div>'; return; }
 
-      var re = reHl(tok(q));
+      var tokensArr = tok(q);
+      var phrase = joinPhrase(tokensArr);
+      var re = reHl(tokensArr);
       var docs = idx.d, html = "";
+
       for (var x = 0; x < state.results.length; x++) {
         var r = state.results[x];
         var d = docs[r.i] || [];
         var url = d[0] || "", title = d[1] || "", path = d[2] || "", sn = d[3] || "";
-        var href = prefix + url;
-        // Pass the raw query to the destination page so it can locate
-        // the nearest parent header for the actual match. Avoid forcing
-        // a specific hash here so the page can decide the best anchor.
+        var baseHref = prefix + url;
+        var qPart = "";
         if (q) {
           var sep = url.indexOf('?') === -1 ? '?' : '&';
-          href += sep + 'q=' + encodeURIComponent(q);
-        } else if (r.hdr) {
-          href += "#" + r.hdr;
+          qPart = sep + 'q=' + encodeURIComponent(q);
         }
-        html +=
-          '<a class="sidebar-search-item" role="option" href="' + esc(href) + '">' +
-          '<div class="sidebar-search-item-title">' + hl(esc(title), re) + '</div>' +
-          (path ? '<div class="sidebar-search-item-path">' + esc(path.replace(/\//g, " \u203A ")) + '</div>' : '') +
-          (sn ? '<div class="sidebar-search-item-snippet">' + hl(esc(sn), re) + '</div>' : '') +
-          '</a>';
+
+        // Check per-page headers and render any that match the query/tokens
+        var hdrs = (idx.h && idx.h[r.i]) || [];
+        var matchedHeaders = [];
+        for (var hi = 0; hi < hdrs.length; hi++) {
+          var hid = hdrs[hi][0] || "";
+          var htxt = hdrs[hi][1] || "";
+          var hn = norm(htxt);
+          if (phrase && hn.indexOf(phrase) >= 0) {
+            matchedHeaders.push({ id: hid, text: htxt });
+            continue;
+          }
+          for (var ti = 0; ti < tokensArr.length; ti++) {
+            if (tokensArr[ti] && hn.indexOf(tokensArr[ti]) >= 0) {
+              matchedHeaders.push({ id: hid, text: htxt });
+              break;
+            }
+          }
+        }
+
+        // Render header-level results first (one per matching header)
+        for (var m = 0; m < matchedHeaders.length; m++) {
+          var mid = matchedHeaders[m].id || "";
+          var mtext = matchedHeaders[m].text || "";
+          var href = baseHref + qPart + (mid ? ('#' + mid) : '');
+          html +=
+            '<a class="sidebar-search-item" role="option" href="' + esc(href) + '">' +
+            '<div class="sidebar-search-item-title">' + hl(esc(mtext), re) + '</div>' +
+            (title ? '<div class="sidebar-search-item-path">' + esc(title) + '</div>' : '') +
+            '</a>';
+        }
+
+        // If no header matched, fall back to the page-level result
+        if (matchedHeaders.length === 0) {
+          var href2 = baseHref + (q ? qPart : '');
+          html +=
+            '<a class="sidebar-search-item" role="option" href="' + esc(href2) + '">' +
+            '<div class="sidebar-search-item-title">' + hl(esc(title), re) + '</div>' +
+            (path ? '<div class="sidebar-search-item-path">' + esc(path.replace(/\//g, " \u203A ")) + '</div>' : '') +
+            (sn ? '<div class="sidebar-search-item-snippet">' + hl(esc(sn), re) + '</div>' : '') +
+            '</a>';
+        }
       }
       R.innerHTML = html;
     }
