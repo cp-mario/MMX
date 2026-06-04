@@ -247,7 +247,7 @@ desde script.js al main) */
 #sidebar-search-clear {
   position: absolute;
   right: 22px;
-  top: 50%;
+  top: 60%;
   transform: translateY(-50%);
   background: transparent;
   border: 0;
