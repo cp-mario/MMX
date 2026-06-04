@@ -1,6 +1,6 @@
 /**
  * DOCUMENTATION VIEWER - CLIENT-SIDE SCRIPT
- * 
+ *
  * This script is loaded in every HTML page of the generated documentation.
  * It handles:
  * - Dynamic sidebar menu generation from index.json
@@ -10,9 +10,13 @@
  * - Folder expand/collapse with session storage
  * - Media player initialization (video and audio)
  * - Image zoom functionality
- * 
+ *
  * Dependencies:
  * - highlight.js (hljs) - Syntax highlighting for code blocks
+ *
+ * The sidebar full-text search lives in a separate module:
+ *   intAssets/search/search.js
+ * which is loaded as its own <script> tag by the HTML template.
  */
 
 

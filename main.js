@@ -11,6 +11,7 @@ import { parseMCFG } from "./scripts/MCFGParser.js";
 import { minifyJs } from "./scripts/minifiers/minifyJs.js";
 import { minifyCss } from "./scripts/minifiers/minifyCss.js";
 import { toKebabCase, normalizePageHref } from "./scripts/kebabCase.js";
+import { collectSearchEntries, writeSearchIndex } from "./scripts/searchIndexBuilder.js";
 
 
 //General config
@@ -227,6 +228,13 @@ function processProjectStructure(sourceDir, outputDir, options = {}) {
   fs.writeFileSync(indexPath, JSON.stringify(indexData, null, 2), "utf8");
   log(`Generated index: intAssets/index.json`);
 
+  // Generate search-index.json (powers the sidebar search box)
+  // Includes: index page + all .mmx pages with title, path, headings, plain-text body
+  // Build logic lives in scripts/searchIndexBuilder.js
+  const searchEntries = collectSearchEntries(pagesSource, rootIndexMmx);
+  writeSearchIndex(outputDir, searchEntries);
+  log(`Generated search index: intAssets/search-index.json (${searchEntries.length} entries)`);
+
   // Generate sitemap.xml with relative URLs
   const sitemapCount = generateSitemap(pagesDest, outputDir);
   log(`Generated sitemap.xml with ${sitemapCount} URLs`);
@@ -371,13 +379,20 @@ function applyPathPrefix(html, prefix) {
     .replace(/(path=["'])(assets\/[^"']+)/g, `$1${prefix}$2`);
 }
 
-//If it's single file insert the script in the html else leave it in blank
+//If it's single file insert the scripts in the html else leave it in blank
 let singleFileContent = "";
+let singleFileSearchContent = "";
 if (CONFIG.singleFile) {
   const scriptPath = path.join(__dirname, "intAssets", "script.js");
   if (fs.existsSync(scriptPath)) {
     const scriptContent = fs.readFileSync(scriptPath, "utf8");
     singleFileContent = `<script>${scriptContent}</script>`;
+  }
+
+  const searchScriptPath = path.join(__dirname, "intAssets", "search", "search.js");
+  if (fs.existsSync(searchScriptPath)) {
+    const searchContent = fs.readFileSync(searchScriptPath, "utf8");
+    singleFileSearchContent = `<script>${searchContent}</script>`;
   }
 }
 
@@ -498,6 +513,11 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
     imageZoom = `<script src="${prefix}intAssets/imageZoom.js"></script>`;
   }
 
+  // Sidebar search script: external <script> in multi-page mode, inlined in single-file mode
+  let searchScript = `<script src="${prefix}intAssets/search/search.js"></script>`;
+  if (CONFIG.singleFile) {
+    searchScript = singleFileSearchContent;
+  }
   let highlightJS = "";
   let highlightCSSTheme = "";
   if (media.anyCodeAuto) {
@@ -523,6 +543,7 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
     .replaceAll("{{playerCSS}}", playerCSS)
     .replaceAll("{{playerJS}}", playerJS)
     .replaceAll("{{imageZoom}}", imageZoom)
+    .replaceAll("{{searchScript}}", searchScript)
     .replaceAll("{{highlightJS}}", highlightJS)
     .replaceAll("{{highlightCSSTheme}}", highlightCSSTheme)
     .replaceAll("{{sidebarBottomText}}", configData.sidebarBottomText);

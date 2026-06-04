@@ -20,6 +20,12 @@
     <link rel="stylesheet" href="{{prefix}}intAssets/style.css">
     <link rel="stylesheet" href="{{prefix}}intAssets/styleSidebar.css">
 
+    <!-- Sidebar full-text search (separate module under intAssets/search/) -->
+    {{searchScript}}
+
+    <!-- Prefetch the search index in parallel so the first keystroke is instant. -->
+    <link rel="prefetch" href="{{prefix}}intAssets/search-index.json" as="fetch" crossorigin="anonymous">
+
     <!-- Scripts and styles if necesary -->
 
     {{imageZoom}}
@@ -86,6 +92,18 @@
                 <path d="M3 6h18M3 12h18M3 18h18" stroke="#e5edf4" stroke-width="2"/>
               </svg>
             </button>
+          </div>
+          <!-- Search box: filters the documentation at build time via intAssets/search-index.json -->
+          <div id="sidebar-search">
+            <input
+              type="search"
+              id="sidebar-search-input"
+              placeholder="Search documentation..."
+              aria-label="Search documentation"
+              autocomplete="off"
+              spellcheck="false">
+            <button id="sidebar-search-clear" type="button" aria-label="Clear search" title="Clear">×</button>
+            <div id="sidebar-search-results" role="listbox" aria-label="Search results"></div>
           </div>
           <div id="sidebar-menu"></div>
 
