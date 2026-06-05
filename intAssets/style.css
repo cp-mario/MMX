@@ -255,12 +255,41 @@ pre.multiline-code.noCopy .copy-btn{
 
 
 /* Tables */
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin-block: 10px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,0.35) transparent;
+}
+
+.table-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.35);
+    border-radius: 4px;
+}
+
+.table-wrapper > table {
+    height: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    width: 100%;
+    margin-block: 0;
+}
+
 main table {
     height: 100%;
     border-collapse: collapse;
     border-spacing: 0;
     width: 100%;
-    overflow: hidden;
     margin-block: 10px;
 }
 
@@ -603,4 +632,38 @@ th.vertical-title{
   to{
     opacity: 0;
   }
+}
+
+/* Auto-generated folder index lists. The build emits each list as
+   <ul class="folder-list"> ... <li class="folder-list-item folder-list-folder|file">.
+   We suppress the default <ul> marker and use a small inline SVG
+   (folder for folders, file for files) so the hierarchy is obvious
+   at a glance. Nested lists get extra left padding to show depth. */
+.folder-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 8px 0 14px 0;
+}
+
+.folder-list .folder-list {
+  margin: 4px 0 4px 0;
+  padding-left: 22px;
+  border-left: 1px dashed rgba(60, 78, 108, 0.18);
+}
+
+.folder-list-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 3px 0;
+  line-height: 1.4;
+}
+
+.folder-list-item > a {
+  flex: 0 1 auto;
+}
+
+.folder-list-item .li-icon-svg {
+  flex: 0 0 auto;
+  display: block;
 }

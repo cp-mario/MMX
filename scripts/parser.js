@@ -136,7 +136,7 @@ function parseMultilineBlocks(text, config) {
               .filter(r => r.length > 0);
 
             if (rows.length === 0) {
-              html = `<table${classAttr}></table>`;
+              html = `<div class="table-wrapper"><table${classAttr}></table></div>`;
             } else {
               let theadRows = '';
               let tbodyRows = '';
@@ -179,7 +179,7 @@ function parseMultilineBlocks(text, config) {
                 tableHtml += `<thead>\n${theadRows}</thead>\n`;
               }
               tableHtml += `<tbody>\n${tbodyRows}</tbody></table>`;
-              html = tableHtml;
+              html = `<div class="table-wrapper">${tableHtml}</div>`;
             }
 
         } else {

@@ -9,9 +9,9 @@ The sidebar on the left is the table of contents. The pages are grouped by topic
 - [Text formatting](pages/Text%20formatting.html) -- paragraphs, headers, bold, italic, links, notes, code blocks and everything else you can write in plain text.
 - [Lists](pages/Lists.html) -- unordered, ordered (auto and manual) and nested lists.
 - [Tables](pages/Tables.html) -- vertical, horizontal and both-sides tables.
-- [File sources and paths](pages/File%20sources%20and%20paths.html) -- how to reference local files and remote URLs.
-- [Multimedia](pages/Multimedia/Images.html) -- images, videos, audios, inline images and iframes.
-- [Examples](pages/Examples/Headers%20example.html) -- worked examples of headers and code blocks.
+- [File sources and paths](pages/file-sources-and-paths.html) -- how to reference local files and remote URLs.
+- [Multimedia](pages/Multimedia) -- images, videos, audios, inline images and iframes.
+- [Examples](pages/Examples) -- worked examples of headers and code blocks.
 
 ## A short tour of MMX
 

@@ -16,6 +16,34 @@
   font-weight: bold;
 }
 
+/* "Jump to folder" affordance: small icon at the right of the
+   folder header. Pushed to the far right with margin-left:auto so it
+   stays right-aligned regardless of the folder-name length. The icon
+   itself is a link, but the click handler stops propagation so the
+   header's expand/collapse behavior is preserved. */
+.folder-index-link {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px 2px 4px;
+  border-radius: 0 0 4px 4px;
+  text-decoration: none;
+  opacity: 0.7;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.folder-index-link:hover,
+.folder-index-link:focus {
+  opacity: 1;
+  background-color: rgba(30, 136, 229, 0.12);
+  outline: none;
+}
+
+.folder-index-link svg {
+  display: block;
+}
+
 .folder-content.collapsed {
   display: none;
 }

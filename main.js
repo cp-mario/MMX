@@ -84,7 +84,8 @@ function generateIndexRecursive(sourceDir, rootDir) {
         path: toKebabCase(path.relative(rootDir, fullPath)),
         children: generateIndexRecursive(fullPath, rootDir)
       });
-    } else if (item.endsWith('.mmx')) {
+    } else if (item.endsWith('.mmx') && !item.startsWith('__')) {
+      // Skip internal/temp .mmx files (e.g. auto-generated __index.mmx)
       const relativePath = path.relative(rootDir, fullPath);
       const safePath = toKebabCase(relativePath).replace(/\.mmx$/i, '.html');
       result.push({
@@ -95,7 +96,275 @@ function generateIndexRecursive(sourceDir, rootDir) {
     }
   }
 
+  // Sort: files first (alphabetical), then folders (alphabetical).
+  // Within each group, sort by the user-visible name (case-insensitive)
+  // so the sidebar order is stable and predictable regardless of the
+  // underlying filesystem's readdir order (which is OS-dependent).
+  result.sort((a, b) => {
+    if (a.type !== b.type) return a.type === "file" ? -1 : 1;
+    return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+  });
+
   return result;
+}
+
+/**
+ * Builds a nested HTML list (<ul><li>...) with links to every file and
+ * subfolder inside `dir`, recursively. Used to populate the auto-generated
+ * `index.html` for each folder under pages/.
+ *
+ * Files become links to the kebab-case HTML. Subfolders become links to
+ * the subfolder's own `index.html` (which is also auto-generated), and
+ * the subfolder's children are nested inside the same <li> to reflect
+ * the on-disk hierarchy.
+ *
+ * Uses raw HTML in the output (target="_self" + relative hrefs) so the
+ * MMX parser leaves it untouched and `applyPathPrefix` does not rewrite
+ * internal navigation links.
+ *
+ * IMPORTANT: all hrefs in the generated list are RELATIVE to the document
+ * that hosts the list (i.e. the `dir` from the FIRST call). When the list
+ * is built for a deeply nested folder, the recursive calls don't know
+ * their own depth, so we accumulate a kebab-case `relDir` (e.g.
+ * `"scrollsavetest/"` or `"a-folder-inside-a-folder/"`) and prepend it to
+ * every link. Without this, a file at `pages/tests/scrollsavetest/23.mmx`
+ * would emit `href="23.html"`, which the browser would resolve against
+ * the document (`pages/tests/index.html`) and produce the wrong URL
+ * `pages/tests/23.html`.
+ *
+ * @param {string} dir - Absolute path to the folder being listed
+ * @param {string} [relDir] - Kebab-case relative path from the top-level
+ *   folder being indexed to `dir`, with a trailing slash. Defaults to "".
+ *   Used internally by recursive calls.
+ * @returns {string} HTML fragment with the nested list
+ */
+function buildFolderListHtml(dir, relDir = "") {
+  const items = fs.readdirSync(dir);
+
+  // Partition into folders and .mmx files, skipping our own temp index
+  const subfolders = [];
+  const files = [];
+  for (const item of items) {
+    // Don't list our own auto-generated index file
+    if (item.toLowerCase() === '__index.mmx') continue;
+    const fullPath = path.join(dir, item);
+    const stat = fs.statSync(fullPath);
+    if (stat.isDirectory()) {
+      subfolders.push(item);
+    } else if (item.endsWith('.mmx')) {
+      files.push(item);
+    }
+  }
+
+  // Case-insensitive alphabetical sort using the original (display) name
+  const sortByName = (a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: 'base' });
+  subfolders.sort(sortByName);
+  files.sort(sortByName);
+
+  if (subfolders.length === 0 && files.length === 0) {
+    return '<p><em>Empty folder.</em></p>';
+  }
+
+  // Inline icons for the auto-generated folder index lists. We use
+  // a small folder/file SVG in front of each <li> instead of the
+  // default list marker, so the hierarchy reads at a glance.
+  const folderIcon = `<svg width="16" height="16" fill="none" aria-hidden="true" class="li-icon-svg" viewBox="0 0 24 24"><path fill="#ffa726" stroke="#e65100" stroke-linejoin="round" stroke-width="1" d="M3 6.5C3 5.67 3.67 5 4.5 5h5l2 2h8c.83 0 1.5.67 1.5 1.5V18c0 .83-.67 1.5-1.5 1.5h-15c-.83 0-1.5-.67-1.5-1.5Z"/></svg>`;
+  const fileIcon = `<svg width="16" height="16" fill="none" aria-hidden="true" class="li-icon-svg" viewBox="0 0 24 24"><path fill="#eceff1" stroke="#546e7a" stroke-linejoin="round" stroke-width="1" d="M6 3h8l4 4v14H6Z"/><path fill="none" stroke="#546e7a" stroke-linejoin="round" stroke-width="1" d="M14 3v4h4"/></svg>`;
+
+  const lines = ['<ul class="folder-list">'];
+
+  // Files first (alphabetical), then folders (alphabetical), each
+  // folder recursively nests its own list inside its <li>.
+  // Files: link text is the file name without the .mmx extension.
+  // The href is prefixed with the accumulated `relDir` so it resolves
+  // correctly from the top-level document (see IMPORTANT note above).
+  for (const file of files) {
+    const baseName = file.replace(/\.mmx$/i, '');
+    const href = relDir + toKebabCase(file).replace(/\.mmx$/i, '.html');
+    lines.push(`<li class="folder-list-item folder-list-file">${fileIcon}<a target="_self" href="${href}">${baseName}</a></li>`);
+  }
+
+  // Folders after files, with children nested in the same <li>.
+  // The child call gets a `relDir` that appends this folder's kebab
+  // name (with trailing slash) so every nested href includes the
+  // chain of intermediate folders.
+  for (const folder of subfolders) {
+    const kebab = toKebabCase(folder);
+    const childRelDir = relDir + kebab + "/";
+    const childHtml = buildFolderListHtml(path.join(dir, folder), childRelDir);
+    lines.push(`<li class="folder-list-item folder-list-folder">${folderIcon}<a target="_self" href="${childRelDir}">${folder}</a>`);
+    lines.push(childHtml);
+    lines.push('</li>');
+  }
+
+  lines.push('</ul>');
+  return lines.join('\n');
+}
+
+/**
+ * Walks the pages source directory and creates a temporary `__index.mmx`
+ * inside every subfolder (recursively). The content is:
+ *
+ *     # {OriginalFolderName}
+ *
+ *     <nested list of children>
+ *
+ * The pipeline then picks up these files just like any other .mmx and
+ * converts them to `index.html` in the output (kebab-case of `__index.mmx`
+ * is `index.mmx`, which becomes `index.html`).
+ *
+ * The auto-generated index is skipped when the user already has a manual
+ * `index.mmx` (case-insensitive) in the folder, so users can still
+ * provide their own landing page for a folder.
+ *
+ * The temp files are deleted by `cleanupFolderIndexPages` after the
+ * build finishes, so the source dir is left untouched.
+ *
+ * @param {string} pagesSourceDir - Absolute path to the project's `pages/` dir
+ * @returns {string[]} List of temp `__index.mmx` paths created (for cleanup)
+ */
+function generateFolderIndexPages(pagesSourceDir) {
+  const tempFiles = [];
+
+  function processFolder(dir) {
+    if (!fs.existsSync(dir)) return;
+    const items = fs.readdirSync(dir);
+
+    // Respect a user-provided `index.mmx` (case-insensitive)
+    const hasUserIndex = items.some(item => item.toLowerCase() === 'index.mmx');
+    if (hasUserIndex) return;
+
+    // Write a temp `__index.mmx` with the folder name as H1 and the
+    // nested list as the body. The H1 is needed for the <title>, the
+    // heading-link button, and the search index title extraction.
+    const folderName = path.basename(dir);
+    const listHtml = buildFolderListHtml(dir);
+    const content = `# ${folderName}\n\n${listHtml}\n`;
+    const tempPath = path.join(dir, '__index.mmx');
+    fs.writeFileSync(tempPath, content, 'utf-8');
+    tempFiles.push(tempPath);
+
+    // Recurse into subfolders. We recurse regardless of `hasUserIndex`
+    // because the user override is per-folder, not per-tree.
+    for (const item of items) {
+      const fullPath = path.join(dir, item);
+      let stat;
+      try { stat = fs.statSync(fullPath); } catch { continue; }
+      if (stat.isDirectory()) {
+        processFolder(fullPath);
+      }
+    }
+  }
+
+  if (!fs.existsSync(pagesSourceDir)) return tempFiles;
+
+  // Only enter subfolders of pages/ (not pages/ itself).
+  for (const item of fs.readdirSync(pagesSourceDir)) {
+    const fullPath = path.join(pagesSourceDir, item);
+    let stat;
+    try { stat = fs.statSync(fullPath); } catch { continue; }
+    if (stat.isDirectory()) {
+      processFolder(fullPath);
+    }
+  }
+
+  return tempFiles;
+}
+
+/**
+ * Removes the temp `__index.mmx` files created by
+ * `generateFolderIndexPages`. Best-effort: a missing file is fine.
+ *
+ * @param {string[]} files - Paths returned by `generateFolderIndexPages`
+ */
+function cleanupFolderIndexPages(files) {
+  for (const f of files) {
+    try { fs.unlinkSync(f); } catch { /* ignore */ }
+  }
+}
+
+/**
+ * Static HTML used for `pages/index.html` in the output. When a user
+ * navigates to the bare `pages/` URL (e.g. clicking the sidebar title
+ * when already inside `pages/`, or following a stale link), this page
+ * strips the trailing `/pages` (and anything after it) and redirects
+ * back to the project root.
+ *
+ * The redirect is intentionally client-side: when the site is served
+ * from a sub-path (e.g. `https://example.com/docs/pages/`), stripping
+ * the suffix in the browser is the only way to land on the correct
+ * absolute URL without knowing the deployment prefix at build time.
+ */
+const PAGES_INDEX_REDIRECT_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+</head>
+<body>
+
+<div class="container">
+    <h2>Redirecting you...</h2>
+    <p>If you are not redirected automatically, click <a href="#" id="manualRedirect">here</a>.</p>
+</div>
+
+<script>
+    (function() {
+        const currentUrl = window.location.href;
+
+        // Regex to match '/pages' at the end, optionally followed by '/' and anything else
+        // Matches: /pages, /pages/, /pages/something, /pages/something/more
+        const regex = /\\/pages(\\/.*)?$/;
+
+        if (regex.test(currentUrl)) {
+            // Remove the matched part
+            const newUrl = currentUrl.replace(regex, '');
+
+            // Redirect
+            window.location.replace(newUrl);
+        }
+    })();
+
+    // Manual link logic
+    document.getElementById('manualRedirect').addEventListener('click', function(e) {
+        e.preventDefault();
+        const currentUrl = window.location.href;
+        const regex = /\\/pages(\\/.*)?$/;
+
+        if (regex.test(currentUrl)) {
+            const newUrl = currentUrl.replace(regex, '');
+            window.location.href = newUrl;
+        }
+    });
+</script>
+
+</body>
+</html>
+`;
+
+/**
+ * Writes a small redirect page at `pages/index.html` in the output.
+ * This catches the case where a user lands on the bare `pages/` URL
+ * (e.g. via a stale link or the file:// scheme showing the folder
+ * listing) and sends them back to the project root.
+ *
+ * Skipped silently when the output `pages/` dir doesn't exist or
+ * when the user has already placed a custom `index.html` next to the
+ * generated folder indexes (unlikely, but the build is non-destructive
+ * here so we don't clobber user content).
+ *
+ * @param {string} pagesDestDir - Absolute path to the output `pages/` dir
+ */
+function generatePagesIndexHtml(pagesDestDir) {
+  if (!fs.existsSync(pagesDestDir)) return;
+  const target = path.join(pagesDestDir, 'index.html');
+  // Don't overwrite a user-provided pages/index.html that came in via
+  // a non-.mmx file in the source (the copy step in processPagesRecursive
+  // would have placed it here). We only write when no file exists yet.
+  if (fs.existsSync(target)) return;
+  fs.writeFileSync(target, PAGES_INDEX_REDIRECT_HTML, 'utf-8');
 }
 
 /**
@@ -253,8 +522,22 @@ function processProjectStructure(sourceDir, outputDir, options = {}) {
   const pagesDest = path.join(outputDir, 'pages');
   if (!fs.existsSync(pagesDest)) fs.mkdirSync(pagesDest, { recursive: true });
 
+  // Generate auto `index.html` for every subfolder of pages/ (recursively).
+  // We do this BEFORE `processPagesRecursive` so the synthetic `__index.mmx`
+  // files are picked up by the normal pipeline (and therefore also end up
+  // in the search index, sitemap, etc.). They are deleted at the end.
+  const tempIndexFiles = generateFolderIndexPages(pagesSource);
+
   processPagesRecursive(pagesSource, pagesDest, stats, { deleteOriginals, log, outputRoot: outputDir });
-  
+
+  // Remove the temp `__index.mmx` files from the source dir so they
+  // don't pollute the user's project after the build.
+  cleanupFolderIndexPages(tempIndexFiles);
+
+  // Write a small redirect page at `pages/index.html` so anyone who
+  // lands on the bare `pages/` URL gets sent back to the project root.
+  generatePagesIndexHtml(pagesDest);
+
   // Process root index.mmx
   const rootIndexMmx = path.join(sourceDir, "index.mmx");
   if (fs.existsSync(rootIndexMmx)) {
