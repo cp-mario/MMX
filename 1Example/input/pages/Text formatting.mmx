@@ -156,6 +156,33 @@ You can also load the content of a note from a file (see [assets/code/note.txt](
 
 #code(assets/code/note.txt)
 
+## Blockquotes
+
+A blockquote is a line that starts with `>` followed by a space and the quote text. Consecutive `> ` lines are joined into a single blockquote.
+
+:::code
+> This is a blockquote
+> it can span multiple lines
+> as long as each line starts with "> "
+:::
+
+Example:
+
+> This is a blockquote
+> it can span multiple lines
+> as long as each line starts with "> "
+
+A blank line starts a new blockquote:
+
+> First quote
+> still the first quote
+
+> Second quote, on its own
+
+The text inside a blockquote is still parsed, so **bold**, *italic* and [links](https://example.com) work too:
+
+> A quote with **bold**, *italic* and [a link](https://example.com)
+
 ## Multiline code
 
 The same block that draws notes can also draw code blocks. Code blocks prevent the content from being parsed, so MMX syntax inside them is shown as-is.

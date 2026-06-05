@@ -33,6 +33,9 @@ export function mmxToHtml(mmx) {
   // Step 4: Parse Markdown-style lists before wrapping text
   result = parseLists(result);
 
+  // Step 4.5: Parse blockquote lines ("> ") and group consecutive ones
+  result = parseBlockquotes(result);
+
   // Step 5: Wrap plain text in <p> tags
   result = wrapParagraphs(result);
 
@@ -380,6 +383,40 @@ function parseLists(text) {
   }
 
   while (stack.length) closeList();
+  return output.join('\n');
+}
+
+/**
+ * Parses blockquote lines (lines starting with "> ") and groups consecutive ones
+ * into a single <blockquote>. Inline formatting (bold, links, etc.) is applied
+ * later by the inline patterns step on the inner content.
+ * @param {string} text - Text with potential blockquote lines
+ * @returns {string} HTML with parsed blockquotes
+ */
+function parseBlockquotes(text) {
+  const lines = text.split('\n');
+  const output = [];
+  const quoteRegex = /^>\s+(.*)$/;
+  let buffer = [];
+
+  const flush = () => {
+    if (buffer.length === 0) return;
+    const inner = buffer.join('<br>');
+    output.push(`<blockquote>${inner}</blockquote>`);
+    buffer = [];
+  };
+
+  for (const line of lines) {
+    const match = quoteRegex.exec(line);
+    if (match) {
+      buffer.push(match[1]);
+    } else {
+      flush();
+      output.push(line);
+    }
+  }
+  flush();
+
   return output.join('\n');
 }
 

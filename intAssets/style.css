@@ -53,6 +53,21 @@ hr {
   margin-block: 2px;
 }
 
+/* Blockquote: "> " at the start of a line */
+main blockquote {
+    margin: 12px 0;
+    padding: 8px 14px;
+    border-left: 4px solid #a7a7a7;
+    background-color: #eef2f7;
+    color: inherit;
+    border-radius: 0 var(--border-radius-base) var(--border-radius-base) 0;
+    font-style: italic;
+}
+
+main blockquote p {
+    margin: 0;
+}
+
 main p{
   margin: 0px;
 }

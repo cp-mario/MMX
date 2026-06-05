@@ -88,7 +88,7 @@ const navigatorButtonClose = `
 let nombreProyecto;
 
 /**
- * INDEX REDIRECT
+a * INDEX REDIRECT
  *
  * If the user lands on any `index.html` page -- the bare root, the
  * auto-generated `pages/index.html`, or any auto-generated folder index
