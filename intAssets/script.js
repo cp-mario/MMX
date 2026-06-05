@@ -408,12 +408,14 @@ function cargarMenuHamburguesa() {
     nav.classList.toggle("show"); // Show/hide sidebar
     btn2.classList.toggle("active"); // Update button appearance
     main.classList.toggle("sidebarActiva"); // Adjust main content layout
+    updateHeaderNavigatorState();
   });
 
   btn2.addEventListener("click", () => {
     nav.classList.toggle("show");
     btn2.classList.toggle("active");
     main.classList.toggle("sidebarActiva");
+    updateHeaderNavigatorState();
   });
 
   /**
