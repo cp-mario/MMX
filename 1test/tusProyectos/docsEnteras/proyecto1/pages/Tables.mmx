@@ -1,36 +1,73 @@
 # Tables
-Basic syntax:
-At the start of the line the end and the start of the table
+
+Tables in MMX are written as rows of `|`-separated values inside a `#table ... #endtable` block. The first argument after `#table` controls how the header cells are rendered.
+
+## Basic syntax
+
+```text
+#table [mode] [optional classes]
+header|cell|cell
+row   |cell|cell
+#endtable
+```
+
+- `mode` -- `v` (vertical, default), `h` (horizontal), `b` (both sides), or omitted (same as `v`).
+- `optional classes` -- extra CSS classes attached to the `<table>` element.
+- Cells are separated by `|`. Whitespace around the value is trimmed automatically.
+- The first row of a table is always the header when the mode is `h` or `b`.
+
+The full source of the examples below is also available as a file at [assets/code/tableExamples.txt](assets/code/tableExamples.txt).
+
 #code(assets/code/tableExamples.txt)
 
-**Examples:**
+## Examples
 
+### Vertical table (default)
 
-Vertical table (default)
+The first column is rendered as a header on the left, the rest as data cells.
+
 #table v
 Name|Score|State
 Alice|95|Pass
 Bob|87|Pass
 #endtable
 
-Horizontal table
+### Horizontal table
+
+The first row is rendered as a header on top, the rest as data rows.
+
 #table h
 Name|Score|State
 Alice|95|Pass
 Bob|87|Pass
 #endtable
 
-Both sides table, the space in the first line is optional, it does not affect, is for better visual understanding
+### Both sides table
+
+Both the first row and the first column become headers. The leading space in the first line is optional -- it is kept only for readability.
 
 #table b
      Name|Score
-Yestarday|Leo|95
+Yesterday|Alice|95
     Today|Bob|87
 #endtable
 
-Undefined mode table (Is a vertical table)
+### Undefined mode
+
+If you omit the mode, the table is treated as a vertical table.
+
 #table
 Title|Description
 Item 1|Text
 Item 2|More text
 #endtable
+
+## Notes
+
+:::note
+Inside a table cell, the inline patterns of MMX still work -- you can use **bold**, *italic*, `inline code`, [links](https://example.com) and even inline images.
+:::
+
+:::note
+A table with zero data rows renders as an empty `<table>`. The header row is always present when the mode is `h` or `b`.
+:::

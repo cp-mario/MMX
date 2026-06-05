@@ -1,29 +1,29 @@
 //Vertical table (default)
 #table v
-Nombre|Puntaje|Estado
+Name|Score|State
 Alice|95|Pass
 Bob|87|Pass
 #endtable
 
 //Horizontal table
 #table h
-Nombre|Puntaje|Estado
+Name|Score|State
 Alice|95|Pass
 Bob|87|Pass
 #endtable
 
 //Both sides table, the space in the first line is optional, it does not
-//affect, is for better visual understanding
+//affect, it is for better visual understanding
 
 #table b
-          Nombre|Puntaje
-Rendimiento ayer|Alice|95
-Rendimiento hoy |Bob|87
+          Name|Score
+Yesterday|Alice|95
+Today|Bob|87
 #endtable
 
-//Undefined mode table (Is a vertical table)
+//Undefined mode table (treated as a vertical table)
 #table
-Título|Descripción
-Item 1|Texto abajo
-Item 2|Más texto
+Title|Description
+Item 1|Text below
+Item 2|More text
 #endtable

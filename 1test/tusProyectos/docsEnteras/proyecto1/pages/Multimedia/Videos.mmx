@@ -1,17 +1,42 @@
 # Videos
 
-Basic sintax:
+Use video blocks to embed a playable video file. The video expands to fill the width of the content area and the user can play, pause, seek and toggle fullscreen with the standard browser controls.
 
-:::code
+## Basic syntax
+
+At the start of a line:
+
+```text
 !!(assets/video.mp4)
-!!(https://someVideo.com/Video.mp4)
+!!(https://example.com/Video.mp4)
+```
+
+You can add optional CSS classes after the source, separated by a space.
+
+## Example
+
+!!(assets/video.mp4)
+
+The video will fill the width of the content.
+
+[Here](pages/File%20sources%20and%20paths.html) you can see more details about the supported video sources (local files vs remote URLs).
+
+## Supported formats
+
+The browser uses any format supported by the HTML5 `<video>` element. The most common ones are:
+
+- `.mp4` (H.264 + AAC) -- the most widely supported format.
+- `.webm` (VP8/VP9 + Vorbis/Opus) -- open and efficient, well supported in modern browsers.
+- `.ogg` (Theora + Vorbis) -- open container, less common today.
+
+When possible, ship both `.mp4` and `.webm` so that the largest set of browsers can play the file.
+
+## Accessibility tips
+
+:::note
+Always provide captions or a transcript for non-decorative videos. The MMX audio and video blocks do not include caption tracks out of the box, so the caption file (`.vtt`) and an external player are typically used.
 :::
 
-
-
-It will look like this:
-
-!!(assets/video.mp4)
-
-[Here](pages/File sources and paths.html) you can see more detailed the supported video sources
-The videos will fill the width of the content.
+:::note
+Avoid autoplay with sound. If a video must autoplay, also add a visible "Pause" control so the user can stop it.
+:::

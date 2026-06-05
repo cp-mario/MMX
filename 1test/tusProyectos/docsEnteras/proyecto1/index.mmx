@@ -1,1 +1,42 @@
 # MMX Documentation
+
+Welcome! This is a sample documentation site built with **MMX**, a small, file-based documentation generator. The page you are reading lives in `index.mmx` and the whole site is generated from `.mmx` files in the `pages/` folder.
+
+## What you will find here
+
+The sidebar on the left is the table of contents. The pages are grouped by topic:
+
+- [Text formatting](pages/Text%20formatting.html) -- paragraphs, headers, bold, italic, links, notes, code blocks and everything else you can write in plain text.
+- [Lists](pages/Lists.html) -- unordered, ordered (auto and manual) and nested lists.
+- [Tables](pages/Tables.html) -- vertical, horizontal and both-sides tables.
+- [File sources and paths](pages/File%20sources%20and%20paths.html) -- how to reference local files and remote URLs.
+- [Multimedia](pages/Multimedia/Images.html) -- images, videos, audios, inline images and iframes.
+- [Examples](pages/Examples/Headers%20example.html) -- worked examples of headers and code blocks.
+
+## A short tour of MMX
+
+MMX files are plain text. The first line is the page title (a `# h1` heading). Everything else is normal text with a few small additions:
+
+- Inline formatting: `**bold**`, `*italic*`, `` `inline code` ``, `[links](url)` and `<c="color">coloured text</c>`.
+- Block elements: `# table`, `::: note`, `::: code`, lists, separators, and the `#b` line break.
+- Media elements: `![alt](image.png)`, `!!(video.mp4)`, `!!!(audio.mp3)`, `<-icon.svg->` and `#iframe(...)`.
+- Headers can carry an anchor tag: `## Section %{my-id}%` so you can link to it with `[Section](page.html#my-id)`.
+
+You do not need a build step in your editor. Write the `.mmx` files, run MMX, and you get a static site of HTML files you can open directly or upload to any web host.
+
+## How this site is organised
+
+The structure under `tusProyectos/docsEnteras/proyecto1/` is:
+
+```text
+proyecto1/
+  config.mcfg        -- title, version, language, sidebar text
+  index.mmx          -- the page you are reading
+  assets/            -- images, videos, audios and code samples
+  pages/             -- all the other pages of the documentation
+    Examples/
+    Multimedia/
+    Tests/
+```
+
+Open any page from the sidebar to see how it is written. The source is the single source of truth -- if you spot a typo or want to expand a page, edit the corresponding `.mmx` file and regenerate the site.

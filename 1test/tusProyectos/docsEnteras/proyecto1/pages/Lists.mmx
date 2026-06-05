@@ -1,13 +1,17 @@
 # Lists
 
+MMX supports three list styles. All of them use indentation (tabs or spaces) to indicate nesting level.
+
 ## Unordered lists
-To create a unordered list use
+
+Start a line with `-` followed by a space and your item text. Use additional `-` characters to nest a sub-item.
+
 :::code
 - item
 - item
 -1 item with 1 tab
--2 item with 2 tab
--2 item with 2 tab
+-2 item with 2 tabs
+-2 item with 2 tabs
 -1 item with 1 tab
 - item
 :::
@@ -17,19 +21,21 @@ Result:
 - item
 - item
 -1 item with 1 tab
--2 item with 2 tab
--2 item with 2 tab
+-2 item with 2 tabs
+-2 item with 2 tabs
 -1 item with 1 tab
 - item
 
-## Ordered lists
-To create a unordered with automatic numbers list use
+## Ordered lists (auto-numbered)
+
+Start a line with `+` to get an automatically numbered list (1, 2, 3, ...). Indent with more `+` characters to nest.
+
 :::code
 + item
 + item
 +1 item with 1 tab
-+2 item with 2 tab
-+2 item with 2 tab
++2 item with 2 tabs
++2 item with 2 tabs
 +1 item with 1 tab
 + item
 :::
@@ -39,21 +45,23 @@ Result:
 + item
 + item
 +1 item with 1 tab
-+2 item with 2 tab
-+2 item with 2 tab
++2 item with 2 tabs
++2 item with 2 tabs
 +1 item with 1 tab
 + item
 
+## Ordered lists (manual numbers)
 
-To create a unordered with manual numbers list use
+If you want to control the starting number, write it explicitly using `n.` at the start of each line.
+
 :::code
 1. item
 2. item
 3.1 item with 1 tab
-4.2 item with 2 tab
-5.2 item with 2 tab
+4.2 item with 2 tabs
+5.2 item with 2 tabs
 6.1 item with 1 tab
-7 item
+7. item
 :::
 
 Result:
@@ -61,18 +69,21 @@ Result:
 +    item
 + item
 +1 item with 1 tab
-+2 item with 2 tab
-+2 item with 2 tab
++2 item with 2 tabs
++2 item with 2 tabs
 +1 item with 1 tab
 + item
 
-Or you can mix them
+## Mixing styles
+
+You can mix auto-numbered and manual-numbered items in the same list.
+
 :::code
 + item
-5. item //this will not work because the start from another number only works at the start of the list
+5. item //this will not work because starting from a different number only works at the start of the list
 9.1 item with 1 tab
-+2 item with 2 tab
-+2 item with 2 tab
++2 item with 2 tabs
++2 item with 2 tabs
 +1 item with 1 tab
 10. item
 :::
@@ -82,13 +93,11 @@ Result:
 + item
 5. item
 9.1 item with 1 tab
-+2 item with 2 tab
-+2 item with 2 tab
++2 item with 2 tabs
++2 item with 2 tabs
 +1 item with 1 tab
 10. item
 
-
-
 :::note
-In all types of list it can be as much spaces or tabs as you want to organise betwen te list element (+,-,1,1.2...) and the text
+In all list types, you can use as many spaces or tabs as you want between the list element (`+`, `-`, `1.`, `1.2`, ...) and the text. MMX only cares about the number of leading characters that mark the indentation level.
 :::

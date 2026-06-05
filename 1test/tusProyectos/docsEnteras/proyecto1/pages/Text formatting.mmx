@@ -1,24 +1,28 @@
 # Text formatting
 
+This page covers everything you can write in plain text: paragraphs, headers, emphasis, separators, inline code, notes and links.
+
 ## Normal writing
 
-As simple as writing normally
+Just write normally. Lines that follow each other with a blank line between them become separate paragraphs. A single line break inside a paragraph is ignored.
+
 :::code
 this is normal text
 :::
 
 Example:
+
 this is normal text
 
 ## Headers
-The headers go from h1 to h6, h1 is bigger than h2 that is bigger than h3...
+
+Headers go from h1 to h6. h1 is the largest and h6 the smallest.
 
 :::note
-The first h1 in your mmx file will be the title of the page
+The first h1 of an `.mmx` file becomes the page title shown in the browser tab and in the sidebar.
 :::
 
-
-A header is declared in a new line like in markdown:
+A header is declared on its own line, just like in Markdown:
 
 :::code
 # This is a h1
@@ -30,13 +34,15 @@ A header is declared in a new line like in markdown:
 :::
 
 :::note
-It's highly recommended to only use a single h1 and as many as you want h2, h3, h4, h5, h6.
+It is strongly recommended to use a single h1 per page (which becomes the title) and as many h2-h6 as you need for the content.
 :::
 
-You can optionaly put after the header declaration a tag to the header for going to that header with a link
+### Header tags (anchor links)
+
+You can optionally add a tag to a header so you can link directly to it. The tag goes between `%{` and `%}` after the title.
 
 :::note
-Don't put a tag in the first h1 of your page
+Do not add a tag to the first h1 of your page -- the first h1 is already used as the title.
 :::
 
 :::code
@@ -48,36 +54,37 @@ Don't put a tag in the first h1 of your page
 ###### This is a h6 with a tag %{Anothertag5}%
 :::
 
-To go to a header with a tag is as simple as writing a link with like this: `[Header](#id)` or to go to a header in another page:
+Linking to a header in the same page:
+`[Header](#id)`
+
+Linking to a header in another page (remember to use `.html`, not `.mmx`):
 `[Header](pages/the/Page/You/Want/To/Go.html#id)`
 
-[Here](pages/Examples/Headers example.html) are some examples
+[Here](pages/Examples/Headers example.html) are some examples of headers in action.
 
 ## Bold
 
-To put some text in bold is as simple as put the text between two asterisks `**Text in bold**`
+Wrap text with two asterisks to make it bold: `**Text in bold**`.
 
 Example:
 **This text is in bold**
 
-
 ## Italic
 
-To put some text in italic is as simple as put the text between a single asterisk `*Text in italic*`
+Wrap text with a single asterisk to make it italic: `*Text in italic*`.
 
 Example:
 *This text is in italic*
 
+## Line breaks
 
+When you are writing normally, line breaks only separate paragraphs. To insert a forced blank line, use the `#b` element. It must appear on its own line.
 
-## Enters
-In mmx writing normally the enters only works if they are dividing two paragraphs, a enter to make a blank line will not work for that there is the `#b` element.
-This element only works at the start of the line and with nothing more in the same line
 :::code
 #b
 :::
 
-Here's an example of 3 `#b`
+Here is an example of 3 `#b`:
 
 #b
 #b
@@ -85,7 +92,8 @@ Here's an example of 3 `#b`
 
 ## Coloured text
 
-In mmx you can color text with a html style syntax with html supported color formats like hex, rgb or color names:
+You can colour text with an HTML-style syntax that accepts any CSS colour value: named colours, hex, `rgb()` or `hsl()`.
+
 :::code
 <c="color">Text in that color</c>
 <c="red">This text will be coloured in red</c>
@@ -95,35 +103,46 @@ In mmx you can color text with a html style syntax with html supported color for
 :::
 
 **Examples:**
-<c="color">Text in that color </c><c="red">This text will be coloured in red</c> normal text <c="blue">This text will be coloured in blue</c><c="#ffcc40"> This text will be coloured in yellow</c> <c="rgb(130, 130, 130)"> This text will be coloured in gray</c>
+
+<c="red">This text will be coloured in red</c> normal text <c="blue">This text will be coloured in blue</c><c="#ffcc40"> This text will be coloured in yellow</c> <c="rgb(130, 130, 130)"> This text will be coloured in gray</c>
+
+:::note
+`<c="color">` is shown above as a placeholder, but `color` is not a valid CSS colour and will be ignored by the browser. Use a real value such as `green`, `#ffcc40` or `rgb(130, 130, 130)`.
+:::
 
 ## Separators
-A simple separator
-This element `#s` only works at the start of the line and with nothing more in the same line like the `#b`
+
+A horizontal rule is produced with `#s` on its own line, just like `#b`.
 
 :::code
 #s
 :::
 
 Example:
+
 #s
 
-
 ## Inline code
-Inline code is declared with
+
+Wrap text in backticks to render it as inline code. Inline code is not parsed by MMX, uses a monospaced font and has a subtle background.
+
 :::code
 `code`
 :::
-and keeps the code from be processed by the parser, it has monospaced typografy and a background
 
 Example:
 
-`This is some inline code, this dont works inside me: [Header](pages/the/Page/You/Want/To/Go.html#id)`
+`This is some inline code, this is not parsed inside me: [Header](pages/the/Page/You/Want/To/Go.html#id)`
 
 ## Notes
-A note is a piece of text that appears with te text note and a background
 
-#code(assets/code/note.txt)
+A note is a block of text that is rendered with the label "Note:" and a highlighted background. It is a good fit for tips, warnings or side information.
+
+:::code
+:::note
+This is a note
+:::
+:::
 
 Example:
 
@@ -131,27 +150,35 @@ Example:
 This is a note
 :::
 
+The text inside a note is still parsed, so you can use **bold**, *italic* and [links](https://example.com).
+
+You can also load the content of a note from a file (see [assets/code/note.txt](assets/code/note.txt)):
+
+#code(assets/code/note.txt)
+
 ## Multiline code
-This element also prevents de text to be parsed. The text can come from de text like the note or from a text file
 
+The same block that draws notes can also draw code blocks. Code blocks prevent the content from being parsed, so MMX syntax inside them is shown as-is.
 
-Normal
+The text can come from a file or be written directly in the `.mmx` file.
+
+Loaded from a file:
+
 #code(assets/code/codeExample.txt)
 
+Written directly:
 
-From a file, at the start of the line
 :::code
 #code(assets/code/note.txt)
 :::
 
-[Here](pages/File sources and paths.html) you can see more detailed the supported code sources
+Both look the same and both accept the following optional classes (separated by spaces):
 
-Both are visualy the same and both can have classes:
-auto: auto highligthing
-noMonoSpace: no monospaced font
-noCopy: no copy button
-noCodeBg: the code will not have a background and also with this it's enabled noCopy and noFormatted, and also will not work auto
-noFormatted: in the code if the text is too long instead of a scrollbar the text will continue in the next line like normal text
+- `auto` -- enable automatic syntax highlighting (powered by highlight.js).
+- `noMonoSpace` -- render the code with a proportional font instead of monospaced.
+- `noCopy` -- hide the "copy" button.
+- `noCodeBg` -- remove the code background. This also enables `noCopy` and `noFormatted` automatically, and disables `auto`.
+- `noFormatted` -- when the code is too long, wrap it to the next line instead of showing a horizontal scrollbar.
 
 :::code
 normal code
@@ -161,30 +188,30 @@ normal code
 code with auto highligthing
 :::
 
-More examples [here](pages/Examples/Code example.html)
-
+More examples [here](pages/Examples/Code example.html).
 
 ## Links
 
-To link a external page, a documentation page or a header (in this or another page)
+Use links to point at an external page, another page in your documentation, or a specific header.
 
-Basic sintax:
+Basic syntax:
 
 :::code
-[External page(it opens in another tab)](https://example.com)
+[External page (it opens in another tab)](https://example.com)
 [Documentation page (it opens in this tab)](pages/route/to/page.html)  //do not forget that instead of .mmx here you must put .html
-[Header(it scrolls the content to the header)](#headerId) 
+[Header (it scrolls the content to the header)](#headerId)
 [Documentation page header (it opens in this tab)](pages/route/to/page.html#headerId)
 :::
 
 **Examples:**
 
-some text [External page(it opens in another tab)](https://example.com) some text
-[Documentation page (it opens in this tab)](pages/Multimedia/Audios.html)
-[Header(it scrolls the content to the header)](#Title) 
-[File sources and paths h2 (it opens in this tab)](pages/File sources and paths.html#header2)
+- some text [External page (opens in another tab)](https://example.com) some text
+- [Documentation page (opens in this tab)](pages/Multimedia/Audios.html)
+- [Header (scrolls the content to the header)](#Title)
+- [File sources and paths h2 (opens in this tab)](pages/File sources and paths.html#header2)
 
-Also you can write a link without that sintaxis and it will appear the link just as.
+You can also write a bare URL or domain and MMX will turn it into a link automatically:
+
 :::code
 https://example.com
 https://example.com/example

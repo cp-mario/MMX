@@ -25,7 +25,5 @@ In-page headings work like a URL, but with a `#id` instead of the address:
 A link to another page in your documentation uses the page path (remember to use `.html`, not `.mmx`):
 [Introduction](pages/Introduction MMX.html)
 
-## H2 %{2}%
-
 ## H2 %{links}%
 

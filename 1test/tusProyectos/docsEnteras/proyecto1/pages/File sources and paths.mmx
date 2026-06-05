@@ -1,7 +1,66 @@
 # File sources and paths
 
+MMX lets you embed media and code from two kinds of sources: a remote URL or a file in your local `assets/` folder. This page describes how each is written and what to keep in mind.
+
 ## Images, videos, audios, inline images and code from files %{header2}%
 
-All of this have the src of the image inside (src) except the inline image that has it inside `<-src->`
+Every media element accepts the same two source forms:
 
-The source can be a URL like `![A image](https://ThisIsAExampleImage.com/image.png)` or a file from the assets folder `![A image](assets/route/from/assets/image.png)`
+- **Remote URL** -- a full `https://` (or `http://`) address.
+- **Local file** -- a path that starts with `assets/` and is resolved relative to the `assets/` folder of your documentation project.
+
+| Element | Syntax | Source goes in |
+|--------|--------|---------------|
+| Image | `![alt](source)` | `()` of the image |
+| Video | `!!(source)` | `()` of the video |
+| Audio | `!!!(source)` | `()` of the audio |
+| Inline image | `Some text <-source->` | between `<-` and `->` |
+| Code from file | `#code(source)` | `()` of the directive |
+
+The same rule applies to every element: the source is either a URL or a path inside `assets/`.
+
+## URL examples
+
+```text
+![A remote image](https://placehold.net/main.svg)
+!!(https://example.com/Video.mp4)
+!!!(https://example.com/sound.mp3)
+#code(https://raw.githubusercontent.com/cp-mario/MMX/refs/heads/main/LICENSE)
+```
+
+## Local file examples
+
+```text
+![A local image](assets/foto.png)
+!!(assets/video.mp4)
+!!!(assets/audio.mp3)
+Some text <-assets/icon2.svg-> in the middle of a sentence
+#code(assets/code/note.txt)
+```
+
+## Path rules
+
+- Paths are always relative to the `assets/` folder. Do **not** start them with `/` or `./`.
+- Use forward slashes (`/`) in paths, even on Windows.
+- Folder and file names are case-sensitive -- `assets/Foto.png` and `assets/foto.png` are different files.
+- Subfolders are allowed: `assets/images/screenshots/home.png`.
+
+:::note
+If a referenced file is missing, the generator does not fail. The output HTML will simply contain a broken reference, so always preview your build after adding a new asset.
+:::
+
+## File-type support
+
+- **Images:** `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`, `.ico` and any other format the browser can render. SVG files work as both regular and inline images.
+- **Videos:** any format the HTML5 `<video>` element supports in the target browsers (typically `.mp4`, `.webm`, `.ogg`).
+- **Audios:** any format the HTML5 `<audio>` element supports in the target browsers (typically `.mp3`, `.wav`, `.ogg`, `.m4a`).
+- **Code from file:** any plain-text file. The file content is read at build time and inlined as the body of the code block.
+
+## Tab icon and title image
+
+MMX automatically picks up two special files in the `assets/` folder if they are present:
+
+- `assets/icon.png` (or `.svg`, `.ico`, `.webp`, `.jpg`, `.jpeg`) -- used as the favicon (the icon shown in the browser tab).
+- `assets/title.webp` (or `.png`, `.jpg`, `.jpeg`, `.svg`) -- used as the documentation title at the top of the sidebar.
+
+If `title.*` is missing, the sidebar falls back to the `title` value from `config.mcfg`.
