@@ -6,10 +6,10 @@ Use video blocks to embed a playable video file. The video expands to fill the w
 
 At the start of a line:
 
-```text
+:::code
 !!(assets/video.mp4)
 !!(https://example.com/Video.mp4)
-```
+:::
 
 You can add optional CSS classes after the source, separated by a space.
 

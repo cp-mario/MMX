@@ -6,25 +6,25 @@ Use an iframe block to embed an external page, video player, map or any other HT
 
 The block starts with `#iframe(¡` and ends with `!)`. Paste a normal HTML `<iframe>` between the delimiters.
 
-```text
+:::code
 #iframe(¡<iframe ...></iframe>!)
-```
+:::
 
 The opener `¡` and the closer `!)` are part of the MMX syntax -- they make it easy to spot the start and end of an iframe block, even when the embedded HTML is long.
 
 ## Example: an embedded YouTube video
 
-```text
+:::code
 #iframe(¡<iframe width="100%" height="315" src="https://www.youtube.com/embed/SR86aNrbWt0?si=2iqxizBLxEFmO1Po" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>!)
-```
+:::
 
 #iframe(¡<iframe width="100%" height="315" src="https://www.youtube.com/embed/SR86aNrbWt0?si=2iqxizBLxEFmO1Po" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>!)
 
 ## Example: an embedded map
 
-```text
+:::code
 #iframe(¡<iframe width="100%" height="400" src="https://www.openstreetmap.org/export/embed.html?bbox=-0.1,51.5,-0.05,51.55&layer=mapnik" style="border: 1px solid #ccc"></iframe>!)
-```
+:::
 
 #iframe(¡<iframe width="100%" height="400" src="https://www.openstreetmap.org/export/embed.html?bbox=-0.1,51.5,-0.05,51.55&layer=mapnik" style="border: 1px solid #ccc"></iframe>!)
 

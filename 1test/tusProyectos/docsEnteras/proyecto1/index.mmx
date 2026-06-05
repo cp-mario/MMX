@@ -17,7 +17,7 @@ The sidebar on the left is the table of contents. The pages are grouped by topic
 
 MMX files are plain text. The first line is the page title (a `# h1` heading). Everything else is normal text with a few small additions:
 
-- Inline formatting: `**bold**`, `*italic*`, `` `inline code` ``, `[links](url)` and `<c="color">coloured text</c>`.
+- Inline formatting: `**bold**`, `*italic*`, `inline code` , `[links](url)` and `<c="color">coloured text</c>`.
 - Block elements: `# table`, `::: note`, `::: code`, lists, separators, and the `#b` line break.
 - Media elements: `![alt](image.png)`, `!!(video.mp4)`, `!!!(audio.mp3)`, `<-icon.svg->` and `#iframe(...)`.
 - Headers can carry an anchor tag: `## Section %{my-id}%` so you can link to it with `[Section](page.html#my-id)`.
@@ -28,7 +28,7 @@ You do not need a build step in your editor. Write the `.mmx` files, run MMX, an
 
 The structure under `tusProyectos/docsEnteras/proyecto1/` is:
 
-```text
+:::code
 proyecto1/
   config.mcfg        -- title, version, language, sidebar text
   index.mmx          -- the page you are reading
@@ -37,6 +37,6 @@ proyecto1/
     Examples/
     Multimedia/
     Tests/
-```
+:::
 
 Open any page from the sidebar to see how it is written. The source is the single source of truth -- if you spot a typo or want to expand a page, edit the corresponding `.mmx` file and regenerate the site.

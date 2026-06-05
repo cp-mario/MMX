@@ -4,9 +4,9 @@ Use inline images to drop a small icon, badge or glyph in the middle of a senten
 
 ## Basic syntax
 
-```text
+:::code
 Some text <-ImageSource->
-```
+:::
 
 The source goes between `<-` and `->`. It can be a remote URL or a local file inside `assets/`.
 

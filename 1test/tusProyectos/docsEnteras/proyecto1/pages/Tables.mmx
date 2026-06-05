@@ -4,12 +4,12 @@ Tables in MMX are written as rows of `|`-separated values inside a `#table ... #
 
 ## Basic syntax
 
-```text
+:::code
 #table [mode] [optional classes]
 header|cell|cell
 row   |cell|cell
 #endtable
-```
+:::
 
 - `mode` -- `v` (vertical, default), `h` (horizontal), `b` (both sides), or omitted (same as `v`).
 - `optional classes` -- extra CSS classes attached to the `<table>` element.

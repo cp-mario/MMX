@@ -12,13 +12,13 @@ To make the documentation work, your project must contain the following structur
 Placed in the root of your project.  
 It must contain:
 
-```ini
+:::code
 title = "The title of your documentation"
 version = "v1.1(The version)"
 lang = "en"
 sidebarBottomText = "The text next to the version on the bottom of the sidebar"
 
-```
+:::
 > [!NOTE]
 > The lang uses the BCP 47 standar (https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)
 
@@ -30,9 +30,9 @@ sidebarBottomText = "The text next to the version on the bottom of the sidebar"
 A folder for images, videos, or any other resources.  
 To reference a resource inside it, use:
 
-```
+:::
 assets/path/to/resource
-```
+:::
 If you put a file named icon.extension (it can be .svg .png .ico .webp .jpg or .jpeg) Ex: icon.png it will be the icon that the browser will show on the tab else the icon will be the browsers default.
 
 
@@ -63,7 +63,7 @@ At the  `config.mcfg`, you must specify:
 
 It will be something similar to this:
 
-```
+:::
 your-project/
 ├── config.json
 ├── index.mmx
@@ -81,7 +81,7 @@ your-project/
     └── export/ ← another category
         ├── html.mmx
         └── mobile.mmx
-```
+:::
 
 You can see how it is and more info included the MM sintaxis in https://mmxdocs.vercel.app https://cp-mario.github.io/MMX/ that is made with MMX
 

@@ -4,10 +4,10 @@ Use image blocks to embed a picture, screenshot, diagram or icon. The image expa
 
 ## Basic syntax
 
-```text
+:::code
 ![Alternative text](assets/foto.png)
 ![Alternative text](https://placehold.net/main.svg)
-```
+:::
 
 You can add optional CSS classes after the source, separated by a space.
 
