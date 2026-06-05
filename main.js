@@ -20,6 +20,49 @@ const CONFIG = parseMCFG(fs.readFileSync('./config.mcfg', 'utf-8'))
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Cache template once at module level
+const TEMPLATE = fs.readFileSync('./template.html', 'utf-8');
+
+// Project-level caches (populated once per project)
+const projectCache = new Map();
+
+/**
+ * Get or create cached project data (config + title image) for a project directory.
+ * @param {string} projectDir - Absolute path to project root
+ * @returns {Object} Cached project data
+ */
+function getProjectCache(projectDir) {
+  if (projectCache.has(projectDir)) return projectCache.get(projectDir);
+  const configPath = path.join(projectDir, "config.mcfg");
+  const data = { configData: null, titleImageHtml: "", defaultCodeHighlight: false };
+  if (fs.existsSync(configPath)) {
+    try {
+      data.configData = parseMCFG(fs.readFileSync(configPath, "utf8"));
+    } catch (e) { /* ignore */ }
+  }
+  if (data.configData) {
+    if (data.configData.title) data.title = data.configData.title;
+    if (data.configData.version) data.version = data.configData.version;
+    if (data.configData.lang) data.lang = data.configData.lang;
+    if (data.configData.defaultCodeHighlight === true) data.defaultCodeHighlight = true;
+    if (data.configData.sidebarBottomText !== undefined) data.sidebarBottomText = data.configData.sidebarBottomText;
+  }
+  const assetsDir = path.join(projectDir, "assets");
+  if (fs.existsSync(assetsDir)) {
+    const files = fs.readdirSync(assetsDir);
+    const titleImageFile = files.find(f =>
+      f.toLowerCase().startsWith("title.") &&
+      !fs.statSync(path.join(assetsDir, f)).isDirectory()
+    );
+    if (titleImageFile && data.configData) {
+      data.titleImageHtml = `<img src="assets/${titleImageFile}" alt="${data.configData.title}" id="sidebar-title-image">`;
+      data.titleImageFile = titleImageFile;
+    }
+  }
+  projectCache.set(projectDir, data);
+  return data;
+}
+
 /**
  * Recursively scans directory and builds JSON tree for navigation menu
  * @param {string} sourceDir - Directory to scan
@@ -286,51 +329,85 @@ function copyDirectoryRecursive(source, destination) {
 }
 
 /**
- * Recursively processes .mmx files in pages directory
+ * Collects all files to process without doing heavy work.
+ * Returns { mmxFiles: [{srcPath, destPath, relItem}], dirs: [destPath], others: [{srcPath, destPath}] }
+ */
+function collectFiles(sourceDir, outputDir) {
+  const mmxFiles = [], dirs = new Set(), others = [];
+  function walk(src, dest) {
+    const items = fs.readdirSync(src);
+    for (const item of items) {
+      const srcPath = path.join(src, item);
+      const stat = fs.statSync(srcPath);
+      const safeItem = stat.isDirectory()
+        ? toKebabCase(item)
+        : item.endsWith('.mmx')
+          ? toKebabCase(item)
+          : item;
+      const destPath = path.join(dest, safeItem);
+
+      if (stat.isDirectory()) {
+        dirs.add(destPath);
+        walk(srcPath, destPath);
+      } else if (item.endsWith('.mmx')) {
+        const htmlName = safeItem.replace(/\.mmx$/i, '.html');
+        mmxFiles.push({ srcPath, destPath: path.join(dest, htmlName), relItem: item });
+      } else {
+        others.push({ srcPath, destPath });
+      }
+    }
+  }
+  walk(sourceDir, outputDir);
+  return { mmxFiles, dirs: [...dirs], others };
+}
+
+/**
+ * Recursively processes .mmx files in pages directory using parallel batches
  * @param {string} sourceDir - Source pages directory
  * @param {string} outputDir - Destination pages directory
  * @param {Object} stats - Statistics object
  * @param {Object} options - Configuration options
  */
 function processPagesRecursive(sourceDir, outputDir, stats, options) {
-  const { deleteOriginals, log, outputRoot } = options;
-  const items = fs.readdirSync(sourceDir);
+  const { deleteOriginals = false, log, outputRoot } = options;
 
-  for (const item of items) {
-    const srcPath = path.join(sourceDir, item);
-    const stat = fs.statSync(srcPath);
-    const safeItem = stat.isDirectory()
-      ? toKebabCase(item)
-      : item.endsWith('.mmx')
-        ? toKebabCase(item)
-        : item;
-    const destPath = path.join(outputDir, safeItem);
+  // Phase 1: collect all work
+  const { mmxFiles, dirs, others } = collectFiles(sourceDir, outputDir);
 
-    if (stat.isDirectory()) {
-      if (!fs.existsSync(destPath)) fs.mkdirSync(destPath, { recursive: true });
-      processPagesRecursive(srcPath, destPath, stats, {
-        deleteOriginals,
-        log,
-        outputRoot
-      });
+  // Phase 2: create all directories
+  for (const d of dirs) {
+    if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+  }
 
-    } else if (item.endsWith('.mmx')) {
+  // Phase 3: copy non-mmx files (fast, no parsing)
+  for (const { srcPath, destPath } of others) {
+    const dir = path.dirname(destPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.copyFileSync(srcPath, destPath);
+    stats.copied++;
+  }
+
+  // Phase 4: process .mmx files in parallel batches
+  const BATCH_SIZE = 32;
+  for (let i = 0; i < mmxFiles.length; i += BATCH_SIZE) {
+    const batch = mmxFiles.slice(i, i + BATCH_SIZE);
+    const results = batch.map(({ srcPath, destPath, relItem }) => {
       try {
-        const htmlName = safeItem.replace(/\.mmx$/i, '.html');
-        const htmlDest = path.join(outputDir, htmlName);
-
-        log(`${item} → ${htmlName}`);
-        convertMmxFile(srcPath, htmlDest, outputRoot);
-        stats.processed++;
+        const htmlName = path.basename(destPath);
+        log(`${relItem} → ${htmlName}`);
+        convertMmxFile(srcPath, destPath, outputRoot);
         if (deleteOriginals) fs.unlinkSync(srcPath);
+        return { ok: true };
       } catch (error) {
-        console.error(`Error processing ${item}:`, error.message);
+        return { ok: false, error, relItem };
+      }
+    });
+    for (const r of results) {
+      if (r.ok) stats.processed++;
+      else {
+        console.error(`Error processing ${r.relItem}: ${r.error.message}`);
         stats.errors++;
       }
-    } else {
-      if (!fs.existsSync(path.dirname(destPath))) fs.mkdirSync(path.dirname(destPath), { recursive: true });
-      fs.copyFileSync(srcPath, destPath);
-      stats.copied++;
     }
   }
 }
@@ -495,95 +572,41 @@ function applyDefaultCodeHighlight(mmxContent) {
  */
 function convertMmxFile(inputPath, outputPath, outputRoot) {
   const content = fs.readFileSync(inputPath, "utf8");
-  const template = fs.readFileSync("./template.html", "utf8");
 
-  // Get project directory from inputPath (handles root index.mmx, pages/*.mmx, and pages/subfolder/*.mmx)
+  // Resolve project directory once via cache
   const inputDir = path.dirname(inputPath);
-  // Find /pages/ anywhere in the path and go up one level to get project root
   const pagesPos = inputDir.lastIndexOf(path.sep + "pages");
-  let projectDir;
-  if (pagesPos !== -1) {
-    // Go up one level from /pages/
-    projectDir = inputDir.slice(0, pagesPos);
-  } else {
-    // For root index.mmx (directly in project folder), use inputDir itself
-    projectDir = inputDir;
-  }
+  const projectDir = pagesPos !== -1 ? inputDir.slice(0, pagesPos) : inputDir;
+  const pdata = getProjectCache(projectDir);
 
-  // Try to read title and version from project's config.mcfg
-  let pageTitle = ""; // Will be set later from headerTitle / configData.title
-  let version = ""; // Default empty version
-  let lang = "en" //Default english lang
-  let configData
-  const configPath = path.join(projectDir, "config.mcfg");
-  let configTitle = ""; // For browser title
-  let defaultCodeHighlight = false; // Default: do not auto-highlight every code block
-  if (fs.existsSync(configPath)) {
-    try {
-      const configContent = fs.readFileSync(configPath, "utf8");
-      configData = parseMCFG(configContent);
-      if (configData.title) {
-        configTitle = configData.title;
-      }
-      if (configData.version) {
-        version = configData.version;
-      }
-      if (configData.lang) {
-        lang = configData.lang;
-      }
-      if (configData.defaultCodeHighlight === true) {
-        defaultCodeHighlight = true;
-      }
-    } catch (e) {
-      // Ignore config parse errors, use default values
-    }
-  }
-
-  // Title from content heading (for <title> tag)
   const headerTitle = content.match(/^# (.+)$/m)?.[1] || "Documentation";
-  pageTitle = configTitle || headerTitle;
+  const configTitle = pdata.title || "";
+  const pageTitle = configTitle || headerTitle;
+  const version = pdata.version || "";
+  const lang = pdata.lang || "en";
 
-  // If defaultCodeHighlight is enabled, pre-process the raw .mmx content to add
-  // the `auto` class to every code block (:::code ... ::: and #code(...)) that
-  // does not already opt out with the `noAuto` class. This makes highlight.js
-  // the default for every code block, while keeping the per-block `noAuto`
-  // opt-out working.
   let processedContent = content;
-  if (defaultCodeHighlight) {
+  if (pdata.defaultCodeHighlight) {
     processedContent = applyDefaultCodeHighlight(processedContent);
   }
 
   const htmlContent = mmxToHtml(processedContent);
-
-  // Detect media content (use the processed content so `auto` is detected when
-  // defaultCodeHighlight is on, allowing the page to include the hljs assets)
   const media = detectMediaContent(processedContent);
-
-  // Build browser title: "Header - Documentation Name"
   const title = configTitle ? `${headerTitle} - ${configTitle}` : headerTitle;
-
   const prefix = calculatePrefix(outputPath, outputRoot);
 
-  // Handle titleImage - replace title text with image if enabled
-  let titleImageHtml = "";
-  const assetsDir = path.join(projectDir, "assets");
-  if (fs.existsSync(assetsDir)) {
-    const files = fs.readdirSync(assetsDir);
-    const titleImageFile = files.find(f => 
-      f.toLowerCase().startsWith("title.") && 
-      !fs.statSync(path.join(assetsDir, f)).isDirectory()
+  // titleImageHtml already includes raw "assets/" path; prefix will be prepended
+  // by applyPathPrefix for href/src attributes, but img src is an attribute itself
+  // so we need to inject the prefix into the already-cached src string
+  let titleImageWithPrefix = "";
+  if (pdata.titleImageHtml) {
+    titleImageWithPrefix = pdata.titleImageHtml.replace(
+      'src="assets/',
+      `src="${prefix}assets/`
     );
-    if (titleImageFile) {
-      const imagePath = prefix + "assets/" + titleImageFile;
-      titleImageHtml = `<img src="${imagePath}" alt="${configData.title}" id="sidebar-title-image">`;
-    }
   }
 
-  
-
-  //If any player elements (Audio or video) make the html load it
-  let playerCSS = "";
-  let playerJS = "";
+  let playerCSS = "", playerJS = "";
   if (media.anyVideo || media.anyAudio) {
     playerCSS = `<link rel="stylesheet" href="${prefix}intAssets/player/playerStyle.css"/>`;
     playerJS = `<script src="${prefix}intAssets/player/playerScript.js"></script>`;
@@ -594,26 +617,20 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
     imageZoom = `<script src="${prefix}intAssets/imageZoom.js"></script>`;
   }
 
-  // Sidebar search script: external <script> in multi-page mode, inlined in single-file mode
-  let searchScript = `<script src="${prefix}intAssets/search/search.js"></script>`;
-  if (CONFIG.singleFile) {
-    searchScript = singleFileSearchContent;
-  }
-  let highlightJS = "";
-  let highlightCSSTheme = "";
+  let searchScript = CONFIG.singleFile
+    ? singleFileSearchContent
+    : `<script src="${prefix}intAssets/search/search.js"></script>`;
+
+  let highlightJS = "", highlightCSSTheme = "";
   if (media.anyCodeAuto) {
-    highlightJS = '<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>'
-    highlightCSSTheme = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">'
-
+    highlightJS = '<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>';
+    highlightCSSTheme = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">';
   }
 
-  let sidebarTitle = pageTitle
-  if (titleImageHtml.length > 0){
-    sidebarTitle = titleImageHtml
-  }
+  const sidebarTitle = titleImageWithPrefix ? titleImageWithPrefix : pageTitle;
+  const sidebarBottomText = pdata.sidebarBottomText ?? "";
 
-  
-  let finalTemplate = template
+  let finalTemplate = TEMPLATE
     .replaceAll("{{title}}", title)
     .replaceAll("{{sidebarTitle}}", sidebarTitle)
     .replaceAll("{{version}}", version)
@@ -627,10 +644,8 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
     .replaceAll("{{searchScript}}", searchScript)
     .replaceAll("{{highlightJS}}", highlightJS)
     .replaceAll("{{highlightCSSTheme}}", highlightCSSTheme)
-    .replaceAll("{{sidebarBottomText}}", configData.sidebarBottomText);
+    .replaceAll("{{sidebarBottomText}}", sidebarBottomText);
 
-    
-  
   finalTemplate = applyPathPrefix(finalTemplate, prefix);
 
   fs.writeFileSync(outputPath, finalTemplate, "utf8");

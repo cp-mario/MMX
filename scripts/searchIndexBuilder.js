@@ -181,10 +181,11 @@ function extractHeaders(html) {
  * runtime can pin a result to the most relevant section of the page.
  */
 export function buildSearchEntry({ url, title, breadcrumb, mmx }) {
-  const text = extractMmxPlainText(mmx);
-  // We need the rendered HTML (not the plain text) to recover the
-  // header IDs and labels, because the parser is what mints the IDs.
-  const html = mmxToHtml(stripMmxNoise(mmx));
+  // Parse once. stripMmxNoise returns clean MMX (no media directives, etc.)
+  // so mmxToHtml gives us both the plain-text body and the header IDs.
+  const cleanMmx = stripMmxNoise(mmx);
+  const html = mmxToHtml(cleanMmx);
+  const text = stripHtml(html);
 
   // The body used for tokenization is capped so a single huge page can't
   // blow up the index. The user only ever reads the first ~8K of any doc
