@@ -107,6 +107,11 @@ if (document.readyState === "loading") {
   highlightOnLoad();
 }
 
+// Re-run when the hash changes (same-page anchor clicks from the sidebar
+// search, content links, etc.) so the target heading gets the .resaltado
+// animation even when the page itself does not reload.
+window.addEventListener("hashchange", highlightOnLoad);
+
 // ============================================================================
 // STEP 2: Load favicon - Project icon detection and loading
 // ============================================================================
