@@ -25,6 +25,31 @@ sidebarBottomText = "The text next to the version on the bottom of the sidebar"
 > [!NOTE]
 > If you change the sidebar bottom text, it would be appreciated if you mention somewhere that you created the documentation with MMX and include a link to the GitHub. And don't put texts longer than 20 characters.
 
+#### Optional: `defaultCodeHighlight` (boolean, default `false`)
+
+When set to `true` in the project's `config.mcfg`, every code block (`:::code ... :::` and `#code(path)`) is automatically highlighted with highlight.js, just as if you had added the `auto` class to each one.
+
+- `defaultCodeHighlight = true` -- every code block is highlighted by default.
+- `defaultCodeHighlight = false` (default) -- code blocks are only highlighted when they explicitly include the `auto` class.
+
+Use the `noAuto` class on a specific block to opt out of the project-wide default:
+
+:::code
+defaultCodeHighlight = true
+:::
+
+:::code
+#code(assets/code/note.txt) noAuto
+:::
+
+:::code
+:::code noAuto
+this block is not highlighted even when defaultCodeHighlight is true
+:::
+:::
+
+This is a per-project setting. It belongs in the project's own `config.mcfg`, not in the generator's `config.mcfg`.
+
 
 ### `assets/` (optional)  
 A folder for images, videos, or any other resources.  

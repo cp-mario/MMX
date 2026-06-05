@@ -9,13 +9,14 @@ Every media element accepts the same two source forms:
 - **Remote URL** -- a full `https://` (or `http://`) address.
 - **Local file** -- a path that starts with `assets/` and is resolved relative to the `assets/` folder of your documentation project.
 
-| Element | Syntax | Source goes in |
-|--------|--------|---------------|
-| Image | `![alt](source)` | `()` of the image |
-| Video | `!!(source)` | `()` of the video |
-| Audio | `!!!(source)` | `()` of the audio |
-| Inline image | `Some text <-source->` | between `<-` and `->` |
-| Code from file | `#code(source)` | `()` of the directive |
+#table h
+Element | Syntax | Source goes in
+Image | `![alt](source)` | `()` of the image
+Video | `!!(source)` | `()` of the video
+Audio | `!!!(source)` | `()` of the audio
+Inline image | `Some text <-source->` | between `<-` and `->`
+Code from file | `#code(source)` | `()` of the directive
+#endtable
 
 The same rule applies to every element: the source is either a URL or a path inside `assets/`.
 

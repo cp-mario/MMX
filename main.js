@@ -413,13 +413,78 @@ function detectMediaContent(mmxContent) {
   const codeAutoRegex = /#code\([^)]+\)\s+auto/;
   // Code block with auto tag: :::code auto or :::code(auto)
   const codeBlockAutoRegex = /:::code[^\n]*auto/;
-  
+
   return {
     anyImage: imageRegex.test(mmxContent),
     anyAudio: audioRegex.test(mmxContent),
     anyVideo: videoRegex.test(mmxContent),
     anyCodeAuto: codeAutoRegex.test(mmxContent) || codeBlockAutoRegex.test(mmxContent)
   };
+}
+
+/**
+ * When the project sets `defaultCodeHighlight = true` in its config.mcfg,
+ * apply the `auto` class to every code block / directive that did not opt
+ * out with `noAuto`. This makes highlight.js the project-wide default while
+ * still allowing per-block opt-out. The transformation is purely textual so
+ * it works on raw .mmx content before the parser runs.
+ *
+ *   :::code                  ->  :::code auto
+ *   :::code auto             ->  :::code auto          (unchanged)
+ *   :::code noAuto           ->  :::code noAuto        (unchanged)
+ *   #code(path)              ->  #code(path) auto
+ *   #code(path) auto         ->  #code(path) auto      (unchanged)
+ *   #code(path) noAuto       ->  #code(path) noAuto    (unchanged)
+ *
+ * @param {string} mmxContent - Raw .mmx content
+ * @returns {string} Content with `auto` injected where appropriate
+ */
+function applyDefaultCodeHighlight(mmxContent) {
+  // Handle multi-line `:::code ... :::` blocks. We rewrite only the opening
+  // line so the body of the block is left untouched. If the opening line
+  // already contains a class token, we only inject `auto` when neither
+  // `auto` nor `noAuto` is already present.
+  const lines = mmxContent.split('\n');
+  const out = [];
+  let insideCode = false;
+
+  for (const line of lines) {
+    if (!insideCode && /^:::code(\s|$)/.test(line)) {
+      // Opening line of a :::code block
+      const tokens = line.trim().split(/\s+/).slice(1).filter(Boolean);
+      const hasAuto = tokens.includes('auto');
+      const hasNoauto = tokens.includes('noAuto');
+      if (!hasAuto && !hasNoauto) {
+        out.push(`${line.trimEnd()} auto`);
+      } else {
+        out.push(line);
+      }
+      insideCode = true;
+    } else if (insideCode && /^:::\s*$/.test(line)) {
+      // Closing line of a :::code block
+      out.push(line);
+      insideCode = false;
+    } else {
+      out.push(line);
+    }
+  }
+
+  let result = out.join('\n');
+
+  // Handle `#code(path) [flags]` directives. Only the trailing class list
+  // is rewritten, the path is left as-is.
+  result = result.replace(
+    /^#code\((.+?)\)(?:\s+([\w\s]+))?\s*$/gm,
+    (match, _path, flags) => {
+      const tokens = flags ? flags.trim().split(/\s+/).filter(Boolean) : [];
+      const hasAuto = tokens.includes('auto');
+      const hasNoauto = tokens.includes('noAuto');
+      if (hasAuto || hasNoauto) return match;
+      return `${match.trimEnd()} auto`;
+    }
+  );
+
+  return result;
 }
 
 /**
@@ -431,13 +496,6 @@ function detectMediaContent(mmxContent) {
 function convertMmxFile(inputPath, outputPath, outputRoot) {
   const content = fs.readFileSync(inputPath, "utf8");
   const template = fs.readFileSync("./template.html", "utf8");
-  const htmlContent = mmxToHtml(content);
-
-  // Detect media content
-  const media = detectMediaContent(content);
-
-  // Title from content heading (for <title> tag)
-  const headerTitle = content.match(/^# (.+)$/m)?.[1] || "Documentation";
 
   // Get project directory from inputPath (handles root index.mmx, pages/*.mmx, and pages/subfolder/*.mmx)
   const inputDir = path.dirname(inputPath);
@@ -451,20 +509,20 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
     // For root index.mmx (directly in project folder), use inputDir itself
     projectDir = inputDir;
   }
-  
+
   // Try to read title and version from project's config.mcfg
-  let pageTitle = headerTitle; // Default to content title
+  let pageTitle = ""; // Will be set later from headerTitle / configData.title
   let version = ""; // Default empty version
   let lang = "en" //Default english lang
   let configData
   const configPath = path.join(projectDir, "config.mcfg");
   let configTitle = ""; // For browser title
+  let defaultCodeHighlight = false; // Default: do not auto-highlight every code block
   if (fs.existsSync(configPath)) {
     try {
       const configContent = fs.readFileSync(configPath, "utf8");
       configData = parseMCFG(configContent);
       if (configData.title) {
-        pageTitle = configData.title;
         configTitle = configData.title;
       }
       if (configData.version) {
@@ -473,10 +531,33 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
       if (configData.lang) {
         lang = configData.lang;
       }
+      if (configData.defaultCodeHighlight === true) {
+        defaultCodeHighlight = true;
+      }
     } catch (e) {
       // Ignore config parse errors, use default values
     }
   }
+
+  // Title from content heading (for <title> tag)
+  const headerTitle = content.match(/^# (.+)$/m)?.[1] || "Documentation";
+  pageTitle = configTitle || headerTitle;
+
+  // If defaultCodeHighlight is enabled, pre-process the raw .mmx content to add
+  // the `auto` class to every code block (:::code ... ::: and #code(...)) that
+  // does not already opt out with the `noAuto` class. This makes highlight.js
+  // the default for every code block, while keeping the per-block `noAuto`
+  // opt-out working.
+  let processedContent = content;
+  if (defaultCodeHighlight) {
+    processedContent = applyDefaultCodeHighlight(processedContent);
+  }
+
+  const htmlContent = mmxToHtml(processedContent);
+
+  // Detect media content (use the processed content so `auto` is detected when
+  // defaultCodeHighlight is on, allowing the page to include the hljs assets)
+  const media = detectMediaContent(processedContent);
 
   // Build browser title: "Header - Documentation Name"
   const title = configTitle ? `${headerTitle} - ${configTitle}` : headerTitle;

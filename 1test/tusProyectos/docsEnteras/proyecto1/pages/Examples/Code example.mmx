@@ -1,7 +1,9 @@
 # Code examples
 
-**No class**
-#code(https://raw.githubusercontent.com/cp-mario/MMX/refs/heads/main/LICENSE)
+This page shows every supported class for code blocks, applied to the same source file so the differences are easy to compare. The list of classes itself is documented on the [Text formatting](pages/Text%20formatting.html#defaultCodeHighlight) page.
+
+**noAuto (opt out of project-wide highlighting)**
+#code(https://raw.githubusercontent.com/cp-mario/MMX/refs/heads/main/LICENSE) noAuto
 #s
 **noMonoSpace**
 #code(https://raw.githubusercontent.com/cp-mario/MMX/refs/heads/main/LICENSE) noMonoSpace

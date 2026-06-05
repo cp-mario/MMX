@@ -179,6 +179,7 @@ Both look the same and both accept the following optional classes (separated by 
 - `noCopy` -- hide the "copy" button.
 - `noCodeBg` -- remove the code background. This also enables `noCopy` and `noFormatted` automatically, and disables `auto`.
 - `noFormatted` -- when the code is too long, wrap it to the next line instead of showing a horizontal scrollbar.
+- `noauto` -- opt out of automatic syntax highlighting for this block, even when the project sets `defaultCodeHighlight = true` in its `config.mcfg`. Use it to keep a single code block plain while the rest of the site uses highlighting.
 
 :::code
 normal code
@@ -186,6 +187,34 @@ normal code
 
 :::code auto
 code with auto highligthing
+:::
+
+:::code noauto
+this block is not highlighted even when defaultCodeHighlight is true
+:::
+
+### Project-wide default highlighting %{defaultCodeHighlight}%
+
+The `auto` class is per block, so by default you have to add it to every code block you want highlighted. If you would rather highlight every code block in the whole project, set `defaultCodeHighlight = true` in the **project's** `config.mcfg` (the one in your documentation root, not the generator's `config.mcfg`):
+
+:::code
+# project's config.mcfg
+title = "MMX"
+version = "v1.1"
+lang = "en"
+sidebarBottomText = "Made with MMX"
+defaultCodeHighlight = true
+:::
+
+When `defaultCodeHighlight = true`:
+
+- Every `:::code ... :::` block and every `#code(path)` directive is highlighted automatically, just as if it had the `auto` class.
+- Blocks that already have `auto` are left untouched (no double-adding).
+- Blocks that have the `noauto` class are **not** highlighted -- use this when a particular snippet should stay plain (e.g. terminal output, ASCII art, a log).
+- A single `#code(path) auto` on a block also forces highlighting on even if the project default is `false`.
+
+:::note
+This is a per-project setting, not a per-page one. The flag is read from the project's `config.mcfg` and applies to every `.mmx` file in that project.
 :::
 
 More examples [here](pages/Examples/Code example.html).
