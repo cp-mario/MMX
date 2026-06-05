@@ -53,6 +53,16 @@
       return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     }
 
+    function slugifyId(s) {
+      return String(s || "")
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+    }
+
     function tok(q) {
       if (!q) return [];
       var n = norm(q);
@@ -253,11 +263,6 @@
         var d = docs[r.i] || [];
         var url = d[0] || "", title = d[1] || "", path = d[2] || "", sn = d[3] || "";
         var baseHref = prefix + url;
-        var qPart = "";
-        if (q) {
-          var sep = url.indexOf('?') === -1 ? '?' : '&';
-          qPart = sep + 'q=' + encodeURIComponent(q);
-        }
 
         // Check per-page headers and render any that match the query/tokens
         var hdrs = (idx.h && idx.h[r.i]) || [];
@@ -282,7 +287,9 @@
         for (var m = 0; m < matchedHeaders.length; m++) {
           var mid = matchedHeaders[m].id || "";
           var mtext = matchedHeaders[m].text || "";
-          var href = baseHref + qPart + (mid ? ('#' + mid) : '');
+          var slug = slugifyId(mtext);
+          var anchor = slug ? ('#' + slug) : (mid ? ('#' + mid) : '');
+          var href = baseHref + anchor;
           html +=
             '<a class="sidebar-search-item" role="option" href="' + esc(href) + '">' +
             '<div class="sidebar-search-item-title">' + hl(esc(mtext), re) + '</div>' +
@@ -293,7 +300,24 @@
 
         // If no header matched, fall back to the page-level result
         if (matchedHeaders.length === 0) {
-          var href2 = baseHref + (q ? qPart : '');
+          // Try to pick the best header for this result (from collect())
+          var anchor2 = '';
+          if (r.hdr) {
+            // try to locate the header text for the id stored in the index
+            var foundText = '';
+            for (var hi2 = 0; hi2 < hdrs.length; hi2++) {
+              if ((hdrs[hi2][0] || '') === r.hdr) { foundText = hdrs[hi2][1] || ''; break; }
+            }
+            var sl = slugifyId(foundText);
+            if (sl) anchor2 = '#' + sl;
+            else anchor2 = '#' + r.hdr;
+          } else if (hdrs.length) {
+            var firstText = hdrs[0][1] || '';
+            var sl2 = slugifyId(firstText);
+            if (sl2) anchor2 = '#' + sl2;
+          }
+
+          var href2 = baseHref + (anchor2 || '');
           html +=
             '<a class="sidebar-search-item" role="option" href="' + esc(href2) + '">' +
             '<div class="sidebar-search-item-title">' + hl(esc(title), re) + '</div>' +

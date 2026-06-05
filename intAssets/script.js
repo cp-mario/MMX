@@ -90,53 +90,8 @@ const path = window.location.pathname;
  * add the .resaltado class to trigger the animation
  */
 function highlightOnLoad() {
-  const params = new URLSearchParams(window.location.search);
-  const q = params.get('q');
-  const hash = window.location.hash.slice(1); // Remove the # from the hash
-
-  // If a search query was passed via ?q=, try to locate the first matching
-  // text node in the document and scroll to the nearest header that precedes it.
-  if (q) {
-    try {
-      var norm = function (s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); };
-      var toks = (norm(q).match(/[a-z0-9]{2,}/g) || []);
-      if (toks.length) {
-        var root = document.querySelector('main') || document.body;
-        var walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, null, false);
-        var lastHeader = null;
-        var node;
-        while ((node = walker.nextNode())) {
-          if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.matches && node.matches('h1,h2,h3,h4,h5,h6')) lastHeader = node;
-          } else if (node.nodeType === Node.TEXT_NODE) {
-            var txt = norm(node.nodeValue || '');
-            var ok = true;
-            for (var i = 0; i < toks.length; i++) {
-              if (txt.indexOf(toks[i]) === -1) { ok = false; break; }
-            }
-            if (ok) {
-              if (lastHeader && lastHeader.id) {
-                lastHeader.scrollIntoView({ behavior: 'smooth' });
-                history.replaceState(null, null, '#' + lastHeader.id);
-                lastHeader.classList.add('resaltado');
-                setTimeout((function (el) { return function () { el.classList.remove('resaltado'); }; })(lastHeader), 1500);
-                return;
-              } else {
-                var el = node.parentElement;
-                if (el) {
-                  el.scrollIntoView({ behavior: 'smooth' });
-                  el.classList.add('resaltado');
-                  setTimeout(function () { el.classList.remove('resaltado'); }, 1500);
-                  return;
-                }
-              }
-            }
-          }
-        }
-      }
-    } catch (e) { /* swallow errors */ }
-  }
-
+  // Only highlight when the URL contains a hash that matches a header id.
+  const hash = window.location.hash.slice(1);
   if (!hash) return;
   const target = document.getElementById(hash);
   if (target) {
