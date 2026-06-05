@@ -1,0 +1,15 @@
+# Bun configuration for MMX
+# Docs: https://bun.com/docs/runtime/configuration
+
+[install]
+# Keep installs deterministic across machines
+frozenLockfile = false
+
+[run]
+# Use Bun's fast JavaScriptCore engine instead of V8
+# `bun main.js` is the recommended way to run the generator
+shell = "system"
+
+[test]
+# Pre-declared for when tests are added later
+preload = []

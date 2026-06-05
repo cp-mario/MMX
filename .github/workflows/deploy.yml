@@ -31,7 +31,7 @@ jobs:
         run: npm install
 
       - name: Run generator script
-        run: node main.js
+        run: bun main.js
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

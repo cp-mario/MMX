@@ -4,6 +4,8 @@
  * @param {string} cssCode - Original CSS code
  * @returns {string} Minified CSS code
  */
+import fs from "fs";
+
 export function minifyCss(cssCode) {
   let result = "";
   let i = 0;
@@ -122,7 +124,6 @@ export function minifyCss(cssCode) {
  * @param {string} outputPath - Path to output minified .css file
  */
 export function minifyCssFile(inputPath, outputPath) {
-  const fs = require("fs");
   const original = fs.readFileSync(inputPath, "utf-8");
   const minified = minifyCss(original);
   fs.writeFileSync(outputPath, minified, "utf-8");

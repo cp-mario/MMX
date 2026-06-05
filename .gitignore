@@ -1,1 +1,41 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
 1Example/output/
+output/
+dist/
+build/
+
+# Bun
+bun.lockb
+.bun/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor / OS
+.vscode/
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Misc
+*.tsbuildinfo
+.cache/
