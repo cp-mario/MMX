@@ -329,14 +329,17 @@
       R.innerHTML = html;
     }
 
-    // delegated click for the "ver todos" button inside R
+    // Delegated click for the "view all" / "show fewer" toggle button inside
+    // R. We use stopPropagation() so the document-level "click outside" handler
+    // doesn't immediately clear the results we are about to re-render.
     R.addEventListener('click', function (e) {
       var el = e.target;
       while (el && el !== R) {
         if (el.classList && el.classList.contains('sidebar-search-more')) {
           e.preventDefault();
-          expanded = true;
-          if (lastQ) run(lastQ, true);
+          e.stopPropagation();
+          expanded = !expanded;
+          if (lastQ) run(lastQ, expanded);
           return;
         }
         el = el.parentElement;
@@ -353,14 +356,27 @@
       var state = collect(q);
       render(state, q);
 
-      if (!state.empty && !state.noMatch && state.results.length === MAX && !expanded) {
-        var total = countAll(q);
-        if (total > MAX) {
-          var btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'sidebar-search-more';
-          btn.textContent = 'View all results (' + total + ')';
-          R.appendChild(btn);
+      // Decide whether to append a toggle button at the end of the list.
+      // - collapsed view: append "View all results (N)" only if there are
+      //   more results than MAX.
+      // - expanded view: append "Show fewer results" so the user can collapse.
+      if (!state.empty && !state.noMatch) {
+        if (!expanded && state.results.length === MAX) {
+          var total = countAll(q);
+          if (total > MAX) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'sidebar-search-more';
+            btn.innerHTML = '<span class="sidebar-search-more-label">View all results</span>' +
+                            ' <span class="sidebar-search-more-count">(' + total + ')</span>';
+            R.appendChild(btn);
+          }
+        } else if (expanded && keepExpanded) {
+          var btnLess = document.createElement('button');
+          btnLess.type = 'button';
+          btnLess.className = 'sidebar-search-more sidebar-search-less';
+          btnLess.innerHTML = '<span class="sidebar-search-more-label">Show fewer results</span>';
+          R.appendChild(btnLess);
         }
       }
     }
@@ -400,8 +416,17 @@
     if (C) C.addEventListener('click', function () { I.value = ''; R.innerHTML = ''; I.focus(); });
 
     document.addEventListener('click', function (e) {
-      var box = document.getElementById('sidebar-search');
-      if (box && !box.contains(e.target)) R.innerHTML = '';
+      // We check composedPath() (not e.target) because the R-level delegated
+      // handler may have removed the original target from the DOM before
+      // this document-level bubble handler runs - in that case
+      // box.contains(e.target) would falsely return false and the results
+      // would be wiped out right after being re-rendered.
+      var path = e.composedPath ? e.composedPath() : [];
+      var inside = false;
+      for (var i = 0; i < path.length; i++) {
+        if (path[i] && path[i].id === 'sidebar-search') { inside = true; break; }
+      }
+      if (!inside) R.innerHTML = '';
     });
   }
 

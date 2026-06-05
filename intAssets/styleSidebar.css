@@ -412,19 +412,65 @@ desde script.js al main) */
   text-decoration-color: #f1c40f;
 }
 
-.sidebar-search-empty,
-.sidebar-search-more {
+.sidebar-search-empty {
   padding: 10px 12px;
   font-size: 13px;
   color: #6b7a90;
   font-style: italic;
 }
 
+/* "View all results" / "Show fewer results" toggle button. Styled as a
+   proper full-width action that visually belongs to the result list
+   (no default browser button chrome) and shows a clear affordance on
+   hover/focus. */
 .sidebar-search-more {
-  text-align: center;
-  border-top: 1px solid #eee;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 10px 12px;
+  background-color: #f5f8fc;
+  border: 0;
+  border-top: 1px solid #e3e8ef;
+  border-radius: 0 0 var(--border-radius-base) var(--border-radius-base);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
   font-style: normal;
+  text-align: center;
   color: #5474a9;
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.sidebar-search-more:hover,
+.sidebar-search-more:focus {
+  background-color: #e8eef5;
+  color: #283143;
+  outline: none;
+}
+
+.sidebar-search-more:focus-visible {
+  outline: 2px solid #0073d7;
+  outline-offset: -2px;
+}
+
+.sidebar-search-more-count {
+  color: #6b7a90;
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+.sidebar-search-less {
+  color: #6b7a90;
+  font-weight: 500;
+}
+
+.sidebar-search-less:hover,
+.sidebar-search-less:focus {
+  color: #283143;
 }
 
 /* On small screens the sidebar overlays content. Make sure the dropdown
