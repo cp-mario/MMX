@@ -179,7 +179,7 @@ All your `.mmx` files live here. Subfolders become categories, and can be nested
 
 ### `index.mmx` (required)
 
-The main entry page of the documentation.
+The main entry page of the documentation. Dont name any other file index.mmx except this.
 
 ---
 
