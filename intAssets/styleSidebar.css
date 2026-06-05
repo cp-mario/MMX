@@ -336,6 +336,7 @@ desde script.js al main) */
   color: #4a4a4a;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: break-word;
@@ -347,6 +348,14 @@ desde script.js al main) */
   padding: 0 1px;
   border-radius: 2px;
   font-weight: 600;
+}
+
+/* Underline matched terms to show the found text under the header */
+.sidebar-search-item-snippet mark,
+.sidebar-search-item-title mark {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-decoration-color: #f1c40f;
 }
 
 .sidebar-search-empty,

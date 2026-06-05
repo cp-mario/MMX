@@ -63,6 +63,30 @@
       return out;
     }
 
+    // Levenshtein distance for fuzzy matching (small, efficient impl)
+    function levenshtein(a, b) {
+      if (a === b) return 0;
+      a = String(a || ""); b = String(b || "");
+      var la = a.length, lb = b.length;
+      if (la === 0) return lb;
+      if (lb === 0) return la;
+      var prev = new Array(lb + 1), cur = new Array(lb + 1);
+      for (var j = 0; j <= lb; j++) prev[j] = j;
+      for (var i = 0; i < la; i++) {
+        cur[0] = i + 1;
+        var ai = a.charAt(i);
+        for (var j = 0; j < lb; j++) {
+          var cost = ai === b.charAt(j) ? 0 : 1;
+          var del = prev[j + 1] + 1;
+          var ins = cur[j] + 1;
+          var sub = prev[j] + cost;
+          cur[j + 1] = del < ins ? (del < sub ? del : sub) : (ins < sub ? ins : sub);
+        }
+        var tmp = prev; prev = cur; cur = tmp;
+      }
+      return prev[lb];
+    }
+
     function reHl(terms) {
       var k = terms.slice().sort().join("\u0001");
       if (k === lastKey) return lastRe;
@@ -123,11 +147,51 @@
       if (!tokens.length) return { empty: tokensAll.length > 0, noMatch: false, results: [] };
 
       var M = idx.i, seed = 0, seedLen = 1/0;
+      var missingToken = false;
       for (var i = 0; i < tokens.length; i++) {
         var p = M[tokens[i]];
-        if (!p) return { empty: false, noMatch: true, results: [] };
+        if (!p) { missingToken = true; break; }
         var L = p.length >> 1;
         if (L < seedLen) { seedLen = L; seed = i; }
+      }
+
+      // Fallback fuzzy scan when an indexed token is missing: allow
+      // approximate matches (typos/spaces) by scanning haystacks.
+      if (missingToken) {
+        var cap = expanded ? 1e9 : MAX;
+        var D = idx.d || [];
+        var H = idx.h || [];
+        var phrase = joinPhrase(tokens);
+        var top = [];
+        for (var dId = 0; dId < D.length; dId++) {
+          var d = D[dId] || [];
+          var title = d[1] || '';
+          var hdrs = H[dId] || [];
+          var hay = makeHaystack(hdrs, title);
+          var score = 0;
+          if (phrase && hay.indexOf(phrase) >= 0) score += PHRASE_BONUS + 100;
+          for (var ti = 0; ti < tokens.length; ti++) {
+            var tk = tokens[ti];
+            if (!tk) continue;
+            if (hay.indexOf(tk) >= 0) score += 30;
+            else {
+              var words = hay.split(/\s+/);
+              for (var wi = 0; wi < words.length; wi++) {
+                var wd = words[wi];
+                if (!wd) continue;
+                if (Math.abs(wd.length - tk.length) <= 2 && levenshtein(wd, tk) <= 1) { score += 15; break; }
+                if (wd.indexOf(tk) >= 0) { score += 10; break; }
+              }
+            }
+          }
+          if (score > 0) top.push({ i: dId, s: score, hdr: null });
+        }
+        top.sort(function(a,b){ return b.s - a.s; });
+        if (top.length > cap) top.length = cap;
+        for (var r = 0; r < top.length; r++) {
+          top[r].hdr = pickHeader((H[top[r].i] || []), joinPhrase(tokens));
+        }
+        return { empty: false, noMatch: false, results: top };
       }
 
       var sp = M[tokens[seed]];
@@ -223,6 +287,7 @@
             '<a class="sidebar-search-item" role="option" href="' + esc(href) + '">' +
             '<div class="sidebar-search-item-title">' + hl(esc(mtext), re) + '</div>' +
             (title ? '<div class="sidebar-search-item-path">' + esc(title) + '</div>' : '') +
+            (sn ? '<div class="sidebar-search-item-snippet">' + hl(esc(sn), re) + '</div>' : '') +
             '</a>';
         }
 
