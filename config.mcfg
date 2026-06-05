@@ -7,8 +7,8 @@ singleFile = false
 
 #MULTI-PAGE MODE (singleFile=false):
 #Generates a complete project with sidebar navigation and separate pages
-inputPath = "./1test/tusProyectos/docsEnteras/proyecto1"
-outputPath = "./1test/output/docsEnteras/proyecto1"
+inputPath = "./1Example/input"
+outputPath = "./1Example/output/"
 
 #SINGLE DOCUMENT MODE (singleFile=true):
 #Combines ALL .mmx files from inputPath into ONE HTML file without sidebar
@@ -17,8 +17,8 @@ outputPath = "./1test/output/docsEnteras/proyecto1"
 
 #SINGLE FILE MODE (singleFile=true + singleInputPath):
 #Converts a SINGLE .mmx file to HTML
-singleInputPath = "./1test/tusProyectos/archivosUnicos/pruebaUnica.mmx"
-singleOutputPath = "./1test/output/archivosUnicos/pruebaUnica.html"
+singleInputPath = ""
+singleOutputPath = ""
 
 #Minification options - set to false to disable, true to enable
 #If you dont know what this does keep them as they are
