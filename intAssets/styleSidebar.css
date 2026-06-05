@@ -22,6 +22,7 @@
 
 #sidebar-menu {
   padding: 14px;
+  padding-top: 4px;
   padding-bottom: 20%;
   overflow-y: auto;
   scrollbar-gutter: stable;
@@ -210,12 +211,65 @@ desde script.js al main) */
 
 #sidebar-search {
   position: relative;
-  padding: 10px 14px 0px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding-top: 10px;
+  padding-inline: 14px;
   background-color: #8bb1cf;
+  justify-content: center;
+}
+
+/* Toolbar with collapse/expand-all buttons, placed to the LEFT of the
+   search input as a vertical stack. */
+#sidebar-search-toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+#sidebar-collapse-all,
+#sidebar-expand-all {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  background-color: #aecbe1;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #283143;
+  cursor: pointer;
+  line-height: 0;
+  transition: background-color 0.12s, border-color 0.12s;
+}
+
+#sidebar-collapse-all:hover,
+#sidebar-expand-all:hover {
+  background-color: #c4d8e9;
+  border-color: #6f98c2;
+}
+
+#sidebar-collapse-all svg,
+#sidebar-expand-all svg {
+  display: block;
+}
+
+/* Search field wrapper (input + clear button) takes the remaining
+   horizontal space next to the toolbar. */
+#sidebar-search-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  position: relative;
 }
 
 #sidebar-search-input {
   width: 100%;
+  height: 35px;
   box-sizing: border-box;
   padding: 7px 28px 7px 10px;
   border: 1px solid var(--border-color);
@@ -246,8 +300,8 @@ desde script.js al main) */
 
 #sidebar-search-clear {
   position: absolute;
-  right: 22px;
-  top: 60%;
+  right: 6px;
+  top: 50%;
   transform: translateY(-50%);
   background: transparent;
   border: 0;
@@ -259,16 +313,16 @@ desde script.js al main) */
   display: none;
 }
 
-#sidebar-search-input:not(:placeholder-shown) ~ #sidebar-search-clear {
+#sidebar-search-field:has(#sidebar-search-input:not(:placeholder-shown)) #sidebar-search-clear {
   display: block;
 }
 
 #sidebar-search-results {
   display: none;
   position: absolute;
-  left: 14px;
-  right: 14px;
-  top: calc(100% - 4px);
+  left: 0;
+  right: 0;
+  top: 46px;
   max-height: 60vh;
   overflow-y: auto;
   background-color: #ffffff;

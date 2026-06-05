@@ -245,6 +245,11 @@ document.addEventListener('DOMContentLoaded', () => {
           const header = document.createElement("div");
           header.classList.add("folder-header");
 
+          // Mark both header and content with the folderId so the global
+          // expand/collapse-all handlers can iterate folders without
+          // depending on the in-scope variable from renderNode.
+          header.dataset.folderId = folderId;
+
           // Folder icon (expand/collapse indicator)
           const icon = document.createElement("span");
           icon.classList.add("folder-icon");
@@ -305,6 +310,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Render all top-level nodes into the menu
       ordered.forEach(node => renderNode(node, menu));
+
+      /**
+       * EXPAND / COLLAPSE ALL FOLDERS
+       * Wires up the two small SVG buttons in the search toolbar to flip
+       * every folder in the rendered tree at once. Folder states continue
+       * to be persisted in sessionStorage under their existing folderId
+       * keys, so the user's choice survives across page navigations.
+       */
+      const setAllFolders = (open) => {
+        document.querySelectorAll("#sidebar-menu .folder-header").forEach(header => {
+          const folderId = header.dataset.folderId;
+          if (!folderId) return;
+          // The content container is the next sibling of the header.
+          const sub = header.nextElementSibling;
+          if (!sub || !sub.classList.contains("folder-content")) return;
+          const icon = header.querySelector(".folder-icon");
+          if (open) {
+            sub.classList.remove("collapsed");
+            if (icon) icon.innerHTML = iconCollapse;
+            sessionStorage.setItem(folderId, "open");
+          } else {
+            sub.classList.add("collapsed");
+            if (icon) icon.innerHTML = iconExpand;
+            sessionStorage.setItem(folderId, "closed");
+          }
+        });
+      };
+
+      const collapseAllBtn = document.getElementById("sidebar-collapse-all");
+      const expandAllBtn = document.getElementById("sidebar-expand-all");
+      if (collapseAllBtn) collapseAllBtn.addEventListener("click", () => setAllFolders(false));
+      if (expandAllBtn) expandAllBtn.addEventListener("click", () => setAllFolders(true));
 
       /**
        * SAVE AND RESTORE SCROLL POSITION
