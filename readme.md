@@ -5,20 +5,6 @@ A file-based documentation generator that turns `.mmx` files into a static HTML 
 > ⚠️ This project is still under development.
 
 ---
-
-## Why Bun?
-
-MMX is a pure ESM JavaScript tool with no runtime dependencies. Migrating to Bun gives us:
-
-- **Faster startup** — Bun's runtime boots much faster than Node.
-- **Faster I/O** — the generator reads/writes a lot of small files; Bun's optimised `fs` shows up here.
-- **One tool** — Bun replaces Node + a package manager in a single binary.
-- **Drop-in compatibility** — `import fs from "fs"`, `path`, `process`, ESM, etc. all just work.
-
-You can still run the generator with Node if you prefer — see the *Alternative runtimes* section below.
-
----
-
 ## Requirements
 
 - **[Bun](https://bun.com)** `>=1.1.0` (recommended)
