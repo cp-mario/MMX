@@ -28,7 +28,7 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm install
+        run: npm install bun
 
       - name: Run generator script
         run: bun main.js
