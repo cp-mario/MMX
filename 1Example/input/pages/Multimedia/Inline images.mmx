@@ -24,10 +24,10 @@ A sentence with an inline icon: Lorem ipsum <-assets/icon2.svg-> dolor sit amet.
 
 ## Tips
 
-:::note
+>>>note
 Prefer the SVG format for inline icons. SVG keeps the icon sharp at any size and can be re-tinted with CSS, which is much harder with raster formats.
-:::
+>>>
 
-:::note
+>>>note
 Because the source is placed inside a sentence, MMX does not add an alternative text to inline images. Make sure the surrounding sentence still makes sense without the image, so that the page stays accessible.
-:::
+>>>

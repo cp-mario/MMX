@@ -64,10 +64,10 @@ Item 2|More text
 
 ## Notes
 
-:::note
+>>>note
 Inside a table cell, the inline patterns of MMX still work -- you can use **bold**, *italic*, `inline code`, [links](https://example.com) and even inline images.
-:::
+>>>
 
-:::note
+>>>note
 A table with zero data rows renders as an empty `<table>`. The header row is always present when the mode is `h` or `b`.
-:::
+>>>

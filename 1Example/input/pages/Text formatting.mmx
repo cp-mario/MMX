@@ -18,9 +18,9 @@ this is normal text
 
 Headers go from h1 to h6. h1 is the largest and h6 the smallest.
 
-:::note
+>>>note
 The first h1 of an `.mmx` file becomes the page title shown in the browser tab and in the sidebar.
-:::
+>>>
 
 A header is declared on its own line, just like in Markdown:
 
@@ -33,17 +33,17 @@ A header is declared on its own line, just like in Markdown:
 ###### This is a h6
 :::
 
-:::note
+>>>note
 It is strongly recommended to use a single h1 per page (which becomes the title) and as many h2-h6 as you need for the content.
-:::
+>>>
 
 ### Header tags (anchor links)
 
 You can optionally add a tag to a header so you can link directly to it. The tag goes between `%{` and `%}` after the title.
 
-:::note
+>>>note
 Do not add a tag to the first h1 of your page -- the first h1 is already used as the title.
-:::
+>>>
 
 :::code
 # This is a h1 with a tag %{tag}%
@@ -106,9 +106,9 @@ You can colour text with an HTML-style syntax that accepts any CSS colour value:
 
 <c="red">This text will be coloured in red</c> normal text <c="blue">This text will be coloured in blue</c><c="#ffcc40"> This text will be coloured in yellow</c> <c="rgb(130, 130, 130)"> This text will be coloured in gray</c>
 
-:::note
+>>>note
 `<c="color">` is shown above as a placeholder, but `color` is not a valid CSS colour and will be ignored by the browser. Use a real value such as `green`, `#ffcc40` or `rgb(130, 130, 130)`.
-:::
+>>>
 
 ## Separators
 
@@ -139,16 +139,16 @@ Example:
 A note is a block of text that is rendered with the label "Note:" and a highlighted background. It is a good fit for side information that the reader should keep in mind while reading.
 
 :::code
-:::note
+>>>note
 This is a note
-:::
+>>>
 :::
 
 Example:
 
-:::note
+>>>note
 This is a note
-:::
+>>>
 
 The text inside a note is still parsed, so you can use **bold**, *italic* and [links](https://example.com).
 
@@ -158,80 +158,87 @@ You can also load the content of a note from a file (see [assets/code/note.txt](
 
 ## Admonitions (Tip, Important, Warning, Caution)
 
-Alongside `:::note` there are four more admonition blocks. They follow the exact same syntax and are rendered with a colored background, a colored left border, and a label that describes the kind of information they carry.
+Alongside `>>>note` there are four more admonition blocks. They follow the exact same syntax and are rendered with a colored background, a colored left border, and a label that describes the kind of information they carry.
 
 The available admonitions are:
 
-- `:::tip` — a suggestion or best practice (green). Use it for advice that helps the reader get more out of the documentation, but that is not strictly required.
-- `:::important` — a key detail that the reader should not skip (blue). Use it for information that is required to make the rest of the section work.
-- `:::warning` — a risk that is unlikely to cause data loss but can produce unexpected results (orange). Use it when continuing without addressing the warning will probably lead to confusion.
-- `:::caution` — a serious risk that can damage data, break the build or produce incorrect output (red). Use it when the reader must stop and read before continuing.
+- `>>>tip` — a suggestion or best practice (green). Use it for advice that helps the reader get more out of the documentation, but that is not strictly required.
+- `>>>important` — a key detail that the reader should not skip (blue). Use it for information that is required to make the rest of the section work.
+- `>>>warning` — a risk that is unlikely to cause data loss but can produce unexpected results (orange). Use it when continuing without addressing the warning will probably lead to confusion.
+- `>>>caution` — a serious risk that can damage data, break the build or produce incorrect output (red). Use it when the reader must stop and read before continuing.
 
-All of them accept the same syntax as `:::note`:
+All of them accept the same syntax as `>>>note`:
 
 :::code
-:::tip
+>>>tip
 Your tip text
-:::
+>>>
 
-:::important
+>>>important
 Your important text
-:::
+>>>
 
-:::warning
+>>>warning
 Your warning text
-:::
+>>>
 
-:::caution
+>>>caution
 Your caution text
-:::
+>>>
 :::
 
 **Examples:**
 
-:::tip
+>>>tip
 You can use `Ctrl + S` to save the file at any time.
-:::
+>>>
 
-:::important
+>>>important
 The configuration file is read once at build time. Restart the build after editing it.
-:::
+>>>
 
-:::warning
+>>>warning
 Closing the terminal while the build is running will abort the process and leave temporary files behind.
-:::
+>>>
 
-:::caution
+>>>caution
 Running `clean --all` removes the `output/` directory. Any file that is not part of the source tree will be deleted permanently.
-:::
+>>>
 
-Like with `:::note`, the text inside every admonition is still parsed, so you can use **bold**, *italic* and [links](https://example.com) inside them:
+Like with `>>>note`, the text inside every admonition is still parsed, so you can use **bold**, *italic* and [links](https://example.com) inside them:
 
-:::tip
-Combine `:::tip` with a [link to the related page](pages/Examples/Headers example.html) to point the reader at more context.
-:::
+>>>tip
+Combine `>>>tip` with a [link to the related page](pages/Examples/Headers example.html) to point the reader at more context.
+>>>
 
 You can also load the content of any admonition from a file using the `#code(path)` directive. The files used below live in [assets/code/](assets/code/):
 
-:::tip
+>>>tip
 #code(assets/code/tip.txt)
-:::
+>>>
 
-:::important
+>>>important
 #code(assets/code/important.txt)
-:::
+>>>
 
-:::warning
+>>>warning
 #code(assets/code/warning.txt)
-:::
+>>>
 
-:::caution
+>>>caution
 #code(assets/code/caution.txt)
-:::
+>>>
 
-:::note
-All four admonition blocks share the same base layout as `:::note`. They differ only in their background color, left border and label color, so they are safe to mix within the same page.
-:::
+
+>>>note
+#code(assets/code/note.txt)
+>>>
+
+>>>note
+All four admonition blocks share the same base layout as `>>>note`. They differ only in their background color, left border and label color, so they are safe to mix within the same page.
+>>>
+
+A side-by-side example of all five admonitions is available at [Admonitions example](pages/Examples/Admonitions%20example.html).
 
 ## Blockquotes
 
@@ -317,9 +324,9 @@ When `defaultCodeHighlight = true`:
 - Blocks that have the `noauto` class are **not** highlighted -- use this when a particular snippet should stay plain (e.g. terminal output, ASCII art, a log).
 - A single `#code(path) auto` on a block also forces highlighting on even if the project default is `false`.
 
-:::note
+>>>note
 This is a per-project setting, not a per-page one. The flag is read from the project's `config.mcfg` and applies to every `.mmx` file in that project.
-:::
+>>>
 
 More examples [here](pages/Examples/Code example.html).
 

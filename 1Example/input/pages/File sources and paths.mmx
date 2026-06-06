@@ -46,9 +46,9 @@ Some text <-assets/icon2.svg-> in the middle of a sentence
 - Folder and file names are case-sensitive -- `assets/Foto.png` and `assets/foto.png` are different files.
 - Subfolders are allowed: `assets/images/screenshots/home.png`.
 
-:::note
+>>>note
 If a referenced file is missing, the generator does not fail. The output HTML will simply contain a broken reference, so always preview your build after adding a new asset.
-:::
+>>>
 
 ## File-type support
 

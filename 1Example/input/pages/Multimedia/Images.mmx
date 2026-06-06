@@ -38,13 +38,13 @@ For best results across browsers, prefer `.webp` or `.png` for diagrams and `.we
 
 The text inside the square brackets is the **alternative text** (`alt`). It is shown when the image cannot be loaded and is read aloud by screen readers. It is the single most important thing for the accessibility of your documentation.
 
-:::note
+>>>note
 Write the alt text as if you were describing the image to a colleague over the phone. Be specific: "Bar chart of monthly active users, January through June" is better than "chart".
-:::
+>>>
 
-:::note
+>>>note
 If the image is purely decorative and adds no information, you can use an empty alt (`![]()`). This tells assistive technology to skip the image.
-:::
+>>>
 
 ## Zooming
 

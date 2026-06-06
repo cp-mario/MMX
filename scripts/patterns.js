@@ -164,47 +164,50 @@ export const PATTERNS = {
   ],
 
   multiline: [
-    // Note block: :::note [classes] ... :::
+    // Note block: >>>note [classes] ... >>>
+    // Uses >>> as the delimiter (instead of :::) so that `:::code ... :::`
+    // blocks can contain literal `:::note` examples without the inner `:::`
+    // being mistaken for the closing of the code block.
     {
       name: 'note',
-      open: /^:::note(?:\s+([^\n]+))?\s*$/gm,
-      close: /^:::\s*$/gm,
+      open: /^>>>note(?:\s+([^\n]+))?\s*$/gm,
+      close: /^>>>\s*$/gm,
       tag: 'div',
       class: 'note',
     },
 
-    // Tip block (sugerencia): :::tip [classes] ... :::
+    // Tip block (sugerencia): >>>tip [classes] ... >>>
     {
       name: 'tip',
-      open: /^:::tip(?:\s+([^\n]+))?\s*$/gm,
-      close: /^:::\s*$/gm,
+      open: /^>>>tip(?:\s+([^\n]+))?\s*$/gm,
+      close: /^>>>\s*$/gm,
       tag: 'div',
       class: 'tip',
     },
 
-    // Important block: :::important [classes] ... :::
+    // Important block: >>>important [classes] ... >>>
     {
       name: 'important',
-      open: /^:::important(?:\s+([^\n]+))?\s*$/gm,
-      close: /^:::\s*$/gm,
+      open: /^>>>important(?:\s+([^\n]+))?\s*$/gm,
+      close: /^>>>\s*$/gm,
       tag: 'div',
       class: 'important',
     },
 
-    // Warning block: :::warning [classes] ... :::
+    // Warning block: >>>warning [classes] ... >>>
     {
       name: 'warning',
-      open: /^:::warning(?:\s+([^\n]+))?\s*$/gm,
-      close: /^:::\s*$/gm,
+      open: /^>>>warning(?:\s+([^\n]+))?\s*$/gm,
+      close: /^>>>\s*$/gm,
       tag: 'div',
       class: 'warning',
     },
 
-    // Caution block: :::caution [classes] ... :::
+    // Caution block: >>>caution [classes] ... >>>
     {
       name: 'caution',
-      open: /^:::caution(?:\s+([^\n]+))?\s*$/gm,
-      close: /^:::\s*$/gm,
+      open: /^>>>caution(?:\s+([^\n]+))?\s*$/gm,
+      close: /^>>>\s*$/gm,
       tag: 'div',
       class: 'caution',
     },

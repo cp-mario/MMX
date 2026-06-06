@@ -796,11 +796,12 @@ function applyPathPrefix(html, prefix) {
 
   return normalizedHtml
     .replace(/(src=["'])(assets\/[^"']+)/g, `$1${prefix}$2`)
-    .replace(/<a\s+target="_blank"\s+href=["'](pages\/[^"']+)["']/g, 
+    .replace(/(src=["'])(intAssets\/[^"']+)/g, `$1${prefix}$2`)
+    .replace(/<a\s+target="_blank"\s+href=["'](pages\/[^"']+)["']/g,
       `<a target="_self" href="${prefix}$1"`)
-    .replace(/<a\s+target="_blank"\s+href=["'](#[^"']+)["']/g, 
+    .replace(/<a\s+target="_blank"\s+href=["'](#[^"']+)["']/g,
       `<a target="_self" href="$1"`)
-    .replace(/<a\s+target="_blank"\s+href=["'](assets\/[^"']+)["']/g, 
+    .replace(/<a\s+target="_blank"\s+href=["'](assets\/[^"']+)["']/g,
       `<a target="_self" href="${prefix}$1"`)
     .replace(/(href=["'])(pages\/[^"']+)/g, `$1${prefix}$2`)
     .replace(/(href=["'])(assets\/[^"']+)/g, `$1${prefix}$2`)

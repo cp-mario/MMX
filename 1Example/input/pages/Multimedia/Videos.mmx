@@ -33,10 +33,10 @@ When possible, ship both `.mp4` and `.webm` so that the largest set of browsers 
 
 ## Accessibility tips
 
-:::note
+>>>note
 Always provide captions or a transcript for non-decorative videos. The MMX audio and video blocks do not include caption tracks out of the box, so the caption file (`.vtt`) and an external player are typically used.
-:::
+>>>
 
-:::note
+>>>note
 Avoid autoplay with sound. If a video must autoplay, also add a visible "Pause" control so the user can stop it.
-:::
+>>>

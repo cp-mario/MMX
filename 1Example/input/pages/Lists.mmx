@@ -98,6 +98,6 @@ Result:
 +1 item with 1 tab
 10. item
 
-:::note
+>>>note
 In all list types, you can use as many spaces or tabs as you want between the list element (`+`, `-`, `1.`, `1.2`, ...) and the text. MMX only cares about the number of leading characters that mark the indentation level.
-:::
+>>>

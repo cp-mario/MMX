@@ -186,7 +186,24 @@ function parseMultilineBlocks(text, config) {
             }
 
         } else {
-          processed = wrapParagraphs(block.content.join('\n'));
+          // Inside non-raw multiline blocks (notes, tip, important, warning,
+          // caution, tables...), the body still needs to be processed by the
+          // monoline patterns so that directives like `#code(path)` expand
+          // and `#b`, `#s`, images, audio, video work too. We first protect
+          // any nested `:::code ... :::` raw block (so MMX inside it is not
+          // compiled), then run the monoline patterns, then unwrap and apply
+          // the inline patterns, just like the main flow.
+          let body = block.content.join('\n');
+          const nestedRaw = extractRawBlocks(body);
+          body = nestedRaw.html;
+
+          for (const { regex, replace } of PATTERNS.monoline) {
+            body = body.replace(regex, replace);
+          }
+
+          body = restoreRawBlocks(body, nestedRaw.blocks);
+
+          processed = wrapParagraphs(body);
 
           for (const { regex, replace } of PATTERNS.inline) {
             processed = processed.replace(regex, replace);

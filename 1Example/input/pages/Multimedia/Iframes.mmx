@@ -30,14 +30,14 @@ The opener `¡` and the closer `!)` are part of the MMX syntax -- they make it e
 
 ## Notes
 
-:::note
+>>>note
 The iframe's `width` and `height` are passed through as written. To make the iframe responsive, set `width="100%"` and a fixed `height` (in pixels). The example above uses `width="100%"` and `height="315"`.
-:::
+>>>
 
-:::note
+>>>note
 For YouTube, prefer the `https://www.youtube.com/embed/...` URL over the regular watch URL. The `embed` form is the one YouTube designs for being placed inside another page.
-:::
+>>>
 
-:::note
+>>>note
 Be careful with cross-origin iframes: a third-party iframe runs in its own context and cannot read or write the surrounding page. Always set the `referrerpolicy`, `sandbox` and `allow` attributes to the most restrictive values that still let the embed work.
-:::
+>>>

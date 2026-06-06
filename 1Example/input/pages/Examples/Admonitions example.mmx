@@ -1,0 +1,83 @@
+# Admonitions example
+
+This page shows every supported admonition block rendered the same way, so the differences are easy to compare. The full documentation lives on the [Text formatting](pages/Text%20formatting.html#AdmonitionsTipImportantWarningCaution) page.
+
+## Note (yellow)
+
+A neutral callout for side information the reader should keep in mind.
+
+:::code
+>>>note
+This is a note
+>>>
+:::
+
+Example:
+
+>>>note
+This is a note
+>>>
+
+## Tip (green)
+
+A suggestion or best practice. Use it for advice that helps the reader get more out of the documentation, but that is not strictly required.
+
+:::code
+>>>tip
+You can use Ctrl + S to save the file at any time.
+>>>
+:::
+
+Example:
+
+>>>tip
+You can use `Ctrl + S` to save the file at any time.
+>>>
+
+## Important (blue)
+
+A key detail that the reader should not skip. Use it for information that is required to make the rest of the section work.
+
+:::code
+>>>important
+The configuration file is read once at build time. Restart the build after editing it.
+>>>
+:::
+
+Example:
+
+>>>important
+The configuration file is read once at build time. Restart the build after editing it.
+>>>
+
+## Warning (orange)
+
+A risk that is unlikely to cause data loss but can produce unexpected results. Use it when continuing without addressing the warning will probably lead to confusion.
+
+:::code
+>>>warning
+Closing the terminal while the build is running will abort the process and leave temporary files behind.
+>>>
+:::
+
+Example:
+
+>>>warning
+Closing the terminal while the build is running will abort the process and leave temporary files behind.
+>>>
+
+## Caution (red)
+
+A serious risk that can damage data, break the build or produce incorrect output. Use it when the reader must stop and read before continuing.
+
+:::code
+>>>caution
+Running `clean --all` removes the `output/` directory. Any file that is not part of the source tree will be deleted permanently.
+>>>
+:::
+
+Example:
+
+>>>caution
+Running `clean --all` removes the `output/` directory. Any file that is not part of the source tree will be deleted permanently.
+>>>

@@ -31,99 +31,58 @@ hr {
 
 
 
-.note{
+/* Admonition blocks: note, tip, important, warning, caution
+   Shared layout via grouped selector; only colors differ per type. */
+.note,
+.tip,
+.important,
+.warning,
+.caution {
     display: flex;
     flex-direction: column;
     gap: 0px;
     margin-top: 10px;
     margin-bottom: 10px;
-    background-color: #fafa8c;
     border-radius: var(--border-radius-base);
-    padding: 5px;
-    padding-left: 10px;
-    padding-right: 10px;
-
+    padding: 5px 10px;
+    border-left: 4px solid transparent;
 }
 
 .coloredText {
   display: inline;
 }
 
-.note > p{
+.note > p,
+.tip > p,
+.important > p,
+.warning > p,
+.caution > p {
   margin-block: 2px;
 }
 
-/* Admonition blocks: tip, important, warning, caution (same layout as .note, distinct colors) */
+.note{
+    background-color: #fafa8c;
+    border-left-color: #c9b500;
+}
+
 .tip{
-    display: flex;
-    flex-direction: column;
-    gap: 0px;
-    margin-top: 10px;
-    margin-bottom: 10px;
     background-color: #d4f5d4;
-    border-left: 4px solid #2e8b2e;
-    border-radius: var(--border-radius-base);
-    padding: 5px;
-    padding-left: 10px;
-    padding-right: 10px;
-}
-
-.tip > p{
-  margin-block: 2px;
+    border-left-color: #2e8b2e;
 }
 
 .important{
-    display: flex;
-    flex-direction: column;
-    gap: 0px;
-    margin-top: 10px;
-    margin-bottom: 10px;
     background-color: #d9e8f5;
-    border-left: 4px solid #1f5fa6;
-    border-radius: var(--border-radius-base);
-    padding: 5px;
-    padding-left: 10px;
-    padding-right: 10px;
-}
-
-.important > p{
-  margin-block: 2px;
+    border-left-color: #1f5fa6;
 }
 
 .warning{
-    display: flex;
-    flex-direction: column;
-    gap: 0px;
-    margin-top: 10px;
-    margin-bottom: 10px;
     background-color: #fce8c4;
-    border-left: 4px solid #cc7a00;
-    border-radius: var(--border-radius-base);
-    padding: 5px;
-    padding-left: 10px;
-    padding-right: 10px;
-}
-
-.warning > p{
-  margin-block: 2px;
+    border-left-color: #cc7a00;
 }
 
 .caution{
-    display: flex;
-    flex-direction: column;
-    gap: 0px;
-    margin-top: 10px;
-    margin-bottom: 10px;
     background-color: #f7d4d4;
-    border-left: 4px solid #b30000;
-    border-radius: var(--border-radius-base);
-    padding: 5px;
-    padding-left: 10px;
-    padding-right: 10px;
-}
-
-.caution > p{
-  margin-block: 2px;
+    border-left-color: #b30000;
 }
 
 /* Blockquote: "> " at the start of a line */
@@ -180,7 +139,7 @@ h1,h2,h3,h4,h5,h6  {
 }
 
 .note-label {
-  color: #007bff;
+  color: #c9b500;
 }
 
 .tip-label {

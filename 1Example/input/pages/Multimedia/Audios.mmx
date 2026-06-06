@@ -34,10 +34,10 @@ When possible, ship both `.mp3` and `.ogg` to cover the largest audience.
 
 ## Accessibility tips
 
-:::note
+>>>note
 Always provide a transcript or a written description of the audio for users who cannot listen to it. Captions for audio-only content are usually published as a separate text file or page.
-:::
+>>>
 
-:::note
+>>>note
 If the audio starts automatically (`autoplay`), make sure the page also offers a clear way to stop it -- many users find unexpected sound disruptive.
-:::
+>>>
