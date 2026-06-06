@@ -26,10 +26,10 @@ You do not need a build step in your editor. Write the `.mmx` files, run MMX, an
 
 ## How this site is organised
 
-The structure under `tusProyectos/docsEnteras/proyecto1/` is:
+The structure under `1Example/input/` is:
 
 :::code
-proyecto1/
+input/
   config.mcfg        -- title, version, language, sidebar text
   index.mmx          -- the page you are reading
   assets/            -- images, videos, audios and code samples
