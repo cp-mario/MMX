@@ -21,12 +21,12 @@
 
 
 hr {
-    border: 0;
-    border-top: 1px solid #a7a7a7;
-    margin: 20px;
-    margin-inline: 10px;
-    padding: 0;
-    height: 0;
+  border: 0;
+  border-top: 1px solid #a7a7a7;
+  margin: 20px;
+  margin-inline: 10px;
+  padding: 0;
+  height: 0;
 }
 
 
@@ -69,11 +69,7 @@ hr {
    wrapper is to carry the `id` attribute so the browser can scroll
    to it when a `$$id` link (or a `[text](page.html#id)` link) is
    followed. */
-.mmx-anchor {
-  /* No styles. Kept as a class so a theme can highlight bookmarks
-     (e.g. briefly flash them when the page jumps to one) without
-     having to add a new selector. */
-}
+
 
 /* Color display: <colorDisplay="color"/>
    Renders a small filled circle next to the literal color value, sized
@@ -314,6 +310,7 @@ main .inlineImg {
 
 html {
     scroll-behavior: smooth;
+    scroll-
     scroll-padding-top: 10px;
 }
 

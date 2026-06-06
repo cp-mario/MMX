@@ -535,7 +535,7 @@ You can place as many anchors on a page as you need, and you can use the same an
 The link `$$id` does not have to come after the anchor. The compiler does not verify that the id exists, but the browser will simply jump to the top of the page if it does not find a matching bookmark. Use forward references freely when you want to point the reader at something further down the page:
 
 :::code
-The full changelog is at the bottom of the page (see $changelog).
+The full changelog is at the bottom of the page (see $$changelog).
 ...
 $[Changelog](changelog)
 ...
@@ -546,7 +546,7 @@ $[Changelog](changelog)
 For cross-page links, keep using the regular link syntax with the id appended after a `#`:
 
 :::code
-[header on another page](pages/File%20sources%20and%20paths.html#header2)
+[header on another page](pages/file-sources-and-paths.html#header2)
 [the bookmark-demo anchor on this page](pages/Text%20formatting.html#bookmark-demo)
 :::
 
