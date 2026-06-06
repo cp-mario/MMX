@@ -20,13 +20,28 @@ export function toKebabCase(input) {
   const normalizeSegment = (segment) => {
     if (!segment) return '';
 
-    const dotIndex = segment.lastIndexOf('.');
-    let base = segment;
+    // Decode percent-encoded characters (e.g. %20 -> space, %C3%A9 -> é)
+    // BEFORE kebab-casing so the result reflects the actual characters
+    // in the name. Without this, a href like "pages/Text%20formatting.html"
+    // becomes "pages/text-20formatting.html" (the `%` and digits are
+    // non-alphanumeric and turn into dashes) instead of the correct
+    // "pages/text-formatting.html". Filesystem paths never contain
+    // percent-encoding, so decoding is a no-op for them.
+    let decoded = segment;
+    try {
+      decoded = decodeURIComponent(segment);
+    } catch (e) {
+      // Malformed percent-encoding: fall back to the original segment
+      // so we don't lose information on edge cases like a bare `%`.
+    }
+
+    const dotIndex = decoded.lastIndexOf('.');
+    let base = decoded;
     let ext = '';
 
     if (dotIndex > 0) {
-      base = segment.slice(0, dotIndex);
-      ext = segment.slice(dotIndex + 1);
+      base = decoded.slice(0, dotIndex);
+      ext = decoded.slice(dotIndex + 1);
     }
 
     base = base

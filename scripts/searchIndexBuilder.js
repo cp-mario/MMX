@@ -287,10 +287,17 @@ function walk(dir, root, out) {
     if (stat.isDirectory()) {
       walk(full, root, out);
     } else if (item.toLowerCase().endsWith(".mmx")
-               && item.toLowerCase() !== "indextext.mmx") {
+               && item.toLowerCase() !== "indextext.mmx"
+               && !item.startsWith("__")) {
       // Skip `indexText.mmx` (case-insensitive) — it is a companion
       // file consumed by the folder-index generator (see main.js) and
       // should not be exposed as a searchable page on its own.
+      // Also skip auto-generated temp files starting with `__` (e.g.
+      // `__index.mmx`) — those are the folder-index generator's temp
+      // files. They live in the source dir for the duration of the
+      // build and would otherwise pollute the search index with
+      // duplicate entries that point at the same auto-generated
+      // `index.html` (kebab-cased, `__index` -> `index`).
       out.push({ absPath: full, relPath: path.relative(root, full).replace(/\\/g, "/") });
     }
   }

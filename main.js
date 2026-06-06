@@ -250,7 +250,24 @@ function generateFolderIndexPages(pagesSourceDir) {
     if (!fs.existsSync(dir)) return;
     const items = fs.readdirSync(dir);
 
-    // Respect a user-provided `index.mmx` (case-insensitive)
+    // Recurse into subfolders FIRST. The recursion must happen even when
+    // this folder has a user-provided `index.mmx` — the user override is
+    // per-folder, not per-tree, so subfolders still need their own
+    // auto-generated `index.html`. (The previous version returned early
+    // before reaching the recursion, which silently broke navigation
+    // for any folder that mixed a custom `index.mmx` with subfolders.)
+    for (const item of items) {
+      const fullPath = path.join(dir, item);
+      let stat;
+      try { stat = fs.statSync(fullPath); } catch { continue; }
+      if (stat.isDirectory()) {
+        processFolder(fullPath);
+      }
+    }
+
+    // Respect a user-provided `index.mmx` (case-insensitive). If the user
+    // has written their own landing page for this folder, do NOT overwrite
+    // it with the auto-generated one. Subfolders above are already done.
     const hasUserIndex = items.some(item => item.toLowerCase() === 'index.mmx');
     if (hasUserIndex) return;
 
@@ -298,17 +315,6 @@ function generateFolderIndexPages(pagesSourceDir) {
     const tempPath = path.join(dir, '__index.mmx');
     fs.writeFileSync(tempPath, content, 'utf-8');
     tempFiles.push(tempPath);
-
-    // Recurse into subfolders. We recurse regardless of `hasUserIndex`
-    // because the user override is per-folder, not per-tree.
-    for (const item of items) {
-      const fullPath = path.join(dir, item);
-      let stat;
-      try { stat = fs.statSync(fullPath); } catch { continue; }
-      if (stat.isDirectory()) {
-        processFolder(fullPath);
-      }
-    }
   }
 
   if (!fs.existsSync(pagesSourceDir)) return tempFiles;
