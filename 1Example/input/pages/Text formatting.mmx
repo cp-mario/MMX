@@ -110,6 +110,38 @@ You can colour text with an HTML-style syntax that accepts any CSS colour value:
 `<c="color">` is shown above as a placeholder, but `color` is not a valid CSS colour and will be ignored by the browser. Use a real value such as `green`, `#ffcc40` or `rgb(130, 130, 130)`.
 >>>
 
+## Color display
+
+The `<colorDisplay="..."/>` tag renders a small filled circle next to the literal color value you pass in. It is self-closing (no closing tag) and accepts the same CSS color values as `<c="...">`: named colors, hex, `rgb()` or `hsl()`.
+
+The circle and the text sit inline with the surrounding text and scale with the font size, so they line up with normal paragraphs and headings. The whole element is a button: clicking either the circle or the color value copies that value to the clipboard. A green `✓` appears for a second to confirm the copy.
+
+It is useful for documenting a color palette so readers can see the actual color, copy it, and not just read its name.
+
+:::code
+<colorDisplay="red"/>
+<colorDisplay="#ffcc40"/>
+<colorDisplay="rgb(130, 130, 130)"/>
+<colorDisplay="hsl(200, 80%, 50%)"/>
+:::
+
+**Examples:**
+
+Some text <colorDisplay="red"/> more text
+<colorDisplay="blue"/>
+<colorDisplay="#ffcc40"/>
+<colorDisplay="rgb(130, 130, 130)"/>
+<colorDisplay="hsl(200, 80%, 50%)"/>
+<colorDisplay="rebeccapurple"/>
+
+>>>note
+`<colorDisplay="color">` is shown above as a placeholder syntax. `color` itself is not a valid CSS value and will not be rendered. Always pass a real value such as `red`, `#ffcc40`, `rgb(130, 130, 130)` or `hsl(200, 80%, 50%)`.
+>>>
+
+>>>tip
+The click-to-copy behavior uses the browser clipboard API, so it works on pages served over `http://localhost` and `https://`. If a reader opens the generated HTML directly from disk (`file://`) the modern clipboard API may be blocked, but the script falls back to the legacy `document.execCommand('copy')` so it still works in that case.
+>>>
+
 ## Separators
 
 A horizontal rule is produced with `#s` on its own line, just like `#b`.
@@ -121,6 +153,39 @@ A horizontal rule is produced with `#s` on its own line, just like `#b`.
 Example:
 
 #s
+
+## Comments
+
+You can leave a comment in any `.mmx` file using the same syntax as an HTML comment: `<!-- your comment -->`. The comment is stripped from the source before any MMX pattern runs except the inline code, the raw inline tag or the code block, so the text inside it never appears in the generated HTML and never affects headers, links, lists or any other element.
+
+A comment can sit on its own line, sit on the same line as other content, or span multiple lines. All three forms work the same way.
+
+:::code
+<!-- this whole line is a comment, it will not appear in the output, but its on a code block so it appears -->
+
+This line is visible.
+This line is also fully visible. <!-- Here is a comment -->
+
+<!--
+Multi-line comments are also supported.
+another line
+-->
+
+Some text with a comment at the right <!-- A comment -->
+:::
+
+<!-- This comment is not visible, if you can see this you are in the .mmx file -->
+Some text with a comment at the right <!-- A comment -->
+
+
+
+>>>tip
+Use comments to leave notes to yourself (a TODO, a reminder, a draft) or to temporarily disable a section of the page without deleting it. Because the comment is stripped before the rest of the file is compiled, the content inside the comment is not interpreted as MMX: a literal comment marker around <%**bold**%> stays exactly as written in the source until you remove the opening and closing delimiters.
+>>>
+
+>>>note
+If you need to display the literal text <%<!--%> in the rendered page (for example, in a documentation site that explains HTML comments), wrap it in a `:::code ... :::` block, in a `#code(path)` directive, or in an inline raw tag `<% ... %>`. Those constructs keep the content verbatim and are not affected by the comment-stripping step.
+>>>
 
 ## Inline code
 

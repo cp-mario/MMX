@@ -82,7 +82,11 @@ export function stripMmxNoise(mmx) {
     .replace(/^#b.*$/gm, "")
     .replace(/^#s.*$/gm, "")
     // Colored-text span: <c="...">...</c>  -> keep inner text
-    .replace(/<c="[^"]+">([\s\S]*?)<\/c>/g, "$1");
+    .replace(/<c="[^"]+">([\s\S]*?)<\/c>/g, "$1")
+    // HTML-style comments: drop them so the search index never sees
+    // comment text. The parser does this too, but stripping here keeps
+    // the build-time index small and unambiguous.
+    .replace(/<!--[\s\S]*?-->/g, " ");
 }
 
 /**

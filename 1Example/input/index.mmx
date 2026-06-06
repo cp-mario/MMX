@@ -20,6 +20,7 @@ MMX files are plain text. The first line is the page title (a `# h1` heading). E
 - Inline formatting: `**bold**`, `*italic*`, `inline code` , `[links](url)` and `<c="color">coloured text</c>`.
 - Block elements: `# table`, `::: note`, `::: code`, lists, separators, and the `#b` line break.
 - Media elements: `![alt](image.png)`, `!!(video.mp4)`, `!!!(audio.mp3)`, `<-icon.svg->` and `#iframe(...)`.
+- Comments: HTML-style `<!-- ... -->` blocks (single-line, inline, or multi-line) are stripped before the page is compiled, so they are a safe way to leave notes to yourself or to disable a section without deleting it. See the [Comments](pages/Text%20formatting.html#Comments) section of the Text formatting page.
 - Headers can carry an anchor tag: `## Section %{my-id}%` so you can link to it with `[Section](page.html#my-id)`.
 
 You do not need a build step in your editor. Write the `.mmx` files, run MMX, and you get a static site of HTML files you can open directly or upload to any web host.

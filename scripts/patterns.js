@@ -270,10 +270,23 @@ export const PATTERNS = {
     },
 
     // Colored text: <c="color">text</c>
-    { 
+    {
       regex: /<c="([^"]+)">(.*?)<\/c>/gs,
       replace: (match, color, content) => {
         return `<div class="coloredText" style="color: ${color};">${content}</div>`;
+      }
+    },
+
+    // Color display: <colorDisplay="color"/>
+    // Self-closing tag that renders the literal color value next to a
+    // filled circle filled with that same color. Accepts any CSS color
+    // (named, hex, rgb(), hsl(), etc.). Useful for documenting a palette.
+    // The whole element is a button: clicking either the swatch or the
+    // label copies the color value to the clipboard (handled in script.js).
+    {
+      regex: /<colorDisplay="([^"]+)"\s*\/>/g,
+      replace: (match, color) => {
+        return `<button type="button" class="colorDisplay" data-color="${color}" title="Click to copy ${color}"><span class="colorDisplay-label">${color}</span><span class="colorDisplay-swatch" style="background-color: ${color};"></span></button>`;
       }
     },
 

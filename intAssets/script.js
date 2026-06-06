@@ -611,6 +611,42 @@ function putCopyButton(btn) {
 }
 
 // ============================================================================
+// STEP 6.5: Click-to-copy for <colorDisplay="..."/> elements
+// ============================================================================
+/**
+ * Adds click-to-copy behavior to every .colorDisplay element on the page.
+ * The element stores the color value in its data-color attribute; clicking
+ * it (or pressing Enter / Space when focused) writes that value to the
+ * clipboard and shows a brief visual confirmation.
+ */
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.colorDisplay').forEach(el => {
+    el.addEventListener('click', async () => {
+      const color = el.dataset.color;
+      if (!color) return;
+
+      try {
+        await navigator.clipboard.writeText(color);
+      } catch (err) {
+        // Fallback for older browsers / insecure contexts
+        const ta = document.createElement('textarea');
+        ta.value = color;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'absolute';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (_) { /* ignore */ }
+        document.body.removeChild(ta);
+      }
+
+      el.classList.add('copied');
+      setTimeout(() => el.classList.remove('copied'), 500);
+    });
+  });
+});
+
+// ============================================================================
 // STEP 7: Initialize syntax highlighting for code blocks
 // ============================================================================
 /**

@@ -13,6 +13,15 @@ import { PATTERNS } from "./patterns.js";
 export function mmxToHtml(mmx) {
   let result = mmx;
 
+  // Step 0: Strip HTML-style comments (<!-- ... -->) from the source.
+  // This is intentionally the very first step so the comment text never
+  // reaches any MMX pattern (headings, lists, inline code, links, etc.)
+  // and is guaranteed to be removed from the output. Comments can span
+  // multiple lines and can appear inline next to other content; we
+  // replace the whole match (including the leading and trailing space,
+  // when present) with a single space so adjacent words do not merge.
+  result = stripComments(result);
+
   // Step 1: Process multi-line blocks FIRST to isolate raw code blocks
   // This must happen before monoline patterns so that MMX inside :::code blocks
   // is not compiled by monoline patterns
@@ -687,4 +696,143 @@ function restoreHtmlAttributes(html, attributes) {
     html = html.replace(attr.key, attr.value);
   }
   return html;
+}
+
+/**
+ * Strips HTML-style comments (`<!-- ... -->`) from the source, but
+ * leaves the comment text untouched when it appears inside a region
+ * that must be preserved verbatim:
+ *
+ *  - multi-line blocks (everything between `:::name` and `:::`),
+ *  - inline code (text wrapped in single backticks), and
+ *  - inline raw tags (`<% ... %>`).
+ *
+ * A small state machine walks the source character by character so we
+ * can correctly handle all four cases:
+ *
+ *   1. multi-line blocks are detected first: when we hit `:::` we scan
+ *      forward for the matching closing `:::` (or, for admonitions and
+ *      other named blocks, the appropriate `:::` closing pattern from
+ *      `PATTERNS.multiline`) and copy the whole region verbatim,
+ *   2. inline raw tags are detected next: a `<%` opens the tag and
+ *      `%>` closes it on the same line (anything inside is copied as-is),
+ *   3. inline code is detected next: a backtick opens the span and the
+ *      next backtick on the same line closes it (the contents are
+ *      copied as-is, so `<!--` inside `` `<!--` `` is preserved),
+ *   4. inside normal text, `<!-- ... -->` matches are replaced with a
+ *      single space so adjacent words do not merge.
+ *
+ * Unterminated comments (a `<!--` with no matching `-->` in normal
+ * text) are left untouched, so a literal `<!--` can still be displayed
+ * by pairing it with a closing delimiter inside one of the protected
+ * regions above. This mirrors how most browsers treat malformed HTML
+ * comments.
+ *
+ * @param {string} text - Raw MMX source
+ * @returns {string} Source with all well-formed comments removed
+ */
+function stripComments(text) {
+  const n = text.length;
+  let out = '';
+  let i = 0;
+
+  while (i < n) {
+    const ch = text[i];
+    const next = text[i + 1];
+    const next2 = text[i + 2];
+
+    // --- 1. Multi-line blocks: `:::name ... :::` ---------------------
+    // Copy the whole block (open line, body, close line) verbatim so
+    // any `<!--` inside the body is preserved.
+    if (ch === ':' && next === ':' && next2 === ':') {
+      const openEnd = text.indexOf('\n', i);
+      const endMarker = openEnd === -1 ? n : openEnd;
+      const openLine = text.slice(i, endMarker);
+      out += openLine;
+      i = endMarker;
+
+      // Try to find a matching closing `:::` line. We do not need to
+      // know the block type: any `:::` line ends the current block.
+      let found = false;
+      while (i < n) {
+        const nl = text.indexOf('\n', i);
+        const lineEnd = nl === -1 ? n : nl;
+        const line = text.slice(i, lineEnd);
+        if (/^:::/.test(line)) {
+          out += '\n' + line;
+          i = lineEnd;
+          found = true;
+          break;
+        }
+        out += '\n' + line;
+        i = lineEnd + 1;
+      }
+      if (!found) {
+        // No closing marker: copy the rest of the source as-is.
+        out += text.slice(i);
+        i = n;
+      }
+      continue;
+    }
+
+    // --- 2. Inline raw tag: <% ... %> --------------------------------
+    // A single-line tag. Anything between `<%` and the matching `%>`
+    // is copied verbatim, including any `<!--` markers.
+    if (ch === '<' && next === '%') {
+      const close = text.indexOf('%>', i + 2);
+      if (close !== -1) {
+        const end = close + 2;
+        // Only treat as a raw tag if it ends on the same line; this
+        // avoids false positives with stray `<%` characters that have
+        // no matching `%>` on the same line.
+        const nl = text.indexOf('\n', i);
+        if (nl === -1 || end <= nl) {
+          out += text.slice(i, end);
+          i = end;
+          continue;
+        }
+      }
+    }
+
+    // --- 3. Inline code: ` ... ` -------------------------------------
+    // A single-line span wrapped in backticks. Anything between the
+    // opening and closing backtick is copied verbatim.
+    if (ch === '`') {
+      // Find the closing backtick on the same line.
+      const nl = text.indexOf('\n', i);
+      const lineEnd = nl === -1 ? n : nl;
+      const close = text.indexOf('`', i + 1);
+      if (close !== -1 && close < lineEnd) {
+        const span = text.slice(i, close + 1);
+        out += span;
+        i = close + 1;
+        continue;
+      }
+    }
+
+    // --- 4. Normal text: strip `<!-- ... -->` ------------------------
+    if (ch === '<' && next === '!' && next2 === '-' && text[i + 3] === '-') {
+      const end = text.indexOf('-->', i + 4);
+      if (end !== -1) {
+        // Replace the whole comment (including a single trailing space
+        // if present) with a single space so adjacent words do not
+        // merge together.
+        let drop = end + 3 - i;
+        if (text[end + 3] === ' ') drop += 1;
+        out += ' ';
+        i += drop;
+        continue;
+      }
+      // Unterminated: copy the rest as-is.
+      out += text.slice(i);
+      i = n;
+      continue;
+    }
+
+    // Default: copy the character and advance.
+    out += ch;
+    i += 1;
+  }
+
+  return out;
 }

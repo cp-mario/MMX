@@ -52,6 +52,77 @@ hr {
   display: inline;
 }
 
+/* Color display: <colorDisplay="color"/>
+   Renders a small filled circle next to the literal color value, sized
+   to match the surrounding text and centered vertically in the line.
+   Clicking the element (circle or label) copies the color value. */
+.colorDisplay {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  font-family: "JetBrains Mono", "Consolas", monospace;
+  /* `middle` centers the button's box on the x-height of the
+     surrounding text so the swatch sits flush with the text instead
+     of floating above it. */
+  vertical-align: middle;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 3px;
+  position: relative;
+  transition: background-color 0.15s ease;
+  height: 22px;
+  top: -2px;
+}
+
+.colorDisplay:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+.colorDisplay:focus-visible {
+  outline: 2px solid #1f5fa6;
+  outline-offset: 2px;
+}
+
+.colorDisplay-swatch {
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+  /* Flexbox `align-items: center` already vertically centers the swatch
+     with the label, so no transform is needed. */
+}
+
+.colorDisplay-label {
+  line-height: 1;
+  position: relative;
+}
+
+.colorDisplay.copied {
+  background-color: rgba(46, 139, 46, 0.18);
+}
+
+/* The check mark is absolutely positioned so it does not take any
+   flow space: adding or removing it never shifts the text next to
+   the colorDisplay. `pointer-events: none` keeps the absolute
+   pseudo out of the way of clicks. */
+.colorDisplay.copied .colorDisplay-label::after {
+  color: #2e8b2e;
+  font-weight: bold;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 0.2em;
+  pointer-events: none;
+}
+
 .note > p,
 .tip > p,
 .important > p,
