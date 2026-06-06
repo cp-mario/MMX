@@ -277,6 +277,33 @@ export const PATTERNS = {
       }
     },
 
+    // Strikethrough: ~text~
+    // Tildes are not used anywhere else in MMX, so this is safe.
+    {
+      regex: /~([^~\n]+)~/g,
+      replace: (match, text) => `<del>${text}</del>`
+    },
+
+    // Underline: __text__
+    // Double underscores are not used anywhere else in MMX, so this is
+    // safe. (Single `_` is kept free for future use; only `__` is bound.)
+    {
+      regex: /__([^_\n]+)__/g,
+      replace: (match, text) => `<u>${text}</u>`
+    },
+
+    // Subscript: <sub>text</sub>
+    {
+      regex: /<sub>(.*?)<\/sub>/gs,
+      replace: (match, content) => `<sub>${content}</sub>`
+    },
+
+    // Superscript: <sup>text</sup>
+    {
+      regex: /<sup>(.*?)<\/sup>/gs,
+      replace: (match, content) => `<sup>${content}</sup>`
+    },
+
     // Auto-detect and linkify plain URLs
     // Matches: https://..., http://..., www...., and domain.com patterns
     // Does NOT match URLs already inside <a> tags, href attributes, or path attributes

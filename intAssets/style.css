@@ -234,6 +234,16 @@ html {
   font-family: "Lato", sans-serif;
 }
 
+/* tildado (strikethrough): ~text~ */
+del {
+  text-decoration: line-through;
+}
+
+/* subrayado (underline): __text__ */
+u {
+  text-decoration: underline;
+}
+
 /* todos los codes  */
 code {
     font-family: "JetBrains Mono", monospace;

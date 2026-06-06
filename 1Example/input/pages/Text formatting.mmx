@@ -151,6 +151,64 @@ This text is <%write **not bold**, *not italic*, [not a link](https://example.co
 The raw tag is single-line: a newline closes the tag. If you need a multi-line raw block, use a `:::code ... :::` block instead.
 >>>
 
+## Strikethrough
+
+Wrap text with a single tilde to render it as strikethrough: `~Text in strikethrough~`.
+
+:::code
+~This text is in strikethrough~
+:::
+
+**Example:**
+
+~This text is in strikethrough~
+
+## Underline
+
+Wrap text with two underscores to render it as underlined: `__Text underlined__`.
+
+:::code
+__This text is underlined__
+:::
+
+**Example:**
+
+__This text is underlined__
+
+## Subscript
+
+Wrap text in a `<sub>...</sub>` tag to render it as subscript. Subscript text appears smaller and below the normal baseline.
+
+:::code
+H<sub>2</sub>O
+X<sub>i</sub> = 1
+:::
+
+**Examples:**
+
+H<sub>2</sub>O is the formula of water.
+
+The variable X<sub>i</sub> = 1 represents the i-th element.
+
+## Superscript
+
+Wrap text in a `<sup>...</sup>` tag to render it as superscript. Superscript text appears smaller and above the normal baseline.
+
+:::code
+E = mc<sup>2</sup>
+2<sup>10</sup> = 1024
+:::
+
+**Examples:**
+
+According to Einstein, E = mc<sup>2</sup>.
+
+The number 2<sup>10</sup> = 1024 is the smallest 10-bit value.
+
+>>>note
+Like inline code, `<sub>...</sub>` and `<sup>...</sup>` are parsed by the inline patterns, so you can also nest **bold**, *italic* and [links](https://example.com) inside them.
+>>>
+
 ## Notes
 
 A note is a block of text that is rendered with the label "Note:" and a highlighted background. It is a good fit for side information that the reader should keep in mind while reading.
