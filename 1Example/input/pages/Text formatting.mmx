@@ -136,7 +136,7 @@ Example:
 
 ## Notes
 
-A note is a block of text that is rendered with the label "Note:" and a highlighted background. It is a good fit for tips, warnings or side information.
+A note is a block of text that is rendered with the label "Note:" and a highlighted background. It is a good fit for side information that the reader should keep in mind while reading.
 
 :::code
 :::note
@@ -155,6 +155,83 @@ The text inside a note is still parsed, so you can use **bold**, *italic* and [l
 You can also load the content of a note from a file (see [assets/code/note.txt](assets/code/note.txt)):
 
 #code(assets/code/note.txt)
+
+## Admonitions (Tip, Important, Warning, Caution)
+
+Alongside `:::note` there are four more admonition blocks. They follow the exact same syntax and are rendered with a colored background, a colored left border, and a label that describes the kind of information they carry.
+
+The available admonitions are:
+
+- `:::tip` — a suggestion or best practice (green). Use it for advice that helps the reader get more out of the documentation, but that is not strictly required.
+- `:::important` — a key detail that the reader should not skip (blue). Use it for information that is required to make the rest of the section work.
+- `:::warning` — a risk that is unlikely to cause data loss but can produce unexpected results (orange). Use it when continuing without addressing the warning will probably lead to confusion.
+- `:::caution` — a serious risk that can damage data, break the build or produce incorrect output (red). Use it when the reader must stop and read before continuing.
+
+All of them accept the same syntax as `:::note`:
+
+:::code
+:::tip
+Your tip text
+:::
+
+:::important
+Your important text
+:::
+
+:::warning
+Your warning text
+:::
+
+:::caution
+Your caution text
+:::
+:::
+
+**Examples:**
+
+:::tip
+You can use `Ctrl + S` to save the file at any time.
+:::
+
+:::important
+The configuration file is read once at build time. Restart the build after editing it.
+:::
+
+:::warning
+Closing the terminal while the build is running will abort the process and leave temporary files behind.
+:::
+
+:::caution
+Running `clean --all` removes the `output/` directory. Any file that is not part of the source tree will be deleted permanently.
+:::
+
+Like with `:::note`, the text inside every admonition is still parsed, so you can use **bold**, *italic* and [links](https://example.com) inside them:
+
+:::tip
+Combine `:::tip` with a [link to the related page](pages/Examples/Headers example.html) to point the reader at more context.
+:::
+
+You can also load the content of any admonition from a file using the `#code(path)` directive. The files used below live in [assets/code/](assets/code/):
+
+:::tip
+#code(assets/code/tip.txt)
+:::
+
+:::important
+#code(assets/code/important.txt)
+:::
+
+:::warning
+#code(assets/code/warning.txt)
+:::
+
+:::caution
+#code(assets/code/caution.txt)
+:::
+
+:::note
+All four admonition blocks share the same base layout as `:::note`. They differ only in their background color, left border and label color, so they are safe to mix within the same page.
+:::
 
 ## Blockquotes
 

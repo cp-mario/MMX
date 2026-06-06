@@ -42,7 +42,7 @@ hr {
     padding: 5px;
     padding-left: 10px;
     padding-right: 10px;
-    
+
 }
 
 .coloredText {
@@ -50,6 +50,79 @@ hr {
 }
 
 .note > p{
+  margin-block: 2px;
+}
+
+/* Admonition blocks: tip, important, warning, caution (same layout as .note, distinct colors) */
+.tip{
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    background-color: #d4f5d4;
+    border-left: 4px solid #2e8b2e;
+    border-radius: var(--border-radius-base);
+    padding: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.tip > p{
+  margin-block: 2px;
+}
+
+.important{
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    background-color: #d9e8f5;
+    border-left: 4px solid #1f5fa6;
+    border-radius: var(--border-radius-base);
+    padding: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.important > p{
+  margin-block: 2px;
+}
+
+.warning{
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    background-color: #fce8c4;
+    border-left: 4px solid #cc7a00;
+    border-radius: var(--border-radius-base);
+    padding: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.warning > p{
+  margin-block: 2px;
+}
+
+.caution{
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    background-color: #f7d4d4;
+    border-left: 4px solid #b30000;
+    border-radius: var(--border-radius-base);
+    padding: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.caution > p{
   margin-block: 2px;
 }
 
@@ -99,9 +172,31 @@ h1,h2,h3,h4,h5,h6  {
   font-weight: bold;
 }
 
+/* Admonition labels: shared style with a per-type accent color */
+.admonition-label {
+  display: inline-block;
+  font-weight: bolder;
+  margin-right: 6px;
+}
+
 .note-label {
   color: #007bff;
-  font-weight: bolder;
+}
+
+.tip-label {
+  color: #2e8b2e;
+}
+
+.important-label {
+  color: #1f5fa6;
+}
+
+.warning-label {
+  color: #cc7a00;
+}
+
+.caution-label {
+  color: #b30000;
 }
 
 body{

@@ -193,7 +193,19 @@ function parseMultilineBlocks(text, config) {
           }
 
           if (block.type === 'note') {
-            processed = `<span class="note-label">Note:</span>${processed}`;
+            processed = `<span class="admonition-label note-label">Note:</span>${processed}`;
+            html = `<${block.tag} class="${block.classes ? block.classes.join(' ') : block.class}">${processed}</${block.tag}>`;
+          } else if (block.type === 'tip') {
+            processed = `<span class="admonition-label tip-label">Tip:</span>${processed}`;
+            html = `<${block.tag} class="${block.classes ? block.classes.join(' ') : block.class}">${processed}</${block.tag}>`;
+          } else if (block.type === 'important') {
+            processed = `<span class="admonition-label important-label">Important:</span>${processed}`;
+            html = `<${block.tag} class="${block.classes ? block.classes.join(' ') : block.class}">${processed}</${block.tag}>`;
+          } else if (block.type === 'warning') {
+            processed = `<span class="admonition-label warning-label">Warning:</span>${processed}`;
+            html = `<${block.tag} class="${block.classes ? block.classes.join(' ') : block.class}">${processed}</${block.tag}>`;
+          } else if (block.type === 'caution') {
+            processed = `<span class="admonition-label caution-label">Caution:</span>${processed}`;
             html = `<${block.tag} class="${block.classes ? block.classes.join(' ') : block.class}">${processed}</${block.tag}>`;
           } else {
             html = `<${block.tag} class="${block.classes ? block.classes.join(' ') : block.class}">${processed}</${block.tag}>`;

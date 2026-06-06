@@ -173,6 +173,42 @@ export const PATTERNS = {
       class: 'note',
     },
 
+    // Tip block (sugerencia): :::tip [classes] ... :::
+    {
+      name: 'tip',
+      open: /^:::tip(?:\s+([^\n]+))?\s*$/gm,
+      close: /^:::\s*$/gm,
+      tag: 'div',
+      class: 'tip',
+    },
+
+    // Important block: :::important [classes] ... :::
+    {
+      name: 'important',
+      open: /^:::important(?:\s+([^\n]+))?\s*$/gm,
+      close: /^:::\s*$/gm,
+      tag: 'div',
+      class: 'important',
+    },
+
+    // Warning block: :::warning [classes] ... :::
+    {
+      name: 'warning',
+      open: /^:::warning(?:\s+([^\n]+))?\s*$/gm,
+      close: /^:::\s*$/gm,
+      tag: 'div',
+      class: 'warning',
+    },
+
+    // Caution block: :::caution [classes] ... :::
+    {
+      name: 'caution',
+      open: /^:::caution(?:\s+([^\n]+))?\s*$/gm,
+      close: /^:::\s*$/gm,
+      tag: 'div',
+      class: 'caution',
+    },
+
     // Code block: :::code [language] [flags] ... :::
     {
       name: 'code',
