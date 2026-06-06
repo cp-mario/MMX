@@ -210,19 +210,19 @@ function parseMultilineBlocks(text, config) {
           }
 
           if (block.type === 'note') {
-            processed = `<span class="admonition-label note-label">Note:</span>${processed}`;
+            processed = `<span class="admonition-label note-label"><img class="admonition-icon" src="intAssets/icons/note.svg" alt="" aria-hidden="true">Note:</span>${processed}`;
             html = `<${block.tag} class="${block.classes ? block.classes.join(' ') : block.class}">${processed}</${block.tag}>`;
           } else if (block.type === 'tip') {
-            processed = `<span class="admonition-label tip-label">Tip:</span>${processed}`;
+            processed = `<span class="admonition-label tip-label"><img class="admonition-icon" src="intAssets/icons/tip.svg" alt="" aria-hidden="true">Tip:</span>${processed}`;
             html = `<${block.tag} class="${block.classes ? block.classes.join(' ') : block.class}">${processed}</${block.tag}>`;
           } else if (block.type === 'important') {
-            processed = `<span class="admonition-label important-label">Important:</span>${processed}`;
+            processed = `<span class="admonition-label important-label"><img class="admonition-icon" src="intAssets/icons/important.svg" alt="" aria-hidden="true">Important:</span>${processed}`;
             html = `<${block.tag} class="${block.classes ? block.classes.join(' ') : block.class}">${processed}</${block.tag}>`;
           } else if (block.type === 'warning') {
-            processed = `<span class="admonition-label warning-label">Warning:</span>${processed}`;
+            processed = `<span class="admonition-label warning-label"><img class="admonition-icon" src="intAssets/icons/warning.svg" alt="" aria-hidden="true">Warning:</span>${processed}`;
             html = `<${block.tag} class="${block.classes ? block.classes.join(' ') : block.class}">${processed}</${block.tag}>`;
           } else if (block.type === 'caution') {
-            processed = `<span class="admonition-label caution-label">Caution:</span>${processed}`;
+            processed = `<span class="admonition-label caution-label"><img class="admonition-icon" src="intAssets/icons/caution.svg" alt="" aria-hidden="true">Caution:</span>${processed}`;
             html = `<${block.tag} class="${block.classes ? block.classes.join(' ') : block.class}">${processed}</${block.tag}>`;
           } else {
             html = `<${block.tag} class="${block.classes ? block.classes.join(' ') : block.class}">${processed}</${block.tag}>`;

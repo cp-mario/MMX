@@ -61,8 +61,8 @@ hr {
 }
 
 .note{
-    background-color: #fafa8c;
-    border-left-color: #c9b500;
+    background-color: #fff8ae;
+    border-left-color:#b89700;
 }
 
 .tip{
@@ -133,13 +133,21 @@ h1,h2,h3,h4,h5,h6  {
 
 /* Admonition labels: shared style with a per-type accent color */
 .admonition-label {
-  display: inline-block;
-  font-weight: bolder;
-  margin-right: 6px;
+    display: inline-flex;
+    align-items: center;
+    font-weight: bolder;
+    margin-right: 6px;
+    gap: 4px;
+}
+
+.admonition-icon {
+    width: 1.1em;
+    height: 1.1em;
+    flex-shrink: 0;
 }
 
 .note-label {
-  color: #c9b500;
+  color: #8a7600;
 }
 
 .tip-label {
