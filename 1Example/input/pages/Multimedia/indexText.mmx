@@ -1,0 +1,13 @@
+## About this folder
+
+This folder is a **reference for every kind of media** you can embed in an MMX page: regular images, inline icons, audio, video, and iframes.
+
+> Place an `indexText.mmx` file in any folder inside `pages/` (this one, for example) to give the folder a short textual description. The build inserts it just under the folder name and above the auto-generated directory list. The file is **never** rendered as a standalone page and does not appear in the sidebar or the search index.
+
+Pick one of the pages below to see how each media type is written in MMX:
+
+- **Audios** — the `!!(path/to/audio)` block directive.
+- **Videos** — the `!!!(path/to/video)` block directive.
+- **Images** — the `![](path/to/image)` block directive (with optional caption / alignment classes).
+- **Inline images** — the `<-path->` inline syntax, useful for tiny icons inside running text.
+- **Iframes** — the `#iframe(...)` directive for embedding other pages.

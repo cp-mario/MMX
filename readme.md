@@ -163,6 +163,43 @@ If you put a file named `icon.png` (or `.svg`, `.ico`, `.webp`, `.jpg`, `.jpeg`)
 
 All your `.mmx` files live here. Subfolders become categories, and can be nested.
 
+#### Auto-generated folder indexes
+
+Every subfolder of `pages/` automatically gets an `index.html` page that lists its contents as a nested tree of files and subfolders. The build creates a temporary `__index.mmx` for each folder, runs it through the regular MMX pipeline, and deletes the temp file when the build is done.
+
+You do not need to do anything to get the auto-generated indexes — they exist purely to give every folder a clickable landing page in the sidebar.
+
+If you want to take full control of a folder's landing page, just drop your own `index.mmx` (case-insensitive) into that folder. The build will detect it and skip the auto-generation step for that folder (but not for any nested subfolders, which keep their auto-generated indexes).
+
+#### `indexText.mmx` — folder descriptions
+
+If you want to give a folder a short textual description / introduction **without** replacing the auto-generated directory list, drop a file named `indexText.mmx` (case-insensitive) into that folder:
+
+```text
+pages/
+└── Multimedia/
+    ├── indexText.mmx   <-- folder description
+    ├── Audios.mmx
+    ├── Videos.mmx
+    └── ...
+```
+
+The build will:
+
+1. Compile the contents of `indexText.mmx` with the **same MMX pipeline** used for regular pages (so you can use paragraphs, lists, tables, images, code blocks, etc. — anything MMX supports).
+2. Insert that compiled HTML **between the folder name (H1) and the auto-generated directory list** of the folder's `index.html`, separated by a thin dashed horizontal rule.
+3. Skip the file everywhere else — it is **not** rendered as its own page, **not** listed in the sidebar, and **not** added to the search index or the sitemap.
+
+If both `index.mmx` and `indexText.mmx` are present in the same folder, `index.mmx` wins (it fully replaces the auto-generated index, and `indexText.mmx` is ignored — it has no effect there).
+
+> [!TIP]
+> A few practical use cases for `indexText.mmx`:
+> - A one-paragraph "what is in this folder" intro on a category landing page.
+> - A short list of recommended reading order inside a tutorial folder.
+> - A screenshot or callout block that should always be visible at the top of the folder.
+>
+> When the description grows beyond a screen of text, prefer dropping a real `index.mmx` instead — the build's `indexText.mmx` block is deliberately compact and is not a replacement for a proper landing page.
+
 ### `index.mmx` (required)
 
 The main entry page of the documentation. Dont name any other file index.mmx except this.

@@ -84,8 +84,11 @@ function generateIndexRecursive(sourceDir, rootDir) {
         path: toKebabCase(path.relative(rootDir, fullPath)),
         children: generateIndexRecursive(fullPath, rootDir)
       });
-    } else if (item.endsWith('.mmx') && !item.startsWith('__')) {
+    } else if (item.endsWith('.mmx') && !item.startsWith('__') && item.toLowerCase() !== 'indextext.mmx') {
       // Skip internal/temp .mmx files (e.g. auto-generated __index.mmx)
+      // and `indexText.mmx`, which is a special companion file consumed
+      // by the folder-index generator (see generateFolderIndexPages)
+      // and never rendered as its own page.
       const relativePath = path.relative(rootDir, fullPath);
       const safePath = toKebabCase(relativePath).replace(/\.mmx$/i, '.html');
       result.push({
@@ -145,8 +148,11 @@ function buildFolderListHtml(dir, relDir = "") {
   const subfolders = [];
   const files = [];
   for (const item of items) {
-    // Don't list our own auto-generated index file
+    // Don't list our own auto-generated index file, and don't list
+    // `indexText.mmx` either — it's a companion file for the folder
+    // description, never a navigable page of its own.
     if (item.toLowerCase() === '__index.mmx') continue;
+    if (item.toLowerCase() === 'indextext.mmx') continue;
     const fullPath = path.join(dir, item);
     const stat = fs.statSync(fullPath);
     if (stat.isDirectory()) {
@@ -210,6 +216,8 @@ function buildFolderListHtml(dir, relDir = "") {
  *
  *     # {OriginalFolderName}
  *
+ *     <optional user-provided description from `indexText.mmx`>
+ *     <hr class="folder-index-divider">
  *     <nested list of children>
  *
  * The pipeline then picks up these files just like any other .mmx and
@@ -219,6 +227,15 @@ function buildFolderListHtml(dir, relDir = "") {
  * The auto-generated index is skipped when the user already has a manual
  * `index.mmx` (case-insensitive) in the folder, so users can still
  * provide their own landing page for a folder.
+ *
+ * If the folder contains a companion file named `indexText.mmx`
+ * (case-insensitive), its compiled HTML is inserted between the H1
+ * (the folder name) and the auto-generated nested list. This is the
+ * recommended way to add a textual description / introduction to a
+ * folder without having to write a full manual `index.mmx`. The file
+ * is never rendered as a standalone page and does not appear in the
+ * sidebar or the search index — see `buildFolderListHtml` and
+ * `collectFiles` for the matching skip rules.
  *
  * The temp files are deleted by `cleanupFolderIndexPages` after the
  * build finishes, so the source dir is left untouched.
@@ -237,12 +254,47 @@ function generateFolderIndexPages(pagesSourceDir) {
     const hasUserIndex = items.some(item => item.toLowerCase() === 'index.mmx');
     if (hasUserIndex) return;
 
+    // Look for the optional companion file `indexText.mmx`. When present,
+    // parse it with the same MMX pipeline used for regular pages so the
+    // user can use the full MMX feature set (lists, tables, images, code
+    // blocks, etc.) in their folder description. The parsed output is
+    // wrapped in a `<div class="folder-index-text">` so it can be styled
+    // distinctly from the auto-generated list that follows it.
+    const indexTextItem = items.find(item => item.toLowerCase() === 'indextext.mmx');
+    let descriptionHtml = "";
+    if (indexTextItem) {
+      const indexTextPath = path.join(dir, indexTextItem);
+      try {
+        const rawMmx = fs.readFileSync(indexTextPath, "utf-8");
+        descriptionHtml = `<div class="folder-index-text">\n${mmxToHtml(rawMmx)}\n</div>`;
+      } catch (e) {
+        // Failing to parse the description should not break the whole
+        // build; log a warning and fall back to no description.
+        console.warn(`Could not read/parse ${indexTextPath}: ${e.message}`);
+      }
+    }
+
     // Write a temp `__index.mmx` with the folder name as H1 and the
     // nested list as the body. The H1 is needed for the <title>, the
     // heading-link button, and the search index title extraction.
     const folderName = path.basename(dir);
     const listHtml = buildFolderListHtml(dir);
-    const content = `# ${folderName}\n\n${listHtml}\n`;
+
+    // Build the body: when there is a description, slot it between the
+    // H1 and the list, separated by an `<hr class="folder-index-divider">`
+    // so the user content is visually distinct from the auto-generated
+    // directory list that follows.
+    // The auto-generated directory list is always preceded by an
+    // `<h2 class="folder-index-heading">Index</h2>` so the list has a
+    // clear, consistent title (and a dedicated anchor target for links).
+    const indexHeading = '<h2 class="folder-index-heading">Index</h2>';
+    let content;
+    if (descriptionHtml) {
+      content = `# ${folderName}\n\n${descriptionHtml}\n\n<hr class="folder-index-divider">\n\n${indexHeading}\n\n${listHtml}\n`;
+    } else {
+      content = `# ${folderName}\n\n${indexHeading}\n\n${listHtml}\n`;
+    }
+
     const tempPath = path.join(dir, '__index.mmx');
     fs.writeFileSync(tempPath, content, 'utf-8');
     tempFiles.push(tempPath);
@@ -616,6 +668,12 @@ function copyDirectoryRecursive(source, destination) {
 /**
  * Collects all files to process without doing heavy work.
  * Returns { mmxFiles: [{srcPath, destPath, relItem}], dirs: [destPath], others: [{srcPath, destPath}] }
+ *
+ * `indexText.mmx` (case-insensitive) is intentionally skipped — it is
+ * a special companion file for folder descriptions, consumed by
+ * `generateFolderIndexPages`. It must never be rendered as its own
+ * page (`index-text.html`), listed in the sidebar, or added to the
+ * search index.
  */
 function collectFiles(sourceDir, outputDir) {
   const mmxFiles = [], dirs = new Set(), others = [];
@@ -624,6 +682,8 @@ function collectFiles(sourceDir, outputDir) {
     for (const item of items) {
       const srcPath = path.join(src, item);
       const stat = fs.statSync(srcPath);
+      // Skip the special companion file used by the folder-index generator
+      if (stat.isFile() && item.toLowerCase() === 'indextext.mmx') continue;
       const safeItem = stat.isDirectory()
         ? toKebabCase(item)
         : item.endsWith('.mmx')

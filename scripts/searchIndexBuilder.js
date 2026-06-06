@@ -286,7 +286,11 @@ function walk(dir, root, out) {
     const stat = fs.statSync(full);
     if (stat.isDirectory()) {
       walk(full, root, out);
-    } else if (item.toLowerCase().endsWith(".mmx")) {
+    } else if (item.toLowerCase().endsWith(".mmx")
+               && item.toLowerCase() !== "indextext.mmx") {
+      // Skip `indexText.mmx` (case-insensitive) — it is a companion
+      // file consumed by the folder-index generator (see main.js) and
+      // should not be exposed as a searchable page on its own.
       out.push({ absPath: full, relPath: path.relative(root, full).replace(/\\/g, "/") });
     }
   }

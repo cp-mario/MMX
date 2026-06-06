@@ -685,3 +685,30 @@ th.vertical-title{
    `.folder-list-icon-folder`) live in `folderIndexIcons.css`, which is
    only loaded by pages that actually contain an auto-generated folder
    index. See the comment at the top of that file for the rationale. */
+
+/* Optional folder description block. When a folder under `pages/`
+   contains an `indexText.mmx` companion file, the build injects the
+   compiled HTML inside a `<div class="folder-index-text">` element
+   BEFORE the auto-generated directory list. The styles below make it
+   visually clear that this is descriptive prose (not part of the
+   navigable index) and visually separate it from the list that
+   follows.
+
+   These selectors are intentionally generic so the user can put any
+   MMX content inside `indexText.mmx` (paragraphs, lists, tables,
+   images, code blocks...) and have it look like a regular part of the
+   page rather than something bolted on. */
+
+
+/* The horizontal rule that the build inserts between the description
+   and the auto-generated directory list. It uses a dedicated class so
+   we can make it visually subdued (a normal `<hr>` has the
+   `20px / 10px` margins defined at the top of this file, which would
+   look heavy next to a description block). */
+   
+.folder-index-divider {
+  border: 0;
+  border-top: 1px dashed rgba(60, 78, 108, 0.25);
+  margin: 6px 0 14px 0;
+  height: 0;
+}
