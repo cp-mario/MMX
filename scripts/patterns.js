@@ -164,6 +164,24 @@ export const PATTERNS = {
   ],
 
   multiline: [
+    // Code block: :::code [language] [flags] ... :::
+    // IMPORTANT: this MUST be the first entry in the multiline array.
+    // `parseMultilineBlocks` is called once per config in order, so the
+    // `code` config has to run BEFORE the admonition configs (`note`,
+    // `tip`, `important`, `warning`, `caution`). Otherwise the `>>>`...
+    // `>>>` markers inside a `:::code ... :::` block are matched and
+    // converted into real admonitions, and the user gets escaped HTML
+    // (e.g. `&lt;div class="tip"&gt;...`) inside the code block instead
+    // of the literal `>>>` text they wrote.
+    {
+      name: 'code',
+      open: /^:::code\s*(.*)$/gm,
+      close: /^:::\s*$/gm,
+      tag: 'pre',
+      class: 'multiline-code',
+      raw: true
+    },
+
     // Note block: >>>note [classes] ... >>>
     // Uses >>> as the delimiter (instead of :::) so that `:::code ... :::`
     // blocks can contain literal `:::note` examples without the inner `:::`
@@ -210,16 +228,6 @@ export const PATTERNS = {
       close: /^>>>\s*$/gm,
       tag: 'div',
       class: 'caution',
-    },
-
-    // Code block: :::code [language] [flags] ... :::
-    {
-      name: 'code',
-      open: /^:::code\s*(.*)$/gm,
-      close: /^:::\s*$/gm,
-      tag: 'pre',
-      class: 'multiline-code',
-      raw: true
     },
 
     // Table block: #table [mode] [classes] ... #endtable
