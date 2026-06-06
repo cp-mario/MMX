@@ -26,10 +26,10 @@ You do not need a build step in your editor. Write the `.mmx` files, run MMX, an
 
 ## How this site is organised
 
-The structure under `tusProyectos/docsEnteras/proyecto1/` is:
+The structure under `1Example/input/` is:
 
 :::code
-proyecto1/
+input/
   config.mcfg        -- title, version, language, sidebar text
   index.mmx          -- the page you are reading
   assets/            -- images, videos, audios and code samples
@@ -55,3 +55,4 @@ pages/
 :::
 
 Anything you write in `indexText.mmx` (headings, lists, images, code blocks…) is rendered between the folder name and the auto-generated `Index` list. The file itself is **never** listed in the sidebar and does **not** appear in the search index, so it is safe to use as a pure folder blurb. If you want full control over the landing page, write an `index.mmx` in the folder instead -- that one is rendered normally and the auto-generator steps aside.
+[Example of a folder with this](pages/Examples)
