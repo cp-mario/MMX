@@ -166,13 +166,15 @@ function buildFolderListHtml(dir, relDir = "") {
     return '<p><em>Empty folder.</em></p>';
   }
 
-  // Inline icons for the auto-generated folder index lists. We use
-  // a small folder/file SVG in front of each <li> instead of the
-  // default list marker, so the hierarchy reads at a glance.
-  const folderIcon = `<svg width="16" height="16" fill="none" aria-hidden="true" class="li-icon-svg" viewBox="0 0 24 24"><path fill="#ffa726" stroke="#e65100" stroke-linejoin="round" stroke-width="1" d="M3 6.5C3 5.67 3.67 5 4.5 5h5l2 2h8c.83 0 1.5.67 1.5 1.5V18c0 .83-.67 1.5-1.5 1.5h-15c-.83 0-1.5-.67-1.5-1.5Z"/></svg>`;
-  const fileIcon = `<svg width="16" height="16" fill="none" aria-hidden="true" class="li-icon-svg" viewBox="0 0 24 24"><path fill="#eceff1" stroke="#546e7a" stroke-linejoin="round" stroke-width="1" d="M6 3h8l4 4v14H6Z"/><path fill="none" stroke="#546e7a" stroke-linejoin="round" stroke-width="1" d="M14 3v4h4"/></svg>`;
-
   const lines = ['<ul class="folder-list">'];
+
+  // Icons for the auto-generated folder index. The actual SVG is defined
+  // once in `intAssets/style.css` and rendered as a CSS background-image,
+  // so we don't pay the ~500 bytes of inline-SVG markup per <li> (which
+  // multiplies fast in deeply nested or wide lists). The <span> is the
+  // same size as the previous SVG (16x16) so the layout is unchanged.
+  const fileIconSpan = '<span class="folder-list-icon folder-list-icon-file" aria-hidden="true"></span>';
+  const folderIconSpan = '<span class="folder-list-icon folder-list-icon-folder" aria-hidden="true"></span>';
 
   // Files first (alphabetical), then folders (alphabetical), each
   // folder recursively nests its own list inside its <li>.
@@ -182,7 +184,7 @@ function buildFolderListHtml(dir, relDir = "") {
   for (const file of files) {
     const baseName = file.replace(/\.mmx$/i, '');
     const href = relDir + toKebabCase(file).replace(/\.mmx$/i, '.html');
-    lines.push(`<li class="folder-list-item folder-list-file">${fileIcon}<a target="_self" href="${href}">${baseName}</a></li>`);
+    lines.push(`<li class="folder-list-item folder-list-file">${fileIconSpan} <a target="_self" href="${href}">${baseName}</a></li>`);
   }
 
   // Folders after files, with children nested in the same <li>.
@@ -193,7 +195,7 @@ function buildFolderListHtml(dir, relDir = "") {
     const kebab = toKebabCase(folder);
     const childRelDir = relDir + kebab + "/";
     const childHtml = buildFolderListHtml(path.join(dir, folder), childRelDir);
-    lines.push(`<li class="folder-list-item folder-list-folder">${folderIcon}<a target="_self" href="${childRelDir}">${folder}</a>`);
+    lines.push(`<li class="folder-list-item folder-list-folder">${folderIconSpan} <a target="_self" href="${childRelDir}">${folder}</a>`);
     lines.push(childHtml);
     lines.push('</li>');
   }
