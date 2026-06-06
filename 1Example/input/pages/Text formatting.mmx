@@ -503,3 +503,53 @@ example.com/example
 
 https://example.com https://example.com/example
 example.com example.com/example
+
+## Anchors (`$[...]` and the `$$id` shortcut)
+
+Anchors are reusable bookmarks inside a page. You can define an anchor at any spot in the text and then link to it from anywhere else in the same page (or, for cross-page links, from any other page using the regular `[text](page.html#id)` syntax). They are useful for building things like a table of contents, a "see also" list at the bottom of a section, or any other situation where you want to jump around inside a long page.
+
+There are two pieces that work together:
+
+- `$[text](id)` -- defines a bookmark at the current position. The text is the visible label (everything between `$[` and `]`), and the id is the name you can use to link to it (everything between `(` and `)`). The id must contain only letters, digits, dashes and underscores.
+- `$$id` -- a same-page link to a bookmark. The id becomes both the visible label of the link AND the href target, so `$my-anchor` is equivalent to writing `[my-anchor](#my-anchor)`. This is a shortcut for the case where you are happy showing the raw id to the reader.
+
+:::code
+$[this section](my-anchor) is the bookmark.
+Click $my-anchor to jump back here.
+:::
+
+**Example:**
+
+$[this section](bookmark-demo) is a bookmark. Click $$bookmark-demo to jump back to it.
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed mattis accumsan velit. Aenean suscipit sagittis magna, ut consequat nisl. Nunc pulvinar eget eros id rutrum. Nam at ullamcorper augue. Nunc eget est vitae neque posuere eleifend in et justo. Donec consectetur vel neque at mattis.
+
+#b
+#b
+
+
+You can place as many anchors on a page as you need, and you can use the same anchor from as many `$$id` links as you like.
+
+### Forward references
+
+The link `$$id` does not have to come after the anchor. The compiler does not verify that the id exists, but the browser will simply jump to the top of the page if it does not find a matching bookmark. Use forward references freely when you want to point the reader at something further down the page:
+
+:::code
+The full changelog is at the bottom of the page (see $changelog).
+...
+$[Changelog](changelog)
+...
+:::
+
+### Cross-page anchors
+
+For cross-page links, keep using the regular link syntax with the id appended after a `#`:
+
+:::code
+[header on another page](pages/File%20sources%20and%20paths.html#header2)
+[the bookmark-demo anchor on this page](pages/Text%20formatting.html#bookmark-demo)
+:::
+
+>>>note
+Cross-page links open in the same tab, just like regular MMX links. The hash is preserved by the build, so the browser scrolls to the matching id and the `.resaltado` highlight animation plays on the target element (the same animation that runs when you follow a header link).
+>>>

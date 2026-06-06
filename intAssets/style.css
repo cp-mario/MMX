@@ -52,6 +52,29 @@ hr {
   display: inline;
 }
 
+/* Anchor link produced by `$$id`. Uses a dotted underline so it is
+   visually distinct from a regular link (`[text](url)`) and from a
+   header link: regular links open in a new tab and have a solid
+   underline, while a `$$id` link is an in-page anchor jump. The
+   underline stays even after the link is visited so the user can
+   still tell that the id is a defined bookmark, not a 404. */
+.mmx-anchor-link {
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+/* The `<span class="mmx-anchor">` produced by `$[text](id)` has no
+   visual side effects: it sits in the normal text flow and the
+   text inside is shown exactly as written. The only purpose of the
+   wrapper is to carry the `id` attribute so the browser can scroll
+   to it when a `$$id` link (or a `[text](page.html#id)` link) is
+   followed. */
+.mmx-anchor {
+  /* No styles. Kept as a class so a theme can highlight bookmarks
+     (e.g. briefly flash them when the page jumps to one) without
+     having to add a new selector. */
+}
+
 /* Color display: <colorDisplay="color"/>
    Renders a small filled circle next to the literal color value, sized
    to match the surrounding text and centered vertically in the line.

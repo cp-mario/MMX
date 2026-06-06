@@ -248,12 +248,87 @@ export const PATTERNS = {
       replace: (match, src) => `<img class="inlineImg" alt="icon" src="${src}">`
     },
 
+    // Anchor (named bookmark): $[text](id)
+    // Defines a same-page bookmark at the current position. The `text`
+    // is the visible label that gets rendered, and the `id` is the name
+    // the bookmark can be linked to with `$$id` (same page) or
+    // `[text](pages/Other.html#id)` (cross-page, using the standard
+    // MMX link syntax). The output is a `<span id="...">` so the
+    // bookmark has zero visual side effects: the text inside is shown
+    // exactly as written, but the surrounding element carries the id
+    // that the browser scrolls to when a link points at `#id`.
+    //
+    // The id is restricted to letters, digits, dashes and underscores
+    // so it is always a valid HTML id and a valid URL fragment
+    // (no need to percent-encode anything). Dots are NOT allowed in
+    // the id on purpose: MMX's auto-URL detector would otherwise see
+    // `my.id` inside the link's visible text and re-link it to
+    // `https://my.id` (because `.id` is a real TLD), which would
+    // produce a nested anchor and break the layout. Use dashes for
+    // hierarchical ids (e.g. `my-anchor`, `section-1-intro`).
+    //
+    // The text is taken verbatim, which means MMX inside it (like
+    // `**bold**`) is still compiled by the patterns that run AFTER
+    // this one. This mirrors how the link pattern renders its text.
+    //
+    // This pattern must run BEFORE the generic `[text](url)` link
+    // pattern, otherwise the bracket/paren part would be eaten first
+    // and `$[text](id)` would never match.
+    {
+      regex: /\$\[([^\]\n]+)\]\(([A-Za-z0-9_\-]+)\)/g,
+      replace: (match, text, id) => `<span class="mmx-anchor" id="${id}">${text}</span>`
+    },
+
     // Link: [text](url)
     {
       regex: /\[([^\]]+)\]\(([^)]+)\)/g,
       replace: (match, text, href) => {
         const normalizedHref = normalizePageHref(href);
         return `<a target="_blank" href="${normalizedHref}">${text}</a>`;
+      }
+    },
+
+    // Same-page anchor link: $$id
+    // Shortcut for an in-page link to a bookmark defined with
+    // `$[text](id)`. The id becomes both the visible label of the link
+    // AND the href target, so `$my-anchor` is equivalent to
+    // `[my-anchor](#my-anchor)`. This is purely a same-page helper:
+    // cross-page links to a bookmark are written with the regular
+    // link syntax, e.g. `[header](pages/Other.html#my-anchor)`.
+    //
+    // The id is restricted to the same character set as the anchor
+    // pattern above. A negative lookbehind for `[` and `(` makes sure
+    // we never match a `$$id` that is part of a still-unresolved anchor
+    // (`$[text](id)`) or a link (`[text]($$id)`) -- by the time this
+    // pattern runs, anchors have already been replaced with their
+    // `<span id="...">` form and links with their `<a href="...">`
+    // form, so the lookbehind is just an extra safety net.
+    //
+    // The pattern is also restricted to ids that begin with a letter
+    // or an underscore so that a literal `$` followed by a number
+    // (e.g. `$42`), by punctuation (e.g. `$.` or `$,`) or by
+    // whitespace is never accidentally captured: those stay as plain
+    // text in the rendered page.
+    //
+    // The id is matched greedily, but any trailing `.`, `,`, `;`,
+    // `:`, `!`, `?`, `(`, `)` or `#` is stripped in the replace
+    // callback so that natural sentence punctuation like
+    // "Click $my-id." or "see $intro, for details" does NOT get
+    // eaten by the link. An id that legitimately contains a `.` in
+    // the middle (e.g. `$my.id`) is left alone: the strip removes
+    // the trailing characters of the match, not the inner ones.
+    {
+      regex: /(?<![\[\(])\$\$([A-Za-z_][A-Za-z0-9_\-]+)/g,
+      replace: (match, id) => {
+        // Strip trailing punctuation that is almost never part of
+        // an id in real-world usage (sentence periods, commas,
+        // parentheses, etc.). We keep stripping as long as the
+        // last character is one of them, so a trailing "...", ".,"
+        // or ".)" is removed cleanly.
+        const trailing = /[.,;:!?)(#]+$/;
+        const cleanId = id.replace(trailing, "");
+        if (!cleanId) return match; // pure punctuation: leave source alone
+        return `<a class="mmx-anchor-link" href="#${cleanId}">${cleanId}</a>`;
       }
     },
 
