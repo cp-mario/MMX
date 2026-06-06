@@ -681,28 +681,7 @@ th.vertical-title{
   margin-top: 4px;
 }
 
-/* Icons (file / folder) prepended to each entry in the auto-generated
-   folder index. The build emits an empty <span class="folder-list-icon">
-   per item and the actual SVG is embedded here ONCE as a CSS data-URI,
-   so we don't pay the ~500 bytes of inline SVG markup per <li> (which
-   multiplies fast in deeply nested or wide lists).
-   The 16x16 box matches the previous inline <svg width=16 height=16>. */
-.folder-list-icon {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  vertical-align: -3px;
-  margin-right: 4px;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-  flex-shrink: 0;
-}
-
-.folder-list-icon-file {
-  background-image: url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M6%203%20H14%20L18%207%20V20%20A1%201%200%200%201%2017%2021%20H6%20A1%201%200%200%201%205%2020%20V4%20A1%201%200%200%201%206%203%20Z%22%20fill%3D%22%23E3F2FD%22%20stroke%3D%22%231E88E5%22%20stroke-width%3D%221.6%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M14%203%20V7%20H18%22%20fill%3D%22none%22%20stroke%3D%22%231E88E5%22%20stroke-width%3D%221.6%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cline%20x1%3D%228%22%20y1%3D%2212%22%20x2%3D%2216%22%20y2%3D%2212%22%20stroke%3D%22%231E88E5%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%2F%3E%3Cline%20x1%3D%228%22%20y1%3D%2215%22%20x2%3D%2216%22%20y2%3D%2215%22%20stroke%3D%22%231E88E5%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%2F%3E%3Cline%20x1%3D%228%22%20y1%3D%2218%22%20x2%3D%2213%22%20y2%3D%2218%22%20stroke%3D%22%231E88E5%22%20stroke-width%3D%221.4%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E");
-}
-
-.folder-list-icon-folder {
-  background-image: url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M3%207%20A1.5%201.5%200%200%201%204.5%205.5%20H9.5%20L11.5%207.5%20H19.5%20A1.5%201.5%200%200%201%2021%209%20V18%20A1.5%201.5%200%200%201%2019.5%2019.5%20H4.5%20A1.5%201.5%200%200%201%203%2018%20Z%22%20fill%3D%22%23E3F2FD%22%20stroke%3D%22%231E88E5%22%20stroke-width%3D%221.6%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E");
-}
+/* The folder-list icon styles (`.folder-list-icon`, `.folder-list-icon-file`,
+   `.folder-list-icon-folder`) live in `folderIndexIcons.css`, which is
+   only loaded by pages that actually contain an auto-generated folder
+   index. See the comment at the top of that file for the rationale. */

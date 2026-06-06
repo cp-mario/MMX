@@ -902,6 +902,18 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
     imageZoom = `<script src="${prefix}intAssets/imageZoom.js"></script>`;
   }
 
+  // The folder-index icon stylesheet is only useful for pages that
+  // actually contain the auto-generated folder list. We detect that by
+  // looking for the `folder-list` class in the rendered HTML and only
+  // inject the <link> (which in turn pulls in the two icon SVG files)
+  // on those pages. Everything else skips the stylesheet and the SVGs
+  // entirely, which is the whole point of this optimization — regular
+  // pages should not pay for assets they never use.
+  const hasFolderList = htmlContent.includes('class="folder-list"');
+  const folderIndexIcons = hasFolderList
+    ? `<link rel="stylesheet" href="${prefix}intAssets/folderIndexIcons.css">`
+    : "";
+
   let searchScript = CONFIG.singleFile
     ? singleFileSearchContent
     : `<script src="${prefix}intAssets/search/search.js"></script>`;
@@ -926,6 +938,7 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
     .replaceAll("{{playerCSS}}", playerCSS)
     .replaceAll("{{playerJS}}", playerJS)
     .replaceAll("{{imageZoom}}", imageZoom)
+    .replaceAll("{{folderIndexIcons}}", folderIndexIcons)
     .replaceAll("{{searchScript}}", searchScript)
     .replaceAll("{{highlightJS}}", highlightJS)
     .replaceAll("{{highlightCSSTheme}}", highlightCSSTheme)

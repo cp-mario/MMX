@@ -20,6 +20,12 @@
     <link rel="stylesheet" href="{{prefix}}intAssets/style.css">
     <link rel="stylesheet" href="{{prefix}}intAssets/styleSidebar.css">
 
+    <!-- Optional stylesheet loaded ONLY by pages that contain an
+         auto-generated folder index. The build detects `class="folder-list"`
+         in the rendered HTML and injects the <link> for folderIndexIcons.css
+         (plus the two icon SVGs it references) on those pages only. -->
+    {{folderIndexIcons}}
+
     <!-- Sidebar full-text search (separate module under intAssets/search/) -->
     {{searchScript}}
 

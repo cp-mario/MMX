@@ -1,0 +1,31 @@
+/* Folder-index icons. This stylesheet is ONLY loaded by pages that
+   actually contain the auto-generated folder list (the build detects
+   `class="folder-list"` in the rendered HTML and injects the
+   `<link rel="stylesheet" href=".../intAssets/folderIndexIcons.css">`
+   on those pages only). Pages without a folder list never download
+   the SVG files below, which is the point — we don't want every page
+   to pay the cost of two icon assets it never uses.
+
+   The actual SVG lives in `icons/icon-file.svg` and `icons/icon-folder.svg`
+   and is loaded as a CSS background-image (16×16, scaled to contain).
+   The same 16×16 box is reserved via width/height so the layout matches
+   the previous inline <svg width=16 height=16> implementation. */
+.folder-list-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+  margin-right: 4px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  flex-shrink: 0;
+}
+
+.folder-list-icon-file {
+  background-image: url("icons/icon-file.svg");
+}
+
+.folder-list-icon-folder {
+  background-image: url("icons/icon-folder.svg");
+}
