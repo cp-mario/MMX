@@ -163,6 +163,53 @@ if (document.readyState === "loading") {
 window.addEventListener("hashchange", highlightOnLoad);
 
 // ============================================================================
+// TASK LISTS
+// ---------------------------------------------------------------------------
+// MMX task list items are rendered as
+//   <li class="task-list-item-li">
+//     <div class="task-list-item">
+//       <input type="checkbox" class="task-list-checkbox" [checked]>
+//       <span class="task-list-content">...</span>
+//     </div>
+//
+// The whole row is a `<div>` (not a `<label>`) on purpose. Wrapping the
+// checkbox in a label would cause clicks on nested interactive elements
+// (links, buttons) to BOTH toggle the checkbox AND fire the link/button
+// action, which is surprising. With a plain div the checkbox only
+// toggles when the user clicks the checkbox itself, the surrounding
+// flex row, or a non-interactive part of the text; clicking a nested
+// link or button leaves the checkbox alone.
+//
+// We intentionally do NOT persist the toggled state in localStorage /
+// sessionStorage: reloading the page (or rebuilding the docs) resets
+// every checkbox back to whatever the MMX source declares (`[x]` for
+// checked, `[ ]` for unchecked). That is the documented behavior.
+// ============================================================================
+document.addEventListener("click", (event) => {
+  const item = event.target.closest(".task-list-item");
+  if (!item) return;
+
+  // The checkbox itself is a real `<input type="checkbox">`, so the
+  // browser already toggles it natively when the user clicks it. We
+  // only need to handle clicks on the surrounding div / text.
+  if (event.target.classList && event.target.classList.contains("task-list-checkbox")) {
+    return;
+  }
+
+  // If the click originated on (or inside) a nested interactive
+  // element such as a link or a button, do NOT also toggle the
+  // checkbox -- let the link / button do its own thing.
+  if (event.target.closest("a, button, input, textarea, select")) {
+    return;
+  }
+
+  const checkbox = item.querySelector(".task-list-checkbox");
+  if (checkbox) {
+    checkbox.checked = !checkbox.checked;
+  }
+});
+
+// ============================================================================
 // STEP 2: Load favicon - Project icon detection and loading
 // ============================================================================
 /**

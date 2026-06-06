@@ -349,48 +349,82 @@ function parseLists(text) {
   const stack = [];
   let listCount = 0;
 
+  /**
+   * Detects a leading task-list marker (`[ ]` or `[x]`, case-insensitive
+   * for the x) at the start of a list item's content and splits it out
+   * into a `{ checked }` flag. The marker is removed from `content` so
+   * the inline patterns do not see it.
+   *
+   * The marker is allowed to be followed by any amount of whitespace
+   * before the actual text, e.g. `- [ ]   text` and `- [x]\ttext` both
+   * work. Anything other than `[ ]` or `[x]` (a single space or `x`
+   * strictly inside square brackets) is left untouched and the item is
+   * not treated as a task list.
+   *
+   * @param {string} content
+   * @returns {{ checked: boolean, content: string } | null}
+   */
+  const extractTaskMarker = (content) => {
+    const m = /^\[([ xX])\]\s+(.*)$/.exec(content);
+    if (!m) return null;
+    return {
+      checked: m[1].toLowerCase() === 'x',
+      content: m[2],
+    };
+  };
+
   const parseListItem = (line) => {
     // Pattern: - text (unordered, optional level number before flexible whitespace)
     const ulMatch = /^-(\d*)\s+(.+)$/.exec(line);
     if (ulMatch) {
+      const level = ulMatch[1] ? Number(ulMatch[1]) : 0;
+      const task = extractTaskMarker(ulMatch[2]);
       return {
         type: 'ul',
-        level: ulMatch[1] ? Number(ulMatch[1]) : 0,
+        level,
         start: null,
-        content: ulMatch[2],
+        content: task ? task.content : ulMatch[2],
+        task: task ? { checked: task.checked } : null,
       };
     }
 
     // Pattern: + text (ordered with +, optional level number before flexible whitespace)
     const olPlusMatch = /^\+(\d*)\s+(.+)$/.exec(line);
     if (olPlusMatch) {
+      const level = olPlusMatch[1] ? Number(olPlusMatch[1]) : 0;
+      const task = extractTaskMarker(olPlusMatch[2]);
       return {
         type: 'ol',
-        level: olPlusMatch[1] ? Number(olPlusMatch[1]) : 0,
+        level,
         start: null,
-        content: olPlusMatch[2],
+        content: task ? task.content : olPlusMatch[2],
+        task: task ? { checked: task.checked } : null,
       };
     }
 
     // Pattern: n.m text (ordered numbered with level)
     const olNumLevelMatch = /^(\d+)\.(\d+)\s+(.+)$/.exec(line);
     if (olNumLevelMatch) {
+      const task = extractTaskMarker(olNumLevelMatch[3]);
       return {
         type: 'ol',
         level: Number(olNumLevelMatch[2]),
         start: Number(olNumLevelMatch[1]),
-        content: olNumLevelMatch[3],
+        content: task ? task.content : olNumLevelMatch[3],
+        task: task ? { checked: task.checked } : null,
       };
     }
 
     // Pattern: n. text (ordered numbered, no level)
     const olNumMatch = /^(\d+)\.\s+(.+)$/.exec(line);
     if (olNumMatch) {
+      const task = extractTaskMarker(olNumMatch[2]);
       return {
         type: 'ol',
         level: 0,
         start: Number(olNumMatch[1]),
-        content: olNumMatch[2],
+        content: task ? task.content : olNumMatch[2],
+        task: task ? { checked: task.checked } : null,
       };
     }
 
@@ -432,7 +466,37 @@ function parseLists(text) {
     const current = stack[stack.length - 1];
     if (current?.itemOpen) output.push('</li>');
     current.itemOpen = true;
-    output.push(`<li>${item.content}`);
+
+    // Task list item: render the checkbox inline, followed by the
+    // item content. We deliberately do NOT use a `<label>` wrapper
+    // (either wrapping the input or via `for=...`) because clicking
+    // a nested interactive element (a link, a button) inside the
+    // content would ALSO toggle the checkbox on top of the link's
+    // own action, which is surprising. Instead, the whole row is a
+    // `<div class="task-list-item">` and the click handler in
+    // script.js toggles the checkbox manually -- unless the click
+    // originated on a nested interactive element, in which case the
+    // handler leaves the checkbox alone and lets the link / button
+    // do its thing.
+    //
+    // The checkbox is rendered with the `checked` HTML attribute
+    // that matches the MMX source (`[x]` = checked, `[ ]` =
+    // unchecked), so the visible state on a fresh page load always
+    // matches the source. We do NOT store the toggled state in
+    // localStorage / sessionStorage on purpose: reloading the page
+    // (or rebuilding the docs) resets every checkbox back to
+    // whatever the MMX file says, which is the expected behavior for
+    // documentation task lists. The user can still click the
+    // checkbox during the current session to mark items as done;
+    // that change is purely visual and is lost on reload.
+    if (item.task) {
+      const checkedAttr = item.task.checked ? ' checked' : '';
+      output.push(
+        `<li class="task-list-item-li"><div class="task-list-item"><input type="checkbox" class="task-list-checkbox"${checkedAttr}> <span class="task-list-content">${item.content}</span></div>`
+      );
+    } else {
+      output.push(`<li>${item.content}`);
+    }
   };
 
   for (const line of lines) {

@@ -714,6 +714,93 @@ th.vertical-title{
   padding-left: 30px;
 }
 
+/* ============================================================================
+   TASK LISTS
+   ----------------------------------------------------------------------------
+   Task list items are emitted by the MMX parser as
+     <li class="task-list-item-li">
+       <label class="task-list-item">
+         <input type="checkbox" class="task-list-checkbox" [checked]>
+         <span class="task-list-content">...text...</span>
+       </label>
+   The `<label>` makes the whole row clickable so the user can toggle the
+   checkbox without having to hit the small box itself. The checkbox is a
+   real `<input type="checkbox">`, so the browser handles keyboard focus,
+   the indeterminate state, and accessibility for free.
+   We do NOT persist the toggled state anywhere (no localStorage /
+   sessionStorage): reloading the page rebuilds the HTML from the MMX
+   source, so the checkbox always returns to whatever the `.mmx` file
+   declares (`[x]` for checked, `[ ]` for unchecked). This is the
+   expected behavior for a documentation checklist.
+   ============================================================================ */
+
+/* The list item itself: only the bullet/marker is suppressed. The label
+   inside handles all the layout, so the native list marker would create
+   a stray dot to the left of the checkbox. */
+li.task-list-item-li {
+  list-style: none;
+  margin-left: -20px; /* pull the row back to align with regular list items */
+}
+
+/* Clickable label that wraps the checkbox and the text. We use a flex
+   row so the checkbox and the text sit on the same baseline. Centering
+   the checkbox vertically inside the row keeps it visually aligned with
+   the text no matter how tall the surrounding line is. */
+.task-list-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+/* The native checkbox itself. We let the OS/browser draw it but
+   nudge the size so it matches the surrounding text better. `accent-color`
+   tints the check mark and the box border using the page's primary blue
+   so it visually belongs to the documentation. */
+.task-list-checkbox {
+  margin: 0;
+  width: 1em;
+  height: 1em;
+  accent-color: #1E88E5;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+/* The text container. When the checkbox is checked we draw a line
+   through the text using `:has()`, so the user can see at a glance
+   which items are done. This selector is widely supported in modern
+   browsers (Chrome 105+, Firefox 121+, Safari 15.4+). */
+.task-list-item:has(.task-list-checkbox:checked) .task-list-content {
+  text-decoration: line-through;
+  color: #6b7280;
+}
+
+/* Focus ring on the label so keyboard users can see which row is
+   active. We keep it subtle to match the rest of the documentation. The
+   ring only shows up for keyboard focus (`:focus-visible`); mouse clicks
+   do not paint an outline around the row. */
+.task-list-item:focus-within {
+  outline: 2px solid #1E88E5;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.task-list-item:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.task-list-checkbox:focus {
+  outline: none;
+}
+
+.task-list-checkbox:focus-visible {
+  outline: 2px solid #1E88E5;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+
 #header-navigator-dropdown .nav-h4 {
   padding-left: 40px;
 }
