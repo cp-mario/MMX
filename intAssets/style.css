@@ -230,6 +230,10 @@ html {
     padding-inline: 3px;
 }
 
+.inline-raw {
+  font-family: "Lato", sans-serif;
+}
+
 /* todos los codes  */
 code {
     font-family: "JetBrains Mono", monospace;

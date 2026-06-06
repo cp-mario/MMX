@@ -134,6 +134,23 @@ Example:
 
 `This is some inline code, this is not parsed inside me: [Header](pages/the/Page/You/Want/To/Go.html#id)`
 
+## Raw inline tag
+
+Like inline code but without formatting
+
+:::code
+<%write **not bold**, *not italic*, [not a link](https://example.com)%>
+:::
+
+**Example:**
+
+This text is <%write **not bold**, *not italic*, [not a link](https://example.com)%>.
+
+
+>>>tip
+The raw tag is single-line: a newline closes the tag. If you need a multi-line raw block, use a `:::code ... :::` block instead.
+>>>
+
 ## Notes
 
 A note is a block of text that is rendered with the label "Note:" and a highlighted background. It is a good fit for side information that the reader should keep in mind while reading.

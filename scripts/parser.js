@@ -44,12 +44,18 @@ export function mmxToHtml(mmx) {
   const extractedInlineCode = extractInlineCode(result);
   result = extractedInlineCode.html;
 
+  // Step 5.4: Extract inline raw tags <% ... %> BEFORE applying inline patterns
+  // Content inside <% ... %> is kept verbatim (no bold, italic, links, color, etc.).
+  // Like inline code, the tag is single-line and only protects against inline patterns.
+  const extractedInlineRaw = extractInlineRaw(result);
+  result = extractedInlineRaw.html;
+
   // Step 5.5: Extract and protect HTML attributes BEFORE applying inline patterns
   // This prevents URL linkification from corrupting attribute values like path="..."
   const extractedAttributes = extractHtmlAttributes(result);
   result = extractedAttributes.html;
 
-  // Step 6: Apply inline formatting (this will NOT affect protected code blocks, inline code, or attributes)
+  // Step 6: Apply inline formatting (this will NOT affect protected code blocks, inline code, attributes, or <%...%> raw blocks)
   for (const { regex, replace } of PATTERNS.inline) {
     result = result.replace(regex, replace);
   }
@@ -59,6 +65,9 @@ export function mmxToHtml(mmx) {
 
   // Step 7: Restore inline code with proper formatting
   result = restoreInlineCode(result, extractedInlineCode.inlineBlocks);
+
+  // Step 7.5: Restore inline raw blocks <% ... %> with proper formatting
+  result = restoreInlineRaw(result, extractedInlineRaw.rawBlocks);
 
   // Step 8: Restore protected code blocks (with original unprocessed content)
   result = restoreRawBlocks(result, extracted.blocks);
@@ -118,9 +127,17 @@ function parseMultilineBlocks(text, config) {
             const processCell = (text) => {
               let content = text.replace(/^\n+/, '').replace(/\n+$/, '');
               content = content.split('\n').map(l => l).join('<br>');
+
+              // Protect <%...%> raw tags inside the cell so inline patterns
+              // (bold, italic, links, etc.) do not compile their content.
+              const cellRaw = extractInlineRaw(content);
+              content = cellRaw.html;
+
               for (const { regex, replace } of PATTERNS.inline) {
                 content = content.replace(regex, replace);
               }
+
+              content = restoreInlineRaw(content, cellRaw.rawBlocks);
               return content || '&nbsp;';
             };
 
@@ -205,9 +222,17 @@ function parseMultilineBlocks(text, config) {
 
           processed = wrapParagraphs(body);
 
+          // Protect <%...%> raw tags inside the admonition body so that
+          // inline patterns (bold, italic, links, etc.) do not compile
+          // their content. Restored right after the inline pass below.
+          const nestedRawTags = extractInlineRaw(processed);
+          processed = nestedRawTags.html;
+
           for (const { regex, replace } of PATTERNS.inline) {
             processed = processed.replace(regex, replace);
           }
+
+          processed = restoreInlineRaw(processed, nestedRawTags.rawBlocks);
 
           if (block.type === 'note') {
             processed = `<span class="admonition-label note-label"><img class="admonition-icon" src="intAssets/icons/note.svg" alt="" aria-hidden="true">Note:</span>${processed}`;
@@ -569,6 +594,63 @@ function extractInlineCode(html) {
  */
 function restoreInlineCode(html, inlineBlocks) {
   for (const block of inlineBlocks) {
+    html = html.replace(block.key, block.value);
+  }
+  return html;
+}
+
+/**
+ * Extracts inline raw blocks (<% ... %>) and replaces with placeholders.
+ * Content inside <% ... %> is preserved verbatim and is NOT parsed by
+ * any inline pattern (bold, italic, links, colors, linkified URLs...).
+ * The tag is single-line: a newline closes the tag.
+ * @param {string} html - HTML content with potential <% ... %> blocks
+ * @returns {Object} { html, rawBlocks }
+ */
+function extractInlineRaw(html) {
+  const rawBlocks = [];
+  let i = 0;
+
+  // First pass: match <% ... %> source tags (used while a block's body
+  // is still in source form, before it is wrapped in <p>/<code>).
+  // Non-greedy and no-newline so two tags on the same line are matched
+  // separately and a multi-line raw block uses :::code ... :::.
+  html = html.replace(/<%([^%\n]*?)%>/g, (match, content) => {
+    const key = `%%INLINE_RAW_${i++}%%`;
+    // Escape the content so any HTML inside the tag is shown as literal
+    // text and cannot inject real markup.
+    const escapedContent = content
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    const htmlBlock = `<code class="inline-raw">${escapedContent}</code>`;
+    rawBlocks.push({ key, value: htmlBlock });
+    return key;
+  });
+
+  // Second pass: match <code class="inline-raw">...</code> tags that
+  // were already produced earlier in the pipeline (e.g. inside an
+  // admonition body). Their inner text must be hidden from the main
+  // inline patterns pass, otherwise a raw tag containing `**` would
+  // be re-compiled into <strong> when the main flow runs the bold
+  // pattern over the rendered output of the admonition.
+  html = html.replace(/<code class="inline-raw">([\s\S]*?)<\/code>/g, (match, content) => {
+    const key = `%%INLINE_RAW_${i++}%%`;
+    rawBlocks.push({ key, value: match });
+    return key;
+  });
+
+  return { html, rawBlocks };
+}
+
+/**
+ * Restores inline raw blocks by replacing placeholders with formatted blocks.
+ * @param {string} html - HTML with placeholders
+ * @param {Array} rawBlocks - Extracted inline raw blocks
+ * @returns {string} HTML with restored inline raw blocks
+ */
+function restoreInlineRaw(html, rawBlocks) {
+  for (const block of rawBlocks) {
     html = html.replace(block.key, block.value);
   }
   return html;
