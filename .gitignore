@@ -5,6 +5,9 @@ node_modules/
 
 # Build output
 1Example/output/
+output/
+dist/
+build/
 
 # Bun
 bun.lockb
