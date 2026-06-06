@@ -55,3 +55,4 @@ pages/
 :::
 
 Anything you write in `indexText.mmx` (headings, lists, images, code blocks…) is rendered between the folder name and the auto-generated `Index` list. The file itself is **never** listed in the sidebar and does **not** appear in the search index, so it is safe to use as a pure folder blurb. If you want full control over the landing page, write an `index.mmx` in the folder instead -- that one is rendered normally and the auto-generator steps aside.
+[Example of a folder with this](pages/Examples)
