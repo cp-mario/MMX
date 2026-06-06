@@ -1,0 +1,365 @@
+# Text formatting
+
+This page covers everything you can write in plain text: paragraphs, headers, emphasis, separators, inline code, notes and links.
+
+## Normal writing
+
+Just write normally. Lines that follow each other with a blank line between them become separate paragraphs. A single line break inside a paragraph is ignored.
+
+:::code
+this is normal text
+:::
+
+Example:
+
+this is normal text
+
+## Headers
+
+Headers go from h1 to h6. h1 is the largest and h6 the smallest.
+
+>>>note
+The first h1 of an `.mmx` file becomes the page title shown in the browser tab and in the sidebar.
+>>>
+
+A header is declared on its own line, just like in Markdown:
+
+:::code
+# This is a h1
+## This is a h2
+### This is a h3
+#### This is a h4
+##### This is a h5
+###### This is a h6
+:::
+
+>>>note
+It is strongly recommended to use a single h1 per page (which becomes the title) and as many h2-h6 as you need for the content.
+>>>
+
+### Header tags (anchor links)
+
+You can optionally add a tag to a header so you can link directly to it. The tag goes between `%{` and `%}` after the title.
+
+>>>note
+Do not add a tag to the first h1 of your page -- the first h1 is already used as the title.
+>>>
+
+:::code
+# This is a h1 with a tag %{tag}%
+## This is a h2 with a tag %{Anothertag}%
+### This is a h3 with a tag %{Anothertag2}%
+#### This is a h4 with a tag %{Anothertag3}%
+##### This is a h5 with a tag %{Anothertag4}%
+###### This is a h6 with a tag %{Anothertag5}%
+:::
+
+Linking to a header in the same page:
+`[Header](#id)`
+
+Linking to a header in another page (remember to use `.html`, not `.mmx`):
+`[Header](pages/the/Page/You/Want/To/Go.html#id)`
+
+[Here](pages/Examples/Headers example.html) are some examples of headers in action.
+
+## Bold
+
+Wrap text with two asterisks to make it bold: `**Text in bold**`.
+
+Example:
+**This text is in bold**
+
+## Italic
+
+Wrap text with a single asterisk to make it italic: `*Text in italic*`.
+
+Example:
+*This text is in italic*
+
+## Line breaks
+
+When you are writing normally, line breaks only separate paragraphs. To insert a forced blank line, use the `#b` element. It must appear on its own line.
+
+:::code
+#b
+:::
+
+Here is an example of 3 `#b`:
+
+#b
+#b
+#b
+
+## Coloured text
+
+You can colour text with an HTML-style syntax that accepts any CSS colour value: named colours, hex, `rgb()` or `hsl()`.
+
+:::code
+<c="color">Text in that color</c>
+<c="red">This text will be coloured in red</c>
+<c="blue">This text will be coloured in blue</c>
+<c="#ffcc40">This text will be coloured in yellow</c>
+<c="rgb(130, 130, 130)">This text will be coloured in gray</c>
+:::
+
+**Examples:**
+
+<c="red">This text will be coloured in red</c> normal text <c="blue">This text will be coloured in blue</c><c="#ffcc40"> This text will be coloured in yellow</c> <c="rgb(130, 130, 130)"> This text will be coloured in gray</c>
+
+>>>note
+`<c="color">` is shown above as a placeholder, but `color` is not a valid CSS colour and will be ignored by the browser. Use a real value such as `green`, `#ffcc40` or `rgb(130, 130, 130)`.
+>>>
+
+## Separators
+
+A horizontal rule is produced with `#s` on its own line, just like `#b`.
+
+:::code
+#s
+:::
+
+Example:
+
+#s
+
+## Inline code
+
+Wrap text in backticks to render it as inline code. Inline code is not parsed by MMX, uses a monospaced font and has a subtle background.
+
+:::code
+`code`
+:::
+
+Example:
+
+`This is some inline code, this is not parsed inside me: [Header](pages/the/Page/You/Want/To/Go.html#id)`
+
+## Notes
+
+A note is a block of text that is rendered with the label "Note:" and a highlighted background. It is a good fit for side information that the reader should keep in mind while reading.
+
+:::code
+>>>note
+This is a note
+>>>
+:::
+
+Example:
+
+>>>note
+This is a note
+>>>
+
+The text inside a note is still parsed, so you can use **bold**, *italic* and [links](https://example.com).
+
+You can also load the content of a note from a file (see [assets/code/note.txt](assets/code/note.txt)):
+
+#code(assets/code/note.txt)
+
+## Admonitions (Tip, Important, Warning, Caution)
+
+Alongside `>>>note` there are four more admonition blocks. They follow the exact same syntax and are rendered with a colored background, a colored left border, and a label that describes the kind of information they carry.
+
+The available admonitions are:
+
+- `>>>tip` — a suggestion or best practice (green). Use it for advice that helps the reader get more out of the documentation, but that is not strictly required.
+- `>>>important` — a key detail that the reader should not skip (blue). Use it for information that is required to make the rest of the section work.
+- `>>>warning` — a risk that is unlikely to cause data loss but can produce unexpected results (orange). Use it when continuing without addressing the warning will probably lead to confusion.
+- `>>>caution` — a serious risk that can damage data, break the build or produce incorrect output (red). Use it when the reader must stop and read before continuing.
+
+All of them accept the same syntax as `>>>note`:
+
+:::code
+>>>tip
+Your tip text
+>>>
+
+>>>important
+Your important text
+>>>
+
+>>>warning
+Your warning text
+>>>
+
+>>>caution
+Your caution text
+>>>
+:::
+
+**Examples:**
+
+>>>tip
+You can use `Ctrl + S` to save the file at any time.
+>>>
+
+>>>important
+The configuration file is read once at build time. Restart the build after editing it.
+>>>
+
+>>>warning
+Closing the terminal while the build is running will abort the process and leave temporary files behind.
+>>>
+
+>>>caution
+Running `clean --all` removes the `output/` directory. Any file that is not part of the source tree will be deleted permanently.
+>>>
+
+Like with `>>>note`, the text inside every admonition is still parsed, so you can use **bold**, *italic* and [links](https://example.com) inside them:
+
+>>>tip
+Combine `>>>tip` with a [link to the related page](pages/Examples/Headers example.html) to point the reader at more context.
+>>>
+
+You can also load the content of any admonition from a file using the `#code(path)` directive. The files used below live in [assets/code/](assets/code/):
+
+>>>tip
+#code(assets/code/tip.txt)
+>>>
+
+>>>important
+#code(assets/code/important.txt)
+>>>
+
+>>>warning
+#code(assets/code/warning.txt)
+>>>
+
+>>>caution
+#code(assets/code/caution.txt)
+>>>
+
+
+>>>note
+#code(assets/code/note.txt)
+>>>
+
+>>>note
+All four admonition blocks share the same base layout as `>>>note`. They differ only in their background color, left border and label color, so they are safe to mix within the same page.
+>>>
+
+A side-by-side example of all five admonitions is available at [Admonitions example](pages/Examples/Admonitions%20example.html).
+
+## Blockquotes
+
+A blockquote is a line that starts with `>` followed by a space and the quote text. Consecutive `> ` lines are joined into a single blockquote.
+
+:::code
+> This is a blockquote
+> it can span multiple lines
+> as long as each line starts with "> "
+:::
+
+Example:
+
+> This is a blockquote
+> it can span multiple lines
+> as long as each line starts with "> "
+
+A blank line starts a new blockquote:
+
+> First quote
+> still the first quote
+
+> Second quote, on its own
+
+The text inside a blockquote is still parsed, so **bold**, *italic* and [links](https://example.com) work too:
+
+> A quote with **bold**, *italic* and [a link](https://example.com)
+
+## Multiline code
+
+The same block that draws notes can also draw code blocks. Code blocks prevent the content from being parsed, so MMX syntax inside them is shown as-is.
+
+The text can come from a file or be written directly in the `.mmx` file.
+
+Loaded from a file:
+
+#code(assets/code/codeExample.txt)
+
+Written directly:
+
+:::code
+#code(assets/code/note.txt)
+:::
+
+Both look the same and both accept the following optional classes (separated by spaces):
+
+- `auto` -- enable automatic syntax highlighting (powered by highlight.js).
+- `noMonoSpace` -- render the code with a proportional font instead of monospaced.
+- `noCopy` -- hide the "copy" button.
+- `noCodeBg` -- remove the code background. This also enables `noCopy` and `noFormatted` automatically, and disables `auto`.
+- `noFormatted` -- when the code is too long, wrap it to the next line instead of showing a horizontal scrollbar.
+- `noauto` -- opt out of automatic syntax highlighting for this block, even when the project sets `defaultCodeHighlight = true` in its `config.mcfg`. Use it to keep a single code block plain while the rest of the site uses highlighting.
+
+:::code
+normal code
+:::
+
+:::code auto
+code with auto highligthing
+:::
+
+:::code noauto
+this block is not highlighted even when defaultCodeHighlight is true
+:::
+
+### Project-wide default highlighting %{defaultCodeHighlight}%
+
+The `auto` class is per block, so by default you have to add it to every code block you want highlighted. If you would rather highlight every code block in the whole project, set `defaultCodeHighlight = true` in the **project's** `config.mcfg` (the one in your documentation root, not the generator's `config.mcfg`):
+
+:::code
+# project's config.mcfg
+title = "MMX"
+version = "v1.1"
+lang = "en"
+sidebarBottomText = "Made with MMX"
+defaultCodeHighlight = true
+:::
+
+When `defaultCodeHighlight = true`:
+
+- Every `:::code ... :::` block and every `#code(path)` directive is highlighted automatically, just as if it had the `auto` class.
+- Blocks that already have `auto` are left untouched (no double-adding).
+- Blocks that have the `noauto` class are **not** highlighted -- use this when a particular snippet should stay plain (e.g. terminal output, ASCII art, a log).
+- A single `#code(path) auto` on a block also forces highlighting on even if the project default is `false`.
+
+>>>note
+This is a per-project setting, not a per-page one. The flag is read from the project's `config.mcfg` and applies to every `.mmx` file in that project.
+>>>
+
+More examples [here](pages/Examples/Code example.html).
+
+## Links
+
+Use links to point at an external page, another page in your documentation, or a specific header.
+
+Basic syntax:
+
+:::code
+[External page (it opens in another tab)](https://example.com)
+[Documentation page (it opens in this tab)](pages/route/to/page.html)  //do not forget that instead of .mmx here you must put .html
+[Header (it scrolls the content to the header)](#headerId)
+[Documentation page header (it opens in this tab)](pages/route/to/page.html#headerId)
+:::
+
+**Examples:**
+
+- some text [External page (opens in another tab)](https://example.com) some text
+- [Documentation page (opens in this tab)](pages/Multimedia/Audios.html)
+- [Header (scrolls the content to the header)](#Title)
+- [File sources and paths h2 (opens in this tab)](pages/File sources and paths.html#header2)
+
+You can also write a bare URL or domain and MMX will turn it into a link automatically:
+
+:::code
+https://example.com
+https://example.com/example
+example.com
+example.com/example
+:::
+
+**Examples:**
+
+https://example.com https://example.com/example
+example.com example.com/example
