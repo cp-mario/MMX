@@ -11,3 +11,12 @@ sidebarBottomText =  "Made with <a target=_blank href=https://github.com/cp-mari
 #Add `auto` explicitly to a block to force highlighting on even if this is false.
 #Defaults to false to keep existing behavior.
 defaultCodeHighlight = false
+
+#Default index for auto-generated folder pages.
+#Set to false (the default) to include the auto-generated directory list in every folder.
+#Set to true to OMIT the directory list by default; in that case, put `#defaultIndex`
+#on the first line of an `indexText.mmx` to opt THAT folder back in.
+#Per-folder overrides (always win over this default):
+#   `#noDefaultIndex` on the first line of `indexText.mmx` -> hide the index in that folder
+#   `#defaultIndex`   on the first line of `indexText.mmx` -> show the index in that folder
+noDefaultIndex = false

@@ -1,0 +1,9 @@
+## About this folder
+
+This folder contains a grab bag of pages used to exercise edge cases in the
+MMX compiler and the folder-index generator. It is **not** user-facing
+documentation; the pages here are mostly numbered stress tests (e.g.
+`scrollSaveTest/00.mmx` … `50.mmx`) plus a few hand-written pages that
+cover the `Getting Started` basics and nested subfolders.
+
+If you are looking for the real docs, head back to the sidebar.

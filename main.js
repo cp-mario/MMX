@@ -46,6 +46,7 @@ function getProjectCache(projectDir) {
     if (data.configData.lang) data.lang = data.configData.lang;
     if (data.configData.defaultCodeHighlight === true) data.defaultCodeHighlight = true;
     if (data.configData.sidebarBottomText !== undefined) data.sidebarBottomText = data.configData.sidebarBottomText;
+    if (data.configData.noDefaultIndex === true) data.noDefaultIndex = true;
   }
   const assetsDir = path.join(projectDir, "assets");
   if (fs.existsSync(assetsDir)) {
@@ -237,13 +238,23 @@ function buildFolderListHtml(dir, relDir = "") {
  * sidebar or the search index — see `buildFolderListHtml` and
  * `collectFiles` for the matching skip rules.
  *
+ * Per-folder index overrides (read from the FIRST LINE of `indexText.mmx`):
+ *   `#noDefaultIndex` -> hide the auto-generated directory list for this folder
+ *   `#defaultIndex`   -> show the auto-generated directory list for this folder
+ * The per-folder directive (if any) always wins over the project-wide
+ * `noDefaultIndex` config option (the `configDefaultNoIndex` arg).
+ *
  * The temp files are deleted by `cleanupFolderIndexPages` after the
  * build finishes, so the source dir is left untouched.
  *
  * @param {string} pagesSourceDir - Absolute path to the project's `pages/` dir
+ * @param {boolean} [configDefaultNoIndex] - Project-wide default from
+ *   `config.mcfg`'s `noDefaultIndex` key. `true` means folders don't show
+ *   the auto-generated directory list unless they opt back in with
+ *   `#defaultIndex` in `indexText.mmx`. Defaults to `false`.
  * @returns {string[]} List of temp `__index.mmx` paths created (for cleanup)
  */
-function generateFolderIndexPages(pagesSourceDir) {
+function generateFolderIndexPages(pagesSourceDir, configDefaultNoIndex = false) {
   const tempFiles = [];
 
   function processFolder(dir) {
@@ -279,11 +290,54 @@ function generateFolderIndexPages(pagesSourceDir) {
     // distinctly from the auto-generated list that follows it.
     const indexTextItem = items.find(item => item.toLowerCase() === 'indextext.mmx');
     let descriptionHtml = "";
+    // Per-folder override for "should we emit the auto-generated directory
+    // list for this folder?". `null` means "no per-folder directive was
+    // found, fall back to the project-wide config default". A boolean
+    // value (true/false) means the per-folder directive wins.
+    let perFolderOverride = null;
     if (indexTextItem) {
       const indexTextPath = path.join(dir, indexTextItem);
       try {
-        const rawMmx = fs.readFileSync(indexTextPath, "utf-8");
-        descriptionHtml = `<div class="folder-index-text">\n${mmxToHtml(rawMmx)}\n</div>`;
+        let rawMmx = fs.readFileSync(indexTextPath, "utf-8");
+
+        // The first non-blank line of `indexText.mmx` may carry a single
+        // directive token that controls whether the auto-generated
+        // directory list is shown for this folder:
+        //   `#noDefaultIndex` -> hide the index in this folder
+        //   `#defaultIndex`   -> show the index in this folder
+        // We match case-insensitively on either a token by itself on a
+        // line or a token followed by a space + comment (anything after
+        // the directive on the same line is treated as a comment and
+        // discarded). The directive is stripped from the content before
+        // the rest of the file is passed to `mmxToHtml`, so it never
+        // shows up in the rendered page.
+        const lines = rawMmx.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          const trimmed = lines[i].trim();
+          if (!trimmed) continue;
+          const lower = trimmed.toLowerCase();
+          if (lower === '#nodefaultindex' || lower.startsWith('#nodefaultindex ')) {
+            perFolderOverride = true; // hide the index
+            lines.splice(i, 1);
+          } else if (lower === '#defaultindex' || lower.startsWith('#defaultindex ')) {
+            perFolderOverride = false; // show the index
+            lines.splice(i, 1);
+          }
+          // First non-blank line handled (whether it was a directive or
+          // not), so we stop scanning. If it was not a directive the
+          // file is left untouched and the fallback to the project
+          // default applies.
+          break;
+        }
+        rawMmx = lines.join('\n');
+
+        // Skip emitting the description block entirely when the
+        // companion file is empty (or contained only a directive). An
+        // empty wrapper would otherwise create a visible gap before the
+        // auto-generated list.
+        if (rawMmx.trim().length > 0) {
+          descriptionHtml = `<div class="folder-index-text">\n${mmxToHtml(rawMmx)}\n</div>`;
+        }
       } catch (e) {
         // Failing to parse the description should not break the whole
         // build; log a warning and fall back to no description.
@@ -291,25 +345,45 @@ function generateFolderIndexPages(pagesSourceDir) {
       }
     }
 
+    // Resolve the final `showIndex` decision for this folder:
+    //   - per-folder directive (if present) wins;
+    //   - otherwise fall back to the project-wide `noDefaultIndex` config
+    //     option (inverted: `noDefaultIndex = true` -> `showIndex = false`).
+    const showIndex = perFolderOverride !== null
+      ? !perFolderOverride
+      : !configDefaultNoIndex;
+
     // Write a temp `__index.mmx` with the folder name as H1 and the
     // nested list as the body. The H1 is needed for the <title>, the
     // heading-link button, and the search index title extraction.
     const folderName = path.basename(dir);
-    const listHtml = buildFolderListHtml(dir);
+    const listHtml = showIndex ? buildFolderListHtml(dir) : "";
 
-    // Build the body: when there is a description, slot it between the
-    // H1 and the list, separated by an `<hr class="folder-index-divider">`
+    // Build the body. When the auto-generated index is suppressed we
+    // emit only the H1 + (optional) description, with no divider and
+    // no directory list, so the folder reads as a normal description
+    // page. When the index is shown we slot the description between
+    // the H1 and the list, separated by an `<hr class="folder-index-divider">`
     // so the user content is visually distinct from the auto-generated
-    // directory list that follows.
-    // The auto-generated directory list is always preceded by an
-    // `<h2 class="folder-index-heading">Index</h2>` so the list has a
-    // clear, consistent title (and a dedicated anchor target for links).
-    const indexHeading = '<h2 class="folder-index-heading">Index</h2>';
+    // directory list that follows. The list is always preceded by an
+    // `<h2 class="folder-index-heading">Index</h2>` so it has a clear,
+    // consistent title (and a dedicated anchor target for links).
     let content;
-    if (descriptionHtml) {
-      content = `# ${folderName}\n\n${descriptionHtml}\n\n<hr class="folder-index-divider">\n\n${indexHeading}\n\n${listHtml}\n`;
+    if (showIndex) {
+      const indexHeading = '<h2 class="folder-index-heading">Index</h2>';
+      if (descriptionHtml) {
+        content = `# ${folderName}\n\n${descriptionHtml}\n\n<hr class="folder-index-divider">\n\n${indexHeading}\n\n${listHtml}\n`;
+      } else {
+        content = `# ${folderName}\n\n${indexHeading}\n\n${listHtml}\n`;
+      }
     } else {
-      content = `# ${folderName}\n\n${indexHeading}\n\n${listHtml}\n`;
+      // Index suppressed. Emit ONLY the folder name and (optionally)
+      // the description, with no divider and no directory list.
+      if (descriptionHtml) {
+        content = `# ${folderName}\n\n${descriptionHtml}\n`;
+      } else {
+        content = `# ${folderName}\n`;
+      }
     }
 
     const tempPath = path.join(dir, '__index.mmx');
@@ -586,7 +660,14 @@ function processProjectStructure(sourceDir, outputDir, options = {}) {
   // We do this BEFORE `processPagesRecursive` so the synthetic `__index.mmx`
   // files are picked up by the normal pipeline (and therefore also end up
   // in the search index, sitemap, etc.). They are deleted at the end.
-  const tempIndexFiles = generateFolderIndexPages(pagesSource);
+  // The project-level `noDefaultIndex` config option (boolean) is the
+  // default for every folder; individual `indexText.mmx` files can
+  // override that with `#noDefaultIndex` or `#defaultIndex` on their
+  // first line. See `generateFolderIndexPages` for the full resolution
+  // rules.
+  const projectData = getProjectCache(sourceDir);
+  const configDefaultNoIndex = !!(projectData && projectData.noDefaultIndex);
+  const tempIndexFiles = generateFolderIndexPages(pagesSource, configDefaultNoIndex);
 
   processPagesRecursive(pagesSource, pagesDest, stats, { deleteOriginals, log, outputRoot: outputDir });
 
