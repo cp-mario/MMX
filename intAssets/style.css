@@ -52,6 +52,11 @@ hr {
   display: inline;
 }
 
+mark {
+  border-radius: 3px;
+  padding-inline: 2px;
+}
+
 /* Anchor link produced by `$$id`. Uses a dotted underline so it is
    visually distinct from a regular link (`[text](url)`) and from a
    header link: regular links open in a new tab and have a solid

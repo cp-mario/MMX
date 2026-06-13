@@ -110,6 +110,23 @@ You can colour text with an HTML-style syntax that accepts any CSS colour value:
 `<c="color">` is shown above as a placeholder, but `color` is not a valid CSS colour and will be ignored by the browser. Use a real value such as `green`, `#ffcc40` or `rgb(130, 130, 130)`.
 >>>
 
+## Highlighted text
+
+You can highlight text as if you used a marker pen with the `<ch>` tag. It works like `<c>` but renders the text with a background colour instead of changing the text colour. It accepts any CSS colour value: named colours, hex, `rgb()` or `hsl()`.
+
+If you do not specify a colour, it defaults to yellow.
+
+:::code
+<ch>This text is highlighted in yellow (default)</ch>
+<ch="lime">This text is highlighted in lime</ch>
+<ch="#ffcc40">This text is highlighted in yellow</ch>
+<ch="rgb(255, 150, 150)">This text is highlighted in pink</ch>
+:::
+
+**Examples:**
+
+<ch>This text is highlighted in yellow (default)</ch> normal text <ch="lime">This text is highlighted in lime</ch> <ch="#ffcc40">This text is highlighted in yellow</ch> <ch="rgb(255, 150, 150)">This text is highlighted in pink</ch>
+
 ## Color display
 
 The `<colorDisplay="..."/>` tag renders a small filled circle next to the literal color value you pass in. It is self-closing (no closing tag) and accepts the same CSS color values as `<c="...">`: named colors, hex, `rgb()` or `hsl()`.

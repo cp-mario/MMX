@@ -352,6 +352,16 @@ export const PATTERNS = {
       }
     },
 
+    // Highlighted/marked text: <ch="color">text</ch> or <ch>text</ch>
+    // Renders as <mark> with the specified background color (defaults to yellow).
+    {
+      regex: /<ch(?:="([^"]*)")?>(.*?)<\/ch>/gs,
+      replace: (match, color, content) => {
+        const bgColor = color || 'yellow';
+        return `<mark style="background-color: ${bgColor};">${content}</mark>`;
+      }
+    },
+
     // Color display: <colorDisplay="color"/>
     // Self-closing tag that renders the literal color value next to a
     // filled circle filled with that same color. Accepts any CSS color
