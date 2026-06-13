@@ -162,6 +162,25 @@ if (document.readyState === "loading") {
 // animation even when the page itself does not reload.
 window.addEventListener("hashchange", highlightOnLoad);
 
+// When clicking an mmx-anchor-link to the same hash, the hashchange event
+// does NOT fire (the hash stays the same), so we manually call
+// highlightOnLoad() to trigger the .resaltado animation on the target.
+// For links pointing to a *different* hash, the hashchange listener
+// already handles it – we do nothing extra here.
+document.addEventListener("click", (event) => {
+  const link = event.target.closest("a.mmx-anchor-link");
+  if (!link) return;
+
+  const href = link.getAttribute("href");
+  if (!href || !href.startsWith("#")) return;
+
+  // Only intervene when the target hash equals the current hash,
+  // because otherwise the browser navigates and hashchange fires.
+  if (href === window.location.hash) {
+    highlightOnLoad();
+  }
+});
+
 // ============================================================================
 // TASK LISTS
 // ---------------------------------------------------------------------------
