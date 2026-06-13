@@ -182,6 +182,19 @@ export const PATTERNS = {
       raw: true
     },
 
+    // Raw HTML block: #html ... ###
+    // Renders the content as raw HTML inside a <div class="raw-html">.
+    // The content is NOT escaped and NOT processed by any MMX pattern,
+    // so you can write literal HTML tags, scripts, or any markup.
+    {
+      name: 'html',
+      open: /^#html(?:\s+([^\n]+))?\s*$/gm,
+      close: /^###\s*$/gm,
+      tag: 'div',
+      class: 'raw-html',
+      html: true
+    },
+
     // Note block: >>>note [classes] ... >>>
     // Uses >>> as the delimiter (instead of :::) so that `:::code ... :::`
     // blocks can contain literal `:::note` examples without the inner `:::`

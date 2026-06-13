@@ -233,6 +233,51 @@ This text is <%write **not bold**, *not italic*, [not a link](https://example.co
 The raw tag is single-line: a newline closes the tag. If you need a multi-line raw block, use a `:::code ... :::` block instead.
 >>>
 
+## Raw HTML block
+
+You can insert raw HTML directly into the page with the `#html` block. The content between `#html` and `###` is rendered **as-is**, without any escaping or processing by MMX patterns. This is useful when you need to embed custom HTML, interactive elements, or third-party embeds that go beyond what MMX provides.
+
+Unlike `:::code ... :::` (which escapes HTML entities for display), the `#html` block outputs the content as real markup that the browser interprets.
+
+>>>tip
+Because the content is **not parsed** by MMX, you cannot use MMX syntax (bold, links, headers, etc.) inside a `#html` block. Use this block only for raw HTML. For displaying code examples, use `:::code ... :::` instead.
+>>>
+
+>>>note
+Dont use headers inside this, instead add an style to the html element `style="a style"` and change the font size 
+>>>
+
+>>>note
+The default styles of mmx will be aplied to this html
+>>>
+
+
+:::code
+#html
+<div style="padding: 1em; background: #f0f8ff; border-left: 4px solid #1E88E5;">
+  <div style="margin-top: 0;">Custom HTML block</div>
+  <p>This content is rendered <strong>directly</strong> as HTML.</p>
+  <ul>
+    <li>Lists work natively</li>
+    <li><em>Italic</em> and <strong>bold</strong> too</li>
+  </ul>
+</div>
+###
+:::
+
+**Example:**
+
+#html
+<div style="padding: 1em; background: #f0f8ff; border-left: 4px solid #1E88E5;">
+  <div style="margin-top: 0;">Custom HTML block</div>
+  <p>This content is rendered <strong>directly</strong> as HTML.</p>
+  <ul>
+    <li>Lists work natively</li>
+    <li><em>Italic</em> and <strong>bold</strong> too</li>
+  </ul>
+</div>
+###
+
 ## Strikethrough
 
 Wrap text with a single tilde to render it as strikethrough: `~Text in strikethrough~`.

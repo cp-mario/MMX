@@ -81,6 +81,16 @@ export function mmxToHtml(mmx) {
   // Step 8: Restore protected code blocks (with original unprocessed content)
   result = restoreRawBlocks(result, extracted.blocks);
 
+  // Restore raw HTML blocks (#html ... ###) that were replaced with
+  // placeholders during multiline parsing so they are not processed
+  // by monoline, list, paragraph, or inline patterns.
+  if (globalThis.__MMX_RAW_HTML_BLOCKS__) {
+    for (const item of globalThis.__MMX_RAW_HTML_BLOCKS__) {
+      result = result.replace(item.key, item.value);
+    }
+    globalThis.__MMX_RAW_HTML_BLOCKS__ = [];
+  }
+
   // Step 7: Handle global iframe blocks
   if (globalThis.__MMX_RAW_IFRAMES__) {
     for (const item of globalThis.__MMX_RAW_IFRAMES__) {
@@ -127,6 +137,25 @@ function parseMultilineBlocks(text, config) {
 
         processed = `<code>${content}</code>`;
         html = `<pre class="${preClasses}"${attrs}>${processed}</pre>`;
+
+      } else if (block.html) {
+        // Raw HTML block: output content as-is without escaping.
+        // Content is NOT processed by monoline or inline patterns.
+        let content = block.content.join('\n');
+        content = content.replace(/^\n+/, '').replace(/\n+$/, '');
+        const divClasses = (block.classes && block.classes.length) ? block.classes.join(' ') : block.class;
+        const rawHtml = `<div class="${divClasses}">${content}</div>`;
+
+        // Store the raw HTML in a global array and emit a placeholder
+        // so subsequent processing (monoline, lists, paragraphs, inline)
+        // cannot corrupt the content. Restored in mmxToHtml after
+        // restoreRawBlocks.
+        if (!globalThis.__MMX_RAW_HTML_BLOCKS__) {
+          globalThis.__MMX_RAW_HTML_BLOCKS__ = [];
+        }
+        const key = `%%RAW_HTML_${globalThis.__MMX_RAW_HTML_BLOCKS__.length}%%`;
+        globalThis.__MMX_RAW_HTML_BLOCKS__.push({ key, value: rawHtml });
+        html = key;
 
       } else {
         // Formatted blocks: tables or notes
@@ -321,6 +350,7 @@ function parseMultilineBlocks(text, config) {
         tag: config.tag,
         class: config.class,
         raw: config.raw || false,
+        html: config.html || false,
         flags: tokens,
         isAuto,
         classes: [config.class, ...extraClasses],
