@@ -370,7 +370,7 @@ function generateFolderIndexPages(pagesSourceDir, configDefaultNoIndex = false) 
     // consistent title (and a dedicated anchor target for links).
     let content;
     if (showIndex) {
-      const indexHeading = '<h2 class="folder-index-heading">Index</h2>';
+      const indexHeading = '<h2 class="folder-index-heading" id="index">Index</h2>';
       if (descriptionHtml) {
         content = `# ${folderName}\n\n${descriptionHtml}\n\n<hr class="folder-index-divider">\n\n${indexHeading}\n\n${listHtml}\n`;
       } else {
