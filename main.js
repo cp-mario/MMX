@@ -126,23 +126,20 @@ function generateIndexRecursive(sourceDir, rootDir) {
  * MMX parser leaves it untouched and `applyPathPrefix` does not rewrite
  * internal navigation links.
  *
- * IMPORTANT: all hrefs in the generated list are RELATIVE to the document
- * that hosts the list (i.e. the `dir` from the FIRST call). When the list
- * is built for a deeply nested folder, the recursive calls don't know
- * their own depth, so we accumulate a kebab-case `relDir` (e.g.
- * `"scrollsavetest/"` or `"a-folder-inside-a-folder/"`) and prepend it to
- * every link. Without this, a file at `pages/tests/scrollsavetest/23.mmx`
- * would emit `href="23.html"`, which the browser would resolve against
- * the document (`pages/tests/index.html`) and produce the wrong URL
- * `pages/tests/23.html`.
+ * IMPORTANT: all hrefs in the generated list are relative to the OUTPUT ROOT
+ * (e.g., "pages/multimedia/audios.html"). The `applyPathPrefix` function
+ * will prepend the calculated prefix (e.g., "../.././") when the page is
+ * rendered, so the final href becomes "../.././pages/multimedia/audios.html"
+ * which correctly resolves from any page depth.
  *
  * @param {string} dir - Absolute path to the folder being listed
+ * @param {string} baseHref - Path from output root to this folder (e.g., "pages/multimedia/"), with trailing slash.
  * @param {string} [relDir] - Kebab-case relative path from the top-level
  *   folder being indexed to `dir`, with a trailing slash. Defaults to "".
  *   Used internally by recursive calls.
  * @returns {string} HTML fragment with the nested list
  */
-function buildFolderListHtml(dir, relDir = "") {
+function buildFolderListHtml(dir, baseHref, relDir = "") {
   const items = fs.readdirSync(dir);
 
   // Partition into folders and .mmx files, skipping our own temp index
@@ -186,23 +183,24 @@ function buildFolderListHtml(dir, relDir = "") {
   // Files first (alphabetical), then folders (alphabetical), each
   // folder recursively nests its own list inside its <li>.
   // Files: link text is the file name without the .mmx extension.
-  // The href is prefixed with the accumulated `relDir` so it resolves
-  // correctly from the top-level document (see IMPORTANT note above).
+  // The href is prefixed with baseHref + relDir so it's relative to the output root.
+  // applyPathPrefix will later prepend the calculated prefix (e.g., "../.././").
   for (const file of files) {
     const baseName = file.replace(/\.mmx$/i, '');
-    const href = relDir + toKebabCase(file).replace(/\.mmx$/i, '.html');
+    const href = baseHref + relDir + toKebabCase(file).replace(/\.mmx$/i, '.html');
     lines.push(`<li class="folder-list-item folder-list-file">${fileIconSpan} <a target="_self" href="${href}">${baseName}</a></li>`);
   }
 
   // Folders after files, with children nested in the same <li>.
   // The child call gets a `relDir` that appends this folder's kebab
   // name (with trailing slash) so every nested href includes the
-  // chain of intermediate folders.
+  // chain of intermediate folders. baseHref is passed through unchanged.
   for (const folder of subfolders) {
     const kebab = toKebabCase(folder);
     const childRelDir = relDir + kebab + "/";
-    const childHtml = buildFolderListHtml(path.join(dir, folder), childRelDir);
-    lines.push(`<li class="folder-list-item folder-list-folder">${folderIconSpan} <a target="_self" href="${childRelDir}">${folder}</a>`);
+    const childHtml = buildFolderListHtml(path.join(dir, folder), baseHref, childRelDir);
+    const folderHref = baseHref + childRelDir;
+    lines.push(`<li class="folder-list-item folder-list-folder">${folderIconSpan} <a target="_self" href="${folderHref}">${folder}</a>`);
     lines.push(childHtml);
     lines.push('</li>');
   }
@@ -357,7 +355,15 @@ function generateFolderIndexPages(pagesSourceDir, configDefaultNoIndex = false) 
     // nested list as the body. The H1 is needed for the <title>, the
     // heading-link button, and the search index title extraction.
     const folderName = path.basename(dir);
-    const listHtml = showIndex ? buildFolderListHtml(dir) : "";
+    
+    // Calculate baseHref: path from output root to this folder (e.g., "pages/multimedia/")
+    // This is the relative path from pagesSourceDir to dir, prefixed with "pages/", kebab-cased.
+    const relFromPagesSource = path.relative(pagesSourceDir, dir);
+    const baseHref = relFromPagesSource
+      ? "pages/" + relFromPagesSource.split(path.sep).map(toKebabCase).join("/") + "/"
+      : "pages/";
+    
+    const listHtml = showIndex ? buildFolderListHtml(dir, baseHref) : "";
 
     // Build the body. When the auto-generated index is suppressed we
     // emit only the H1 + (optional) description, with no divider and
