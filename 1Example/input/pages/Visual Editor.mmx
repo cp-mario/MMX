@@ -1,0 +1,360 @@
+# Visual Editor
+
+MMX includes a built-in **visual editor** that lets you write and preview `.mmx` files in a browser-based interface with live preview, syntax highlighting, and a full toolbar.
+
+>>>tip
+Make sure you have [Bun](https://bun.sh) installed (or Node.js >= 18). The editor runs on **Bun** by default but also works with Node.js.
+>>>
+
+## Starting the editor 
+
+From the project root, run:
+
+:::code
+bun editor/server.js
+:::
+
+If you are using Node.js instead:
+
+:::code
+node editor/server.js
+:::
+
+Once the server starts, you will see a banner in the terminal:
+
+:::code
+╔══════════════════════════════════════════╗
+║         MMX Visual Editor                ║
+║                                          ║
+║  Running on http://localhost:3031        ║
+║  Project root: MMX                       ║
+║  Stop:         Ctrl+C or /api/shutdown   ║
+╚══════════════════════════════════════════╝
+:::
+
+Open [http://localhost:3031](http://localhost:3031) in your browser.
+
+### Changing the port 
+
+Set the `PORT` environment variable to use a different port:
+
+:::code
+PORT=8080 bun editor/server.js
+:::
+
+#s
+
+## Interface overview 
+
+The editor is split into three main areas:
+
+- **Sidebar** (left) — file explorer where you browse, create, and manage `.mmx` files.
+- **Editor** (center) — the main code editor with syntax highlighting and line numbers.
+- **Preview** (right) — a live HTML preview that updates as you type.
+
+You can drag the dividers to resize any section.
+
+#s
+
+## File explorer 
+
+The sidebar displays the full folder structure of your `pages/` directory as a collapsible tree.
+
+### Actions 
+
+#table(h)
+Button | Action |
+New file | Creates a new `.mmx` file in the selected folder 
+New folder | Creates a new subfolder inside `pages/`
+Refresh | Reloads the file tree from disk
+Expand all | Expands every folder in the tree
+Collapse all | Collapses every folder
+#endtable
+
+Clicking a file opens it in the editor. Right-click context menu options include **Rename** and **Delete**.
+
+#s
+
+## Code editor 
+
+The editor is a plain-text `<textarea>` with a syntax-highlighting overlay that runs entirely on the client side. It supports:
+
+- **Syntax highlighting** — MMX-specific tokens (headings, code blocks, admonitions, tables, lists, inline formatting) are color-coded.
+- **Line numbers** — displayed in the left gutter.
+- **Line wrap** — toggle with the toolbar button or press `Alt+W`.
+- **Undo / Redo** — full history stack (`Ctrl+Z` / `Ctrl+Shift+Z` or `Ctrl+Y`).
+
+### Keyboard shortcuts 
+
+#table(h)
+Shortcut | Action
+`Ctrl+S` | Save the current file
+`Ctrl+Z` | Undo
+`Ctrl+Shift+Z` / `Ctrl+Y` | Redo
+`Alt+W` | Toggle line wrap
+`Ctrl+H` | Insert heading
+#endtable
+
+
+#s
+
+## Toolbar 
+
+The toolbar at the top of the editor provides quick access to MMX syntax elements. It is organised in groups:
+
+### Text formatting 
+
+#table(h)
+Button | Inserts
+**H** | Heading (`# title`)
+**B** | Bold (`**text**`)
+*I* | Italic (`*text*`)
+**S** | Strikethrough (`~~text~~`)
+**U** | Underline (`_text_`)
+**A** | Color / Highlight popup
+#endtable
+
+### Code & media 
+
+#table(h)
+Button | Inserts
+`< >` | Inline code ( $$inlineCodeExample )
+Code block | `:::code` block
+#code | `#code(path)` from a file
+Link | `[text](url)`
+Image | `![alt](source)`
+Inline image | `<-source->`
+Video | `!!(source)`
+Audio | `!!!(source)`
+Assets | Opens the assets browser dialog
+#endtable
+
+$[Inline code example:](inlineCodeExample)
+
+:::code
+`code`
+:::
+
+`code`
+
+### Blocks 
+
+#table(h)
+Button | Inserts
+Table | Opens the table editor
+List | Inserts a bullet list (`- item`)
+Admonition | Inserts a note / tip / warning block
+Separator | Inserts a horizontal rule (`---`)
+#endtable
+
+### Actions 
+
+#table(h)
+Button | Action |
+Save | Saves the current file (`Ctrl+S`)
+Preview | Toggles the preview panel on/off
+Scroll sync | Toggles bidirectional scrolling between editor and preview
+Wrap | Toggles line wrapping (`Alt+W`)
+View output | Opens the built documentation in a new tab
+Build & refresh | Runs `bun main.js` and refreshes the output view
+Build log | Shows the output of the last build
+Stop | Shuts down the editor server
+#endtable
+
+#s
+
+## Live preview 
+
+The preview panel renders the current `.mmx` content to HTML every time you stop typing (debounced). It uses the **same MMX parser** (`scripts/parser.js`) that is used for the static site build, so what you see in the preview is what the final HTML will look like.
+
+### Scroll sync 
+
+When **scroll sync** is enabled (default: on), scrolling the editor automatically scrolls the preview to the matching line, and vice versa. Toggle it with the scroll-sync toolbar button.
+
+### #code() includes in preview 
+
+The preview resolves `#code(path)` directives by reading the referenced file from disk. It searches in these locations in order:
+
+1. Relative to the current `.mmx` file's directory.
+2. Relative to the project root.
+3. Relative to the configured `inputPath`.
+
+If the file is not found, a warning message is shown inside the preview.
+
+#s
+
+## Table editor 
+
+The table editor provides a visual grid for building MMX tables without writing the raw syntax. Click the table button in the toolbar to open it.
+
+- **Add / remove rows and columns** using the toolbar inside the dialog.
+- **Merge cells** by selecting them and clicking the merge button.
+- **Apply colors** to cells using the color picker.
+- **Auto-fill** heading cells with shortcut buttons.
+- The dialog inserts the generated MMX table syntax directly into the editor at the cursor position.
+
+#s
+
+## Assets browser 
+
+Click the **Assets** button in the toolbar to open the assets browser dialog. From there you can:
+
+- Browse the folder structure of your `assets/` directory.
+- Preview images, videos, and audio files.
+- Upload new files (drag & drop or click to select).
+- Create folders to organise assets.
+- Open a file in the default system application.
+- Reveal a file in the system file explorer.
+
+When you find the asset you need, click the **Insert** button next to it to add the corresponding MMX syntax at the cursor position in the editor.
+
+#s
+
+## Building the documentation 
+
+From inside the editor you can run a full MMX build without leaving the browser:
+
+1. Click the **Build & refresh** toolbar button (refresh icon).
+2. The server runs `bun main.js` (or `node main.js`) as a child process.
+3. Once the build finishes, the button turns green briefly and the output view updates.
+4. Click **View output** to open the generated documentation in a new browser tab.
+
+You can also click the **Build log** button to see the stdout/stderr output of the last build.
+
+#s
+
+## Shutting down 
+
+There are three ways to stop the editor server:
+
+- Press `Ctrl+C` in the terminal where the server is running.
+- Click the **Stop** button (red square) in the toolbar.
+- Send a `POST` request to `/api/shutdown`.
+
+The server performs a graceful shutdown, closing all open connections before exiting.
+
+#s
+
+## API reference 
+
+The editor server exposes a REST API for file operations and preview. All endpoints return JSON.
+
+### Project info 
+
+:::code
+GET /api/project-info
+:::
+Returns the parsed project configuration (`config.mcfg`).
+
+### File tree 
+
+:::code
+GET /api/files
+:::
+Returns the list of `.mmx` files and the folder tree inside `pages/`.
+
+### Read file 
+
+:::code
+GET /api/file?path=<absolute-path>
+:::
+Returns the content of a file.
+
+### Save file 
+
+:::code
+POST /api/file
+Body: { "filePath": "...", "content": "..." }
+:::
+Saves content to a file. Preserves the original line-ending style (CRLF or LF).
+
+### Create file 
+
+:::code
+POST /api/file/create
+Body: { "filePath": "..." }
+:::
+Creates an empty file (and any necessary parent directories).
+
+### Create folder 
+
+:::code
+POST /api/folder/create
+Body: { "folderPath": "..." }
+:::
+Creates a new folder (and any necessary parent directories).
+
+### Delete file 
+
+:::code
+DELETE /api/file?path=<absolute-path>
+:::
+Deletes a file.
+
+### Delete folder 
+
+:::code
+DELETE /api/folder?path=<absolute-path>
+:::
+Deletes a folder and all its contents recursively.
+
+### Preview 
+
+:::code
+POST /api/preview
+Body: { "content": "...", "filePath": "..." }
+:::
+Converts MMX content to HTML and resolves `#code()` includes. Returns the rendered HTML.
+
+### Build 
+
+:::code
+POST /api/build
+:::
+Runs the full MMX documentation build (`bun main.js`) and returns the build log.
+
+### Build status 
+
+:::code
+GET /api/build/status
+:::
+Returns whether the output `index.html` exists, plus the output path.
+
+### Assets list 
+
+:::code
+GET /api/assets/list?sub=<optional-subpath>
+:::
+Lists files and folders inside the project's `assets/` directory.
+
+### Upload asset 
+
+:::code
+POST /api/assets/upload
+Body: { "filename": "...", "base64": "...", "subPath": "..." }
+:::
+Uploads a file to the `assets/` directory (base64-encoded content).
+
+### Config 
+
+:::code
+GET /api/config
+:::
+Returns the parsed configuration values.
+
+### Shutdown 
+
+:::code
+POST /api/shutdown
+:::
+Gracefully stops the server.
+
+#s
+
+## Requirements 
+
+- **Bun** >= 1.1.0 (recommended) or **Node.js** >= 18.
+- A modern browser (Chrome, Firefox, Edge, or Safari).
+- The project must have a valid `config.mcfg` with `inputPath` pointing to your documentation source.
+
+The editor serves all static files from the `editor/public/` directory and dynamically serves built output from the project's `outputPath`, so everything works out of the box as long as the project structure is intact.

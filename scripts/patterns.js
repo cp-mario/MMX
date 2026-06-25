@@ -122,7 +122,7 @@ export const PATTERNS = {
 
     // Code file inclusion: #code(path/to/file) [flags]
     { 
-      regex: /^#code\((.+?)\)(?:\s+([\w\s]+))?$/gm, 
+      regex: /^#code\((.+?)\)(?:[ \t]+([^\n]+))?\s*$/gm, 
       replace: (match, path, flags) => {
         const opts = flags ? flags.trim().split(/\s+/) : [];
         const auto = opts.includes("auto");
@@ -345,15 +345,15 @@ export const PATTERNS = {
       }
     },
 
-    // Bold: **text**
+    // Bold: **text** (multiline: [\s\S] matches any character incl. newline)
     {
-      regex: /\*\*(.*?)\*\*/g,
+      regex: /\*\*([\s\S]*?)\*\*/g,
       replace: (match, text) => `<strong>${text}</strong>`
     },
 
-    // Italic: *text*
+    // Italic: *text* (multiline: [\s\S] matches any character incl. newline)
     {
-      regex: /\*(.*?)\*/g,
+      regex: /\*([\s\S]*?)\*/g,
       replace: (match, text) => `<em>${text}</em>`
     },
 
@@ -388,18 +388,18 @@ export const PATTERNS = {
       }
     },
 
-    // Strikethrough: ~text~
+    // Strikethrough: ~text~ (multiline)
     // Tildes are not used anywhere else in MMX, so this is safe.
     {
-      regex: /~([^~\n]+)~/g,
+      regex: /~([\s\S]*?)~/g,
       replace: (match, text) => `<del>${text}</del>`
     },
 
-    // Underline: __text__
+    // Underline: __text__ (multiline)
     // Double underscores are not used anywhere else in MMX, so this is
     // safe. (Single `_` is kept free for future use; only `__` is bound.)
     {
-      regex: /__([^_\n]+)__/g,
+      regex: /__([\s\S]*?)__/g,
       replace: (match, text) => `<u>${text}</u>`
     },
 

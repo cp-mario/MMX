@@ -577,7 +577,7 @@ There are two pieces that work together:
 
 :::code
 $[this section](my-anchor) is the bookmark.
-Click $my-anchor to jump back here.
+Click $$my-anchor to jump back here.
 :::
 
 **Example:**

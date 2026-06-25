@@ -51,7 +51,34 @@ bun run node      # force Node even if Bun is installed
 
 ---
 
-## Project structure
+## Visual Editor
+
+MMX includes a built-in **visual editor** that provides a comfortable environment for writing and previewing `.mmx` files in real time.
+
+```bash
+# Start the editor
+bun editor/server.js
+```
+
+Then open [http://localhost:3031](http://localhost:3031) in your browser. The editor works with both **Bun** and **Node.js**.
+
+### Features
+
+- **File explorer** — browse, create, rename, and delete `.mmx` files directly from the sidebar.
+- **Code editor** with syntax highlighting, line numbers, and line wrapping.
+- **Live preview** — see the rendered HTML as you type, with bidirectional scroll sync.
+- **Toolbar** — insert headings, bold, italic, code blocks, tables, lists, admonitions (notes/tips/warnings), images, videos, audio, and more.
+- **Table editor** — a visual grid for editing MMX tables without writing raw syntax.
+- **Assets browser** — upload, browse, and manage files in the `assets/` folder.
+- **Autocomplete** — smart suggestions for MMX syntax elements.
+- **Build & preview output** — run the full MMX build from inside the editor and open the generated documentation.
+- **Undo/redo** — full history support for your edits.
+
+For a complete walkthrough of all features, see the [Visual Editor](1Example/input/pages/Visual%20Editor.mmx) documentation page.
+
+> **Note:** The editor is still under development and may not cover every MMX feature yet.
+
+---
 
 ```
 MMX/

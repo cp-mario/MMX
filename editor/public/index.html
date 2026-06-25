@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MMX Visual Editor</title>
+  <link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+  <!-- ─── App Container ────────────────────────────────────────────── -->
+  <div id="app">
+    <!-- Sidebar: File Explorer -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <h2><span class="icon" data-icon="folder" data-size="16" style="vertical-align:-3px;margin-right:4px;"></span> Explorer</h2>
+        <div class="sidebar-actions">
+          <button id="btnNewFile" title="New file">
+            <span class="icon" data-icon="file-new" data-size="16"></span>
+          </button>
+          <button id="btnNewFolder" title="New folder">
+            <span class="icon" data-icon="folder-new" data-size="16"></span>
+          </button>
+          <button id="btnRefreshFiles" title="Refresh file list">
+            <span class="icon" data-icon="refresh" data-size="16"></span>
+          </button>
+          <button id="btnExpandAll" title="Expand all" class="btn-expand-all">
+            <span class="icon" data-icon="expand-all" data-size="16"></span>
+          </button>
+          <button id="btnCollapseAll" title="Collapse all" class="btn-collapse-all">
+            <span class="icon" data-icon="collapse-all" data-size="16"></span>
+          </button>
+        </div>
+      </div>
+      <div id="fileTree" class="file-tree"></div>
+    </aside>
+
+    <!-- Sidebar divider (resizable) -->
+    <div id="sidebarDivider" class="sidebar-divider"></div>
+
+    <!-- Main Area -->
+    <div id="mainArea">
+      <!-- Toolbar -->
+      <header id="toolbar">
+        <div class="toolbar-group">
+          <button class="tool-btn" data-cmd="heading" title="Heading (Ctrl+H)">
+            <span class="icon" data-icon="heading" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="bold" title="Bold (Ctrl+B)">
+            <span class="icon" data-icon="bold" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="italic" title="Italic (Ctrl+I)">
+            <span class="icon" data-icon="italic" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="strikethrough" title="Strikethrough">
+            <span class="icon" data-icon="strikethrough" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="underline" title="Underline (Ctrl+U)">
+            <span class="icon" data-icon="underline" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="color" title="Color / Highlight">
+            <span class="icon" data-icon="color" data-size="16"></span>
+          </button>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+          <button class="tool-btn" data-cmd="code" title="Inline code">
+            <span class="icon" data-icon="code-inline" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="codeblock" title="Code block">
+            <span class="icon" data-icon="code-block" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="code-file" title="Include code from file (#code)">
+            <span class="icon" data-icon="file-code" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="link" title="Insert link">
+            <span class="icon" data-icon="link" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="image" title="Insert image">
+            <span class="icon" data-icon="image" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="inline-image" title="Insert inline image">
+            <span class="icon" data-icon="inlineimage" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="video" title="Insert video">
+            <span class="icon" data-icon="video" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="audio" title="Insert audio">
+            <span class="icon" data-icon="audio" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="assets" title="Browse Assets">
+            <span class="icon" data-icon="assets" data-size="16"></span>
+          </button>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+          <button class="tool-btn" data-cmd="table" title="Insert table">
+            <span class="icon" data-icon="table" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="list" title="Insert list">
+            <span class="icon" data-icon="list" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="admonition" title="Insert note/tip/warning">
+            <span class="icon" data-icon="admonition" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="separator" title="Horizontal separator">
+            <span class="icon" data-icon="separator" data-size="16"></span>
+          </button>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+          <button class="tool-btn" data-cmd="save" title="Save (Ctrl+S)">
+            <span class="icon" data-icon="save" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="preview-toggle" title="Toggle preview">
+            <span class="icon" data-icon="preview" data-size="16"></span>
+          </button>
+          <button class="tool-btn active" data-cmd="scroll-sync-toggle" title="Scroll sync (bidirectional)">
+            <span class="icon" data-icon="scroll-sync" data-size="16"></span>
+          </button>
+          <button class="tool-btn active" data-cmd="wrap-toggle" title="Toggle line wrap (Alt+W)">
+            <span class="icon" data-icon="wrap-text" data-size="16"></span>
+          </button>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+          <button class="tool-btn tool-btn-build" data-cmd="view-output" title="View output (open built documentation)">
+            <span class="icon" data-icon="preview" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="refresh-build" title="Build & refresh documentation">
+            <span class="icon" data-icon="refresh" data-size="16"></span>
+          </button>
+          <button class="tool-btn" data-cmd="show-build-log" title="View build log">
+            <span class="icon" data-icon="file-code" data-size="16"></span>
+          </button>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+          <button class="tool-btn tool-btn-stop" data-cmd="stop" title="Stop server (shutdown)">
+            <span class="icon" data-icon="stop" data-size="16"></span>
+          </button>
+        </div>
+        <div class="toolbar-spacer"></div>
+        <div id="fileInfo" class="file-info">
+          <span id="currentFileName">No file selected</span>
+          <span id="saveStatus" class="save-status"></span>
+        </div>
+      </header>
+
+  <!-- Color popup (for main editor and table editor) -->
+  <div id="colorPopup" class="color-popup" style="display:none;">
+    <div class="color-popup-section">
+      <div class="color-popup-label">Text color</div>
+      <div class="color-popup-grid">
+        <button class="color-btn" data-mode="color" data-color="red" style="background:#ef4444" title="Red"></button>
+        <button class="color-btn" data-mode="color" data-color="orange" style="background:#f97316" title="Orange"></button>
+        <button class="color-btn" data-mode="color" data-color="yellow" style="background:#eab308" title="Yellow"></button>
+        <button class="color-btn" data-mode="color" data-color="green" style="background:#22c55e" title="Green"></button>
+        <button class="color-btn" data-mode="color" data-color="blue" style="background:#3b82f6" title="Blue"></button>
+        <button class="color-btn" data-mode="color" data-color="purple" style="background:#a855f7" title="Purple"></button>
+        <button class="color-btn" data-mode="color" data-color="pink" style="background:#ec4899" title="Pink"></button>
+        <button class="color-btn" data-mode="color" data-color="gray" style="background:#6b7280" title="Gray"></button>
+      </div>
+    </div>
+    <div class="color-popup-section">
+      <div class="color-popup-label">Highlight</div>
+      <div class="color-popup-grid">
+        <button class="color-btn" data-mode="highlight" data-color="yellow" style="background:#fef08a" title="Yellow"></button>
+        <button class="color-btn" data-mode="highlight" data-color="green" style="background:#bbf7d0" title="Green"></button>
+        <button class="color-btn" data-mode="highlight" data-color="cyan" style="background:#a5f3fc" title="Cyan"></button>
+        <button class="color-btn" data-mode="highlight" data-color="pink" style="background:#fbcfe8" title="Pink"></button>
+        <button class="color-btn" data-mode="highlight" data-color="orange" style="background:#fed7aa" title="Orange"></button>
+        <button class="color-btn" data-mode="highlight" data-color="purple" style="background:#e9d5ff" title="Purple"></button>
+      </div>
+    </div>
+    <div class="color-popup-custom">
+      <label>Custom:</label>
+      <div style="display:flex;gap:4px;align-items:center">
+        <input type="color" id="colorPopupPicker" value="#ff0000">
+        <select id="colorPopupMode">
+          <option value="color">Text color</option>
+          <option value="highlight">Highlight</option>
+        </select>
+        <button class="btn btn-primary" id="colorPopupApply" style="font-size:11px;padding:2px 8px">Apply</button>
+      </div>
+    </div>
+  </div>
+
+      <!-- Editor + Preview split -->
+      <div id="editorPane">
+        <!-- Code Editor -->
+        <section id="editorSection" class="editor-section" style="width:50%">
+          <div class="editor-wrapper">
+            <div id="lineNumbers" class="line-numbers"></div>
+            <div class="editor-container">
+              <div class="code-editor-wrapper">
+                <div id="editorHighlighter" class="code-editor-highlighter" aria-hidden="true"></div>
+                <textarea id="codeEditor" class="code-editor-textarea" spellcheck="false" autocomplete="off" aria-label="Code editor"></textarea>
+              </div>
+            </div>
+          </div>
+          <!-- Autocomplete dropdown -->
+          <div id="autocompleteDropdown" class="autocomplete-dropdown" style="display:none;"></div>
+        </section>
+
+        <!-- Split divider -->
+        <div id="splitDivider" class="split-divider"></div>
+
+        <!-- Preview Panel -->
+        <section id="previewSection" class="preview-section">
+          <div class="preview-header">
+            <span>Preview</span>
+            <span id="previewStatus" class="preview-status"></span>
+          </div>
+          <div id="previewContent" class="preview-content">
+            <div class="preview-placeholder">
+              <p>Open a file to see the live preview</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Dialogs ──────────────────────────────────────────────────── -->
+  
+  <!-- Dialog Overlay -->
+  <div id="dialogOverlay" class="dialog-overlay" style="display:none;"></div>
+  
+  <!-- Table Dialog -->
+  <div id="dialogTable" class="dialog" style="display:none;">
+    <div class="dialog-header">
+      <h3><span class="icon" data-icon="table" data-size="18" style="vertical-align:-4px;margin-right:6px;"></span> Insert Table</h3>
+      <button class="dialog-close" data-dialog="dialogTable">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-row">
+        <label>Mode:</label>
+        <select id="tableMode">
+          <option value="h" selected>Horizontal (first row = header)</option>
+          <option value="v">Vertical (first column = header)</option>
+          <option value="b">Both sides</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Columns:</label>
+        <input type="number" id="tableCols" value="3" min="1" max="20">
+      </div>
+      <div class="form-row">
+        <label>Rows:</label>
+        <input type="number" id="tableRows" value="3" min="1" max="50">
+      </div>
+      <div class="form-row">
+        <label>Optional classes:</label>
+        <input type="text" id="tableClasses" placeholder="e.g. my-class">
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" data-dialog="dialogTable">Cancel</button>
+      <button class="btn btn-primary" id="tableInsertBtn">Insert</button>
+    </div>
+  </div>
+
+  <!-- Link Dialog -->
+  <div id="dialogLink" class="dialog" style="display:none;">
+    <div class="dialog-header">
+      <h3><span class="icon" data-icon="link" data-size="18" style="vertical-align:-4px;margin-right:6px;"></span> Insert Link</h3>
+      <button class="dialog-close" data-dialog="dialogLink">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-row">
+        <label>Text:</label>
+        <input type="text" id="linkText" placeholder="Link text">
+      </div>
+      <div class="form-row">
+        <label>URL:</label>
+        <div style="display:flex;gap:4px;align-items:center;flex:1">
+          <input type="text" id="linkUrl" placeholder="https://... or pages/..." style="flex:1">
+          <button class="btn-browse-assets" data-target="linkUrl" title="Browse assets">
+            <span class="icon" data-icon="folder" data-size="16"></span>
+            Assets
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" data-dialog="dialogLink">Cancel</button>
+      <button class="btn btn-primary" id="linkInsertBtn">Insert</button>
+    </div>
+  </div>
+
+  <!-- Image Dialog -->
+  <div id="dialogImage" class="dialog" style="display:none;">
+    <div class="dialog-header">
+      <h3><span class="icon" data-icon="image" data-size="18" style="vertical-align:-4px;margin-right:6px;"></span> Insert Image</h3>
+      <button class="dialog-close" data-dialog="dialogImage">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-row">
+        <label>Alt text:</label>
+        <input type="text" id="imageAlt" placeholder="Image description">
+      </div>
+      <div class="form-row">
+        <label>Path:</label>
+        <div style="display:flex;gap:4px;align-items:center;flex:1">
+          <input type="text" id="imagePath" placeholder="assets/images/photo.png" style="flex:1">
+          <button class="btn-browse-assets" data-target="imagePath" title="Browse assets">
+            <span class="icon" data-icon="folder" data-size="16"></span>
+            Assets
+          </button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Optional classes:</label>
+        <input type="text" id="imageClasses" placeholder="e.g. bordered shadow">
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" data-dialog="dialogImage">Cancel</button>
+      <button class="btn btn-primary" id="imageInsertBtn">Insert</button>
+    </div>
+  </div>
+
+  <!-- Code File Include Dialog -->
+  <div id="dialogCodeFile" class="dialog" style="display:none;">
+    <div class="dialog-header">
+      <h3><span class="icon" data-icon="file-code" data-size="18" style="vertical-align:-4px;margin-right:6px;"></span> Insert Code Include</h3>
+      <button class="dialog-close" data-dialog="dialogCodeFile">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-row">
+        <label for="codeFilePath">File path:</label>
+        <div style="display:flex;gap:4px;align-items:center;flex:1">
+          <input type="text" id="codeFilePath" placeholder="assets/code/example.js" style="flex:1">
+          <button class="btn-browse-assets" data-target="codeFilePath" title="Browse assets">
+            <span class="icon" data-icon="folder" data-size="16"></span>
+            Assets
+          </button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label for="codeFileFlags">Optional flags:</label>
+        <input type="text" id="codeFileFlags" placeholder="e.g. auto">
+      </div>
+      <div class="form-help">
+        Inserts <code>#code(path/to/file)</code> — includes code from an external file.
+        The <code>auto</code> flag enables automatic language detection.
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" data-dialog="dialogCodeFile">Cancel</button>
+      <button class="btn btn-primary" id="codeFileInsertBtn">Insert</button>
+    </div>
+  </div>
+
+  <!-- Code Block Dialog -->
+  <div id="dialogCodeBlock" class="dialog" style="display:none;">
+    <div class="dialog-header">
+      <h3><span class="icon" data-icon="code-block" data-size="18" style="vertical-align:-4px;margin-right:6px;"></span> Insert Code Block</h3>
+      <button class="dialog-close" data-dialog="dialogCodeBlock">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-row">
+        <label>Flags (optional):</label>
+        <input type="text" id="codeBlockFlags" placeholder="e.g. auto">
+      </div>
+      <div class="form-row">
+        <label>Code:</label>
+        <textarea id="codeBlockContent" rows="6" placeholder="Paste your code here..."></textarea>
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" data-dialog="dialogCodeBlock">Cancel</button>
+      <button class="btn btn-primary" id="codeBlockInsertBtn">Insert</button>
+    </div>
+  </div>
+
+  <!-- Admonition Dialog -->
+  <div id="dialogAdmonition" class="dialog" style="display:none;">
+    <div class="dialog-header">
+      <h3><span class="icon" data-icon="admonition" data-size="18" style="vertical-align:-4px;margin-right:6px;"></span> Insert Admonition</h3>
+      <button class="dialog-close" data-dialog="dialogAdmonition">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-row">
+        <label>Type:</label>
+        <select id="admonitionType">
+          <option value="note">Note</option>
+          <option value="tip">Tip</option>
+          <option value="important">Important</option>
+          <option value="warning">Warning</option>
+          <option value="caution">Caution</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Optional classes:</label>
+        <input type="text" id="admonitionClasses" placeholder="e.g. small">
+      </div>
+      <div class="form-row">
+        <label>Content:</label>
+        <textarea id="admonitionContent" rows="4" placeholder="Write your content here..."></textarea>
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" data-dialog="dialogAdmonition">Cancel</button>
+      <button class="btn btn-primary" id="admonitionInsertBtn">Insert</button>
+    </div>
+  </div>
+
+  <!-- Video Dialog -->
+  <div id="dialogVideo" class="dialog" style="display:none;">
+    <div class="dialog-header">
+      <h3><span class="icon" data-icon="video" data-size="18" style="vertical-align:-4px;margin-right:6px;"></span> Insert Video</h3>
+      <button class="dialog-close" data-dialog="dialogVideo">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-row">
+        <label>Video path:</label>
+        <div style="display:flex;gap:4px;align-items:center;flex:1">
+          <input type="text" id="videoPath" placeholder="assets/videos/demo.mp4" style="flex:1">
+          <button class="btn-browse-assets" data-target="videoPath" title="Browse assets">
+            <span class="icon" data-icon="folder" data-size="16"></span>
+            Assets
+          </button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Optional classes:</label>
+        <input type="text" id="videoClasses" placeholder="e.g. bordered">
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" data-dialog="dialogVideo">Cancel</button>
+      <button class="btn btn-primary" id="videoInsertBtn">Insert</button>
+    </div>
+  </div>
+
+  <!-- Audio Dialog -->
+  <div id="dialogAudio" class="dialog" style="display:none;">
+    <div class="dialog-header">
+      <h3><span class="icon" data-icon="audio" data-size="18" style="vertical-align:-4px;margin-right:6px;"></span> Insert Audio</h3>
+      <button class="dialog-close" data-dialog="dialogAudio">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-row">
+        <label>Audio path:</label>
+        <div style="display:flex;gap:4px;align-items:center;flex:1">
+          <input type="text" id="audioPath" placeholder="assets/audio/sound.mp3" style="flex:1">
+          <button class="btn-browse-assets" data-target="audioPath" title="Browse assets">
+            <span class="icon" data-icon="folder" data-size="16"></span>
+            Assets
+          </button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Optional classes:</label>
+        <input type="text" id="audioClasses" placeholder="e.g. small">
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" data-dialog="dialogAudio">Cancel</button>
+      <button class="btn btn-primary" id="audioInsertBtn">Insert</button>
+    </div>
+  </div>
+
+  <!-- Heading Dialog -->
+  <div id="dialogHeading" class="dialog" style="display:none;">
+    <div class="dialog-header">
+      <h3><span class="icon" data-icon="heading" data-size="18" style="vertical-align:-4px;margin-right:6px;"></span> Insert Heading</h3>
+      <button class="dialog-close" data-dialog="dialogHeading">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-row">
+        <label>Level:</label>
+        <select id="headingLevel">
+          <option value="1">H1 (page title)</option>
+          <option value="2" selected>H2</option>
+          <option value="3">H3</option>
+          <option value="4">H4</option>
+          <option value="5">H5</option>
+          <option value="6">H6</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Text:</label>
+        <input type="text" id="headingText" placeholder="Heading text">
+      </div>
+      <div class="form-row">
+        <label>Optional ID tag:</label>
+        <input type="text" id="headingId" placeholder="my-custom-id">
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" data-dialog="dialogHeading">Cancel</button>
+      <button class="btn btn-primary" id="headingInsertBtn">Insert</button>
+    </div>
+  </div>
+
+  <!-- List Dialog -->
+  <div id="dialogList" class="dialog" style="display:none;">
+    <div class="dialog-header">
+      <h3><span class="icon" data-icon="list" data-size="18" style="vertical-align:-4px;margin-right:6px;"></span> Insert List</h3>
+      <button class="dialog-close" data-dialog="dialogList">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-row">
+        <label>Type:</label>
+        <select id="listType">
+          <option value="unordered">Unordered (-)</option>
+          <option value="ordered">Ordered (+)</option>
+          <option value="task">Task list</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Items (one per line):</label>
+        <textarea id="listItems" rows="5" placeholder="Item 1&#10;Item 2&#10;Item 3"></textarea>
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" data-dialog="dialogList">Cancel</button>
+      <button class="btn btn-primary" id="listInsertBtn">Insert</button>
+    </div>
+  </div>
+
+  <!-- Table Editor Dialog -->
+  <div id="dialogTableEditor" class="dialog dialog-table-editor" style="display:none;">
+    <div class="dialog-header">
+      <h3><span class="icon" data-icon="table" data-size="18" style="vertical-align:-4px;margin-right:6px;"></span> Edit Table</h3>
+      <div class="dialog-header-actions">
+        <button class="dialog-header-btn" id="tableEditorMaximize" title="Maximize">⛶</button>
+        <button class="dialog-close" data-dialog="dialogTableEditor">&times;</button>
+      </div>
+    </div>
+    <div class="dialog-body">
+      <div class="table-editor-container">
+        <table class="table-editor-grid" id="tableEditorGrid">
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="te-format-toolbar">
+        <button class="fmt-btn" data-fmt="bold" title="Bold"><span class="icon" data-icon="bold" data-size="16"></span></button>
+        <button class="fmt-btn" data-fmt="italic" title="Italic"><span class="icon" data-icon="italic" data-size="16"></span></button>
+        <button class="fmt-btn" data-fmt="strike" title="Strikethrough"><span class="icon" data-icon="strikethrough" data-size="16"></span></button>
+        <button class="fmt-btn" data-fmt="underline" title="Underline"><span class="icon" data-icon="underline" data-size="16"></span></button>
+        <span class="toolbar-divider"></span>
+        <button class="fmt-btn" id="teColorBtn" title="Color / Highlight"><span class="icon" data-icon="color" data-size="16"></span></button>
+      </div>
+      <div class="table-editor-toolbar">
+        <button class="tool-btn" id="tableEditorAddRow" title="Add row">+ row</button>
+        <button class="tool-btn" id="tableEditorDelRow" title="Delete last row">− row</button>
+        <span class="toolbar-divider"></span>
+        <button class="tool-btn" id="tableEditorAddCol" title="Add column">+ col</button>
+        <button class="tool-btn" id="tableEditorDelCol" title="Delete last column">− col</button>
+        <span class="toolbar-divider"></span>
+        <label class="te-label">Mode:
+          <select id="tableEditorMode">
+            <option value="v">Vertical</option>
+            <option value="h">Horizontal</option>
+            <option value="b">Both</option>
+          </select>
+        </label>
+        <label class="te-label">Class:
+          <input type="text" id="tableEditorClasses" placeholder="optional" class="te-input">
+        </label>
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-primary" id="tableEditorSaveBtn">Update Table</button>
+    </div>
+  </div>
+
+  <!-- Assets Browser Dialog -->
+  <div id="dialogAssets" class="dialog dialog-assets" style="display:none;">
+    <div class="dialog-header">
+      <h3><span class="icon" data-icon="assets" data-size="18" style="vertical-align:-4px;margin-right:6px;"></span> Assets</h3>
+      <button class="dialog-close" data-dialog="dialogAssets">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <div class="assets-toolbar">
+        <button class="assets-tool-btn" id="assetsUploadBtn" title="Upload files">
+          <span class="icon" data-icon="upload" data-size="16"></span>
+          Upload
+        </button>
+        <button class="assets-tool-btn" id="assetsNewFolderBtn" title="Create folder">
+          <span class="icon" data-icon="folder-new" data-size="16"></span>
+          New Folder
+        </button>
+        <button class="assets-tool-btn" id="assetsRefreshBtn" title="Refresh">
+          <span class="icon" data-icon="refresh" data-size="16"></span>
+          Refresh
+        </button>
+        <span style="flex:1"></span>
+        <button class="assets-tool-btn" id="assetsOpenExplorerBtn" title="Open in system file explorer">
+          <span class="icon" data-icon="folder" data-size="16"></span>
+          Open in Explorer
+        </button>
+      </div>
+      <div class="assets-breadcrumb" id="assetsBreadcrumb"></div>
+      <div class="assets-grid" id="assetsGrid"></div>
+      <!-- Hidden file input for upload within dialog -->
+      <input type="file" id="assetsDialogFileInput" style="display:none" multiple>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" data-dialog="dialogAssets">Close</button>
+    </div>
+  </div>
+
+  <!-- Inline Image Dialog -->
+  <div id="dialogInlineImage" class="dialog" style="display:none;">
+    <div class="dialog-header">
+      <h3><span class="icon" data-icon="inlineimage" data-size="18" style="vertical-align:-4px;margin-right:6px;"></span> Insert Inline Image</h3>
+      <button class="dialog-close" data-dialog="dialogInlineImage">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-row">
+        <label>Image path:</label>
+        <div style="display:flex;gap:4px;align-items:center;flex:1">
+          <input type="text" id="inlineImagePath" placeholder="assets/icons/icon.png" style="flex:1">
+          <button class="btn-browse-assets" data-target="inlineImagePath" title="Browse assets">
+            <span class="icon" data-icon="folder" data-size="16"></span>
+            Assets
+          </button>
+        </div>
+      </div>
+      <div class="form-help">
+        Inserts <code>&lt;-path-&gt;</code> — an inline image icon embedded in text.
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" data-dialog="dialogInlineImage">Cancel</button>
+      <button class="btn btn-primary" id="inlineImageInsertBtn">Insert</button>
+    </div>
+  </div>
+
+  <!-- Build Log Dialog -->
+  <div id="dialogBuildLog" class="dialog dialog-build-log" style="display:none;">
+    <div class="dialog-header">
+      <h3><span class="icon" data-icon="file-code" data-size="18" style="vertical-align:-4px;margin-right:6px;"></span> Build Log</h3>
+      <button class="dialog-close" data-dialog="dialogBuildLog">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <pre id="buildLogContent" class="build-log-content">No build has been run yet.</pre>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" data-dialog="dialogBuildLog">Close</button>
+      <button class="btn btn-primary" id="buildLogClearBtn">Clear</button>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="js/utils.js"></script>
+  <script type="module" src="js/api.js"></script>
+  <script type="module" src="js/state.js"></script>
+  <script type="module" src="js/fileExplorer.js"></script>
+  <script type="module" src="js/codeEditor.js"></script>
+  <script type="module" src="js/toolbar.js"></script>
+  <script type="module" src="js/previewPanel.js"></script>
+  <script type="module" src="js/dialogs.js"></script>
+  <script type="module" src="js/autocomplete.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

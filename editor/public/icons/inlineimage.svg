@@ -1,0 +1,10 @@
+<svg width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+  <!-- Left angle bracket < -->
+  <path d="M3 12l3-3M3 12l3 3"/>
+  <!-- Picture frame -->
+  <rect width="12" height="12" x="6" y="6" rx="1.5"/>
+  <circle cx="9" cy="9" r="1"/>
+  <path d="m18 15-3-3-3 3"/>
+  <!-- Right angle bracket > -->
+  <path d="M21 12l-3-3M21 12l-3 3"/>
+</svg>
