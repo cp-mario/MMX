@@ -376,7 +376,16 @@ function refreshEditor() {
 
 function updateHighlighter() {
   if (!editor || !highlighter) return;
-  highlighter.innerHTML = highlightMmx(editor.value);
+  let html = highlightMmx(editor.value);
+  // When the editor value ends with a newline, the highlighter's last empty
+  // line collapses to zero height under white-space:pre-wrap (the trailing
+  // newline after the last content line doesn't create a visible line box).
+  // This makes highlighter.scrollHeight 20px less than the textarea's.
+  // Adding a zero-width space forces that last line to have line-height.
+  if (html.endsWith('\n')) {
+    html += '\u200B';
+  }
+  highlighter.innerHTML = html;
   // Keep scroll synced after content change
   highlighter.scrollTop = editor.scrollTop;
 }
@@ -742,8 +751,11 @@ function handleKeydown(e) {
     }
     if (currentLine === 0) currentLine = lines.length;
 
-    // If on the last line and that line is empty, snap cursor to end of content
-    if (currentLine >= totalLines && lines[totalLines - 1] === "") {
+    // If past the last line and that line is empty, snap cursor to end of content.
+    // "currentLine > totalLines" means the cursor is beyond the last logical line,
+    // which can only happen when already at val.length. This preserves the native
+    // ability to first reach the last empty line via ArrowDown from the line above.
+    if (currentLine > totalLines && lines[totalLines - 1] === "") {
       e.preventDefault();
       editor.selectionStart = editor.selectionEnd = val.length;
       return;
@@ -1092,9 +1104,9 @@ function snapToContentEnd(offset, clientY) {
     }
     const lineEndPos = lineStartPos + lines[clickedLine].length;
 
-    // If the original offset from caretRangeFromPoint is strictly within this
-    // line (not past its last character), use it.
-    if (offset >= lineStartPos && offset < lineEndPos) {
+    // If the original offset from caretRangeFromPoint is at or within this
+    // line (including its end at the newline), use it.
+    if (offset >= lineStartPos && offset <= lineEndPos) {
       return offset;
     }
 
