@@ -11,6 +11,7 @@ import * as codeEditor from "./codeEditor.js";
 import * as dialogs from "./dialogs.js";
 import { suppressNextInput } from "./autocomplete.js";
 import { showToast } from "./utils.js";
+import { openConfigEditor } from "./fileExplorer.js";
 
 // ─── Auto-save & exit warning ────────────────────────────────────────────────
 
@@ -189,6 +190,9 @@ function handleCommand(cmd) {
       break;
     case "show-build-log":
       showBuildLog();
+      break;
+    case "doc-config":
+      openConfigEditor();
       break;
     case "stop":
       stopServer();

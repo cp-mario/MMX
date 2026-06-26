@@ -31,6 +31,13 @@
           </button>
         </div>
       </div>
+      <!-- Index button (root index.mmx) -->
+      <div class="sidebar-index-btn">
+        <button id="btnEditIndex" class="project-file-btn" title="Edit root index page">
+          <span class="icon" data-icon="file" data-size="16"></span>
+          <span>Index (index.mmx)</span>
+        </button>
+      </div>
       <div id="fileTree" class="file-tree"></div>
     </aside>
 
@@ -131,6 +138,12 @@
           </button>
           <button class="tool-btn" data-cmd="show-build-log" title="View build log">
             <span class="icon" data-icon="file-code" data-size="16"></span>
+          </button>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+          <button class="tool-btn" data-cmd="doc-config" title="Edit documentation configuration (config.mcfg)">
+            <span class="icon" data-icon="settings" data-size="16"></span>
           </button>
         </div>
         <div class="toolbar-divider"></div>
@@ -643,6 +656,59 @@
     <div class="dialog-footer">
       <button class="btn btn-secondary" data-dialog="dialogBuildLog">Close</button>
       <button class="btn btn-primary" id="buildLogClearBtn">Clear</button>
+    </div>
+  </div>
+
+  <!-- Config Editor Dialog (Documentation config) -->
+  <div id="dialogConfigEditor" class="dialog dialog-config-editor" style="display:none;">
+    <div class="dialog-header">
+      <h3><span class="icon" data-icon="settings" data-size="18" style="vertical-align:-4px;margin-right:6px;"></span> Documentation Configuration</h3>
+      <button class="dialog-close" data-dialog="dialogConfigEditor">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <div class="config-section">
+        <h4 class="config-section-title">General</h4>
+        <div class="form-row">
+          <label>Title:</label>
+          <input type="text" id="cfgTitle" placeholder="MMX">
+        </div>
+        <div class="form-row">
+          <label>Version:</label>
+          <input type="text" id="cfgVersion" placeholder="v1.1">
+        </div>
+        <div class="form-row">
+          <label>Language (BCP 47):</label>
+          <input type="text" id="cfgLang" placeholder="en">
+        </div>
+      </div>
+      <div class="config-section">
+        <h4 class="config-section-title">Sidebar</h4>
+        <div class="form-row">
+          <label>Bottom text:</label>
+          <input type="text" id="cfgSidebarBottomText" placeholder="Made with &lt;a href=...&gt;MMX&lt;/a&gt;">
+        </div>
+      </div>
+      <div class="config-section">
+        <h4 class="config-section-title">Code & Index</h4>
+        <div class="form-row">
+          <label>Default code highlight:</label>
+          <select id="cfgDefaultCodeHighlight">
+            <option value="false">Disabled (false)</option>
+            <option value="true">Enabled (true)</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>No default index:</label>
+          <select id="cfgNoDefaultIndex">
+            <option value="false">Show index (false)</option>
+            <option value="true">Hide index (true)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" data-dialog="dialogConfigEditor">Cancel</button>
+      <button class="btn btn-primary" id="configSaveBtn">Save Configuration</button>
     </div>
   </div>
 

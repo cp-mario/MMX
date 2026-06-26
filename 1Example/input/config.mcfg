@@ -5,7 +5,7 @@ version = "v1.1"
 #Language of the documentation, use BCP 47 (https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)
 lang = "en"
 #The text shown in the bottom of the sidebar in every page, it can be a void string, a normal text o a text with an html link (<a>)
-sidebarBottomText =  "Made with <a target=_blank href=https://github.com/cp-mario/MMX>MMX</a>"
+sidebarBottomText = "Made with <a target=_blank href=https://github.com/cp-mario/MMX>MMX</a>"
 #Default syntax highlighting for code blocks (set to true to apply highlight.js to all code blocks by default).
 #Individual blocks can opt out by adding the `noAuto` class.
 #Add `auto` explicitly to a block to force highlighting on even if this is false.

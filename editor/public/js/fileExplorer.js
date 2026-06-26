@@ -8,6 +8,7 @@
 import { state } from "./state.js";
 import * as api from "./api.js";
 import * as codeEditor from "./codeEditor.js";
+import * as dialogs from "./dialogs.js";
 import { showToast, loadIcon } from "./utils.js";
 
 /**
@@ -36,6 +37,118 @@ export function initFileExplorer() {
 
   // Load files on init
   loadFiles();
+
+  // ── Index button ────────────────────────────────────────────────────
+  const btnIndex = document.getElementById("btnEditIndex");
+  btnIndex?.addEventListener("click", openRootIndex);
+}
+
+/**
+ * Open the visual documentation config editor dialog
+ */
+export async function openConfigEditor() {
+  try {
+    // Load current documentation config from server
+    const config = await api.getDocConfig();
+    populateConfigForm(config);
+    dialogs.showDialog("dialogConfigEditor");
+    // Set up save handler
+    const saveBtn = document.getElementById("configSaveBtn");
+    if (saveBtn) {
+      // Remove any previous listener to avoid duplicates
+      const newSaveBtn = saveBtn.cloneNode(true);
+      saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+      newSaveBtn.addEventListener("click", saveConfigFromForm);
+    }
+  } catch (e) {
+    console.error("Failed to load config:", e);
+    showToast("Failed to load configuration", "error");
+  }
+}
+
+/**
+ * Populate the config form with values from the server
+ * @param {object} config - Config object from server
+ */
+function populateConfigForm(config) {
+  // Helper to get raw (unquoted) value preserving original formatting
+  const getRaw = (key, fallback) => {
+    if (config._raw && config._raw[key] !== undefined) {
+      let val = config._raw[key];
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.slice(1, -1);
+      }
+      return val;
+    }
+    return fallback;
+  };
+
+  setFormValue("cfgTitle", getRaw("title", config.title || "MMX"));
+  setFormValue("cfgVersion", getRaw("version", config.version || "v1.1"));
+  setFormValue("cfgLang", getRaw("lang", config.lang || "en"));
+  setFormValue("cfgSidebarBottomText", getRaw("sidebarBottomText", config.sidebarBottomText || ""));
+  setFormValue("cfgDefaultCodeHighlight", String(config.defaultCodeHighlight ?? "false"));
+  setFormValue("cfgNoDefaultIndex", String(config.noDefaultIndex ?? "false"));
+}
+
+/**
+ * Set a form element value by id
+ * @param {string} id
+ * @param {string} value
+ */
+function setFormValue(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (el.tagName === "SELECT" || el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+    el.value = value;
+  }
+}
+
+/**
+ * Save documentation config from the form to the server
+ */
+async function saveConfigFromForm() {
+  const config = {
+    title: document.getElementById("cfgTitle")?.value || "MMX",
+    version: document.getElementById("cfgVersion")?.value || "",
+    lang: document.getElementById("cfgLang")?.value || "en",
+    sidebarBottomText: document.getElementById("cfgSidebarBottomText")?.value || "",
+    defaultCodeHighlight: document.getElementById("cfgDefaultCodeHighlight")?.value === "true",
+    noDefaultIndex: document.getElementById("cfgNoDefaultIndex")?.value === "true",
+  };
+
+  try {
+    await api.saveDocConfig(config);
+    showToast("Documentation config saved successfully", "success");
+    // Close the dialog
+    dialogs.hideDialog("dialogConfigEditor");
+  } catch (e) {
+    console.error("Failed to save config:", e);
+    showToast("Failed to save configuration: " + e.message, "error");
+  }
+}
+
+/**
+ * Open the root index.mmx file (not in pages)
+ */
+async function openRootIndex() {
+  // Get the project config to find the input path
+  let inputPath = "";
+  try {
+    const config = await api.getConfig();
+    inputPath = config.inputPath || "";
+  } catch (e) {
+    console.error("Failed to get config:", e);
+  }
+
+  if (!inputPath) {
+    showToast("Could not determine input path from config", "error");
+    return;
+  }
+
+  // The index.mmx is at inputPath/index.mmx
+  const indexPath = inputPath.replace(/\\/g, "/").replace(/\/$/, "") + "/index.mmx";
+  openFileByPath(indexPath);
 }
 
 // ─── Context menu ──────────────────────────────────────────────────────────

@@ -169,6 +169,23 @@ export async function createAssetFolder(name, subPath = "") {
 }
 
 /**
+ * Get documentation configuration (input/config.mcfg)
+ * @returns {Promise<object>}
+ */
+export async function getDocConfig() {
+  return request("GET", "/api/doc-config");
+}
+
+/**
+ * Save documentation configuration (input/config.mcfg)
+ * @param {object} config - Key-value pairs of config settings
+ * @returns {Promise<{success: boolean, path: string}>}
+ */
+export async function saveDocConfig(config) {
+  return request("POST", "/api/doc-config/save", { config });
+}
+
+/**
  * Open an asset file in the default OS application
  * @param {string} assetPath - Path relative to assets directory
  * @returns {Promise<{success: boolean, path: string}>}
