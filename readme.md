@@ -365,7 +365,7 @@ This project uses:
 - [highlight.js](https://github.com/highlightjs/highlight.js/) — optional code highlighting
 - [Google Fonts](https://fonts.google.com/) — typography
 
-A live example built with MMX is at <https://mmxdocs.vercel.app> and <https://cp-mario.github.io/MMX/>.
+A live example built with MMX is at <https://mmxdocs.vercel.app> and <https://cp-mario.github.io/MMX-Documentation//>.
 
 ---
 
