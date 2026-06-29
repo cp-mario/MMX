@@ -1,24 +1,8 @@
 #This is the config of the parser
-#Three generation modes available:
+#Generates a complete documentation project with sidebar navigation
 
-#Set to false for multi-page mode (default)
-#Set to true for single document or single file mode
-singleFile = false
-
-#MULTI-PAGE MODE (singleFile=false):
-#Generates a complete project with sidebar navigation and separate pages
 inputPath = "./1Example/input"
 outputPath = "./1Example/output/"
-
-#SINGLE DOCUMENT MODE (singleFile=true):
-#Combines ALL .mmx files from inputPath into ONE HTML file without sidebar
-#When singleFile=true, outputPath becomes the OUTPUT FILE PATH (not a folder)
-#Example: outputPath = "./1test/output/proyecto1-single.html"
-
-#SINGLE FILE MODE (singleFile=true + singleInputPath):
-#Converts a SINGLE .mmx file to HTML
-singleInputPath = ""
-singleOutputPath = ""
 
 #Minification options - set to false to disable, true to enable
 #If you dont know what this does keep them as they are

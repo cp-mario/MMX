@@ -1,6 +1,8 @@
 /**
- * MMX Documentation Generator
- * Converts .mmx files to HTML documentation
+ * MMX Documentation Generator — Library module
+ *
+ * Exported functions used by cli.js (the `mmx` command).
+ * This module does NOT run any CLI logic when imported.
  */
 
 import fs from "fs";
@@ -14,14 +16,14 @@ import { toKebabCase, normalizePageHref } from "./scripts/kebabCase.js";
 import { collectSearchEntries, writeSearchIndex } from "./scripts/searchIndexBuilder.js";
 
 
-//General config
-const CONFIG = parseMCFG(fs.readFileSync('./config.mcfg', 'utf-8'))
+//General config (populated by CLI)
+export let CONFIG = { minifyScripts: true, minifyCss: true }
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Cache template once at module level
-const TEMPLATE = fs.readFileSync('./template.html', 'utf-8');
+// Cache template once at module level (from the module directory, not CWD)
+const TEMPLATE = fs.readFileSync(path.join(__dirname, 'template.html'), 'utf-8');
 
 // Project-level caches (populated once per project)
 const projectCache = new Map();
@@ -573,7 +575,7 @@ function generateSitemap(pagesDir, outputDir) {
  * @param {string} outputDir - Output directory for generated HTML
  * @param {Object} options - Configuration options
  */
-function processProjectStructure(sourceDir, outputDir, options = {}) {
+export function processProjectStructure(sourceDir, outputDir, options = {}) {
   const { deleteOriginals = false, verbose = true } = options;
   const log = (msg) => verbose && console.log(msg);
 
@@ -895,24 +897,6 @@ function applyPathPrefix(html, prefix) {
     .replace(/(path=["'])(assets\/[^"']+)/g, `$1${prefix}$2`);
 }
 
-//If it's single file insert the scripts in the html else leave it in blank
-let singleFileContent = "";
-let singleFileSearchContent = "";
-if (CONFIG.singleFile) {
-  const scriptPath = path.join(__dirname, "intAssets", "script.js");
-  if (fs.existsSync(scriptPath)) {
-    const scriptContent = fs.readFileSync(scriptPath, "utf8");
-    singleFileContent = `<script>${scriptContent}</script>`;
-  }
-
-  const searchScriptPath = path.join(__dirname, "intAssets", "search", "search.js");
-  if (fs.existsSync(searchScriptPath)) {
-    const searchContent = fs.readFileSync(searchScriptPath, "utf8");
-    singleFileSearchContent = `<script>${searchContent}</script>`;
-  }
-}
-
-
 /**
  * Detects if content contains any images, audios, videos, or code with auto flag
  * @param {string} mmxContent - Raw MMX content
@@ -1068,9 +1052,7 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
     ? `<link rel="stylesheet" href="${prefix}intAssets/folderIndexIcons.css">`
     : "";
 
-  let searchScript = CONFIG.singleFile
-    ? singleFileSearchContent
-    : `<script src="${prefix}intAssets/search/search.js"></script>`;
+  const searchScript = `<script src="${prefix}intAssets/search/search.js"></script>`;
 
   let highlightJS = "", highlightCSSTheme = "";
   if (media.anyCodeAuto) {
@@ -1083,10 +1065,10 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
 
   let finalTemplate = TEMPLATE
     .replaceAll("{{title}}", title)
+    .replaceAll("{{pageTitle}}", pageTitle)
     .replaceAll("{{sidebarTitle}}", sidebarTitle)
     .replaceAll("{{version}}", version)
     .replaceAll("{{content}}", htmlContent)
-    .replaceAll("{{singlePageScript}}", singleFileContent)
     .replaceAll("{{prefix}}", prefix)
     .replaceAll("{{lang}}", lang)
     .replaceAll("{{playerCSS}}", playerCSS)
@@ -1103,47 +1085,542 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
   fs.writeFileSync(outputPath, finalTemplate, "utf8");
 }
 
-// Clear output directory before generation
-if (!CONFIG.singleFile) {
-  const dir = CONFIG.outputPath;
-
-  if (fs.existsSync(dir)) {
-    for (const file of fs.readdirSync(dir)) {
-      const fullPath = path.join(dir, file);
-
-      if (fs.statSync(fullPath).isDirectory()) {
-        fs.rmSync(fullPath, { recursive: true, force: true });
-      } else {
-        fs.unlinkSync(fullPath);
-      }
+/**
+ * Clear a directory's contents recursively.
+ * @param {string} dirPath
+ */
+export function clearOutputDir(dirPath) {
+  if (!fs.existsSync(dirPath)) return;
+  for (const file of fs.readdirSync(dirPath)) {
+    const fullPath = path.join(dirPath, file);
+    if (fs.statSync(fullPath).isDirectory()) {
+      fs.rmSync(fullPath, { recursive: true, force: true });
+    } else {
+      fs.unlinkSync(fullPath);
     }
   }
 }
 
 /**
- * Main execution function
- * Two modes: full project (singleFile=false) or single file (singleFile=true)
+ * Extracts a date from a filename following common blog conventions:
+ *   YYYY-MM-DD-title.mmx   →   { year, month, day, label: "YYYY-MM-DD" }
+ * Falls back to the file's mtime date when the name has no date prefix.
+ * @param {string} fileName
+ * @param {string} filePath
+ * @returns {{ year: string, month: string, day: string, label: string, ts: number }}
  */
-function main() {
-  if (!CONFIG.singleFile) {
-    if (!fs.existsSync(CONFIG.inputPath)) {
-      console.error(`Error: Input folder does not exist: ${CONFIG.inputPath}`);
-      process.exit(1);
-    }
-    
-    processProjectStructure(CONFIG.inputPath, CONFIG.outputPath, {
-      deleteOriginals: false,
-      verbose: true,
-      outputRoot: CONFIG.outputPath
-    });
+function extractPostDate(fileName, filePath) {
+  const match = fileName.match(/^(\d{4})-(\d{2})-(\d{2})-/);
+  if (match) {
+    const [, y, m, d] = match;
+    return { year: y, month: m, day: d, label: `${y}-${m}-${d}`, ts: new Date(y, m - 1, d).getTime() };
+  }
+  const stat = fs.statSync(filePath);
+  const d = stat.mtime;
+  const y = d.getFullYear().toString();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return { year: y, month: m, day, label: `${y}-${m}-${day}`, ts: d.getTime() };
+}
 
+/**
+ * Reads all .mmx files from a flat folder, converts each to a blog post,
+ * and generates:
+ *   - index.html  → blog home with chronological list of posts
+ *   - post-slug.html → individual post pages
+ *
+ * By default only rebuilds posts whose source .mmx is newer than the
+ * existing .html output (incremental build). Use `{ force: true }` to
+ * rebuild everything.
+ *
+ * @param {string} postsDir    - Folder containing .mmx files (one per post)
+ * @param {string} outputDir   - Where to write the generated blog
+ * @param {{ force?: boolean }} [options]
+ */
+export function buildBlog(postsDir, outputDir, options = {}) {
+  const log = (msg) => console.log(msg);
+  log(`\nBuilding blog from: ${postsDir}`);
+  log(`Output: ${outputDir}\n`);
+
+  if (!fs.existsSync(postsDir)) {
+    console.error(`Error: Blog posts folder not found: ${postsDir}`);
+    process.exit(1);
+  }
+
+  const { force } = options;
+  if (force) {
+    // Full rebuild: wipe the output dir first
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    } else {
+      clearOutputDir(outputDir);
+    }
   } else {
-    // Single file mode - ensure output directory exists, then convert
-    const dir = path.dirname(CONFIG.singleOutputPath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    convertMmxFile(CONFIG.singleInputPath, CONFIG.singleOutputPath, dir);
-    console.log(`Generated: ${CONFIG.singleOutputPath}`);
+    // Incremental: ensure the output dir exists but don't delete anything
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+  }
+
+  // Read, parse, and convert every .mmx file (skip companion files)
+  const posts = [];
+  const files = fs.readdirSync(postsDir).filter(f =>
+    f.endsWith('.mmx') &&
+    f.toLowerCase() !== 'indextext.mmx' &&
+    !f.startsWith('__')
+  );
+
+  for (const file of files) {
+    const srcPath = path.join(postsDir, file);
+    const raw = fs.readFileSync(srcPath, 'utf-8');
+    const title = raw.match(/^# (.+)$/m)?.[1] || path.basename(file, '.mmx');
+
+    // Extract first paragraph as excerpt
+    const firstPara = raw
+      .replace(/^# .+/m, '')           // remove title
+      .replace(/^:::.*$/gm, '')         // strip block directives
+      .replace(/^\[.*?\]\(.*?\)/gm, '') // strip reference-style lines
+      .trim()
+      .split(/\n\s*\n/)[0]             // first block
+      ?.replace(/\*\*(.+?)\*\*/g, '$1') // strip bold markers
+      .replace(/\*(.+?)\*/g, '$1')      // strip italic markers
+      .trim() || '';
+
+    const htmlContent = mmxToHtml(raw);
+    const date = extractPostDate(file, srcPath);
+
+    // Build filename for the output page (kebab-case)
+    const slug = file
+      .replace(/\.mmx$/i, '')
+      .replace(/^\d{4}-\d{2}-\d{2}-/, '')  // strip date prefix for the slug
+      .replace(/\s+/g, '-')
+      .toLowerCase();
+
+    posts.push({
+      title,
+      slug: slug + '.html',
+      date,
+      content: htmlContent,
+      excerpt: firstPara,
+      srcPath,
+    });
+  }
+
+  // Sort posts newest-first by date
+  posts.sort((a, b) => b.date.ts - a.date.ts);
+
+  // ── Read & prepare assets (same as cli.js) ──────────────
+  const intAssetsDir = path.join(__dirname, "intAssets");
+  let styleCSS        = fs.readFileSync(path.join(intAssetsDir, "style.css"), "utf-8");
+  let styleSidebarCSS = fs.readFileSync(path.join(intAssetsDir, "styleSidebar.css"), "utf-8");
+  let scriptJS        = fs.readFileSync(path.join(intAssetsDir, "script.js"), "utf-8");
+
+  // Inject MCFGParser
+  const mcfgParserPath = path.join(__dirname, "scripts", "MCFGParser.js");
+  if (fs.existsSync(mcfgParserPath)) {
+    let pc = fs.readFileSync(mcfgParserPath, "utf-8");
+    pc = pc.replace(/export\s+(function|const|let|var)/g, '$1');
+    const m = pc.match(/\/\*\*[\s\S]*?\*\/\s*(function\s+parseMCFG\([\s\S]*?)$/);
+    if (m) pc = m[1];
+    scriptJS = scriptJS.replace('//MCFGParser', pc);
+  }
+
+  if (CONFIG.minifyScripts) scriptJS = minifyJs(scriptJS);
+  if (CONFIG.minifyCss) { styleCSS = minifyCss(styleCSS); styleSidebarCSS = minifyCss(styleSidebarCSS); }
+
+  // ── Detect media needs across all posts so we include the right bundles ──
+  const anyImage    = posts.some(p => /!\[([^\]]*)\]\([^)]+\)/.test(p.content));
+  const anyAudio    = posts.some(p => /!{3}\([^)]+\)/.test(p.content));
+  const anyVideo    = posts.some(p => /!{2}\([^)]+\)/.test(p.content));
+  const anyCodeAuto = posts.some(p => /auto/.test(p.content));
+  let imageZoomJS = "", playerCSS = "", playerJS = "", highlightJS = "", highlightCSS = "";
+  if (anyImage)    imageZoomJS = fs.readFileSync(path.join(intAssetsDir, "imageZoom.js"), "utf-8");
+  if (anyAudio || anyVideo) {
+    playerCSS = fs.readFileSync(path.join(intAssetsDir, "player", "playerStyle.css"), "utf-8");
+    playerJS  = fs.readFileSync(path.join(intAssetsDir, "player", "playerScript.js"), "utf-8");
+  }
+  if (anyCodeAuto) {
+    highlightJS  = '<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>';
+    highlightCSS = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">';
+  }
+  if (CONFIG.minifyScripts) { if (imageZoomJS) imageZoomJS = minifyJs(imageZoomJS); if (playerJS) playerJS = minifyJs(playerJS); }
+  if (CONFIG.minifyCss) { if (playerCSS) playerCSS = minifyCss(playerCSS); }
+
+  // ── Render each post page (incremental: skip if output is newer) ──
+  let built = 0, skipped = 0;
+  for (const post of posts) {
+    const outPath = path.join(outputDir, post.slug);
+
+    // Check if the output is already up to date
+    if (!force && fs.existsSync(outPath)) {
+      const srcMtime = fs.statSync(post.srcPath).mtimeMs;
+      const outMtime = fs.statSync(outPath).mtimeMs;
+      if (outMtime >= srcMtime) {
+        skipped++;
+        continue;
+      }
+    }
+
+    const pageHtml = buildStandaloneHtml({
+      title: post.title,
+      content: post.content,
+      styleCSS, styleSidebarCSS, scriptJS,
+      playerCSS, playerJS, imageZoomJS,
+      highlightJS, highlightCSS,
+      lang: "en",
+    });
+    fs.writeFileSync(outPath, pageHtml, "utf-8");
+    log(`  ${post.slug}  ← ${path.basename(post.srcPath)}`);
+    built++;
+  }
+
+  // ── Render blog index ──────────────────────────────────
+  const indexHtml = buildBlogIndexHtml({
+    title: "Blog",
+    posts,
+    styleCSS, styleSidebarCSS, scriptJS,
+    playerCSS, playerJS, imageZoomJS,
+    highlightJS, highlightCSS,
+  });
+  fs.writeFileSync(path.join(outputDir, "index.html"), indexHtml, "utf-8");
+  log(`  index.html  (${posts.length} posts)`);
+
+  const summary = built > 0 ? `${built} built` : "none built";
+  const skipNote = skipped > 0 ? `, ${skipped} up to date` : "";
+  log(`\nBlog generated in ${outputDir} (${summary}${skipNote})`);
+}
+
+/**
+ * Builds a blog index HTML page listing all posts chronologically.
+ * Uses the same CSS/JS inlining as standalone pages.
+ */
+function buildBlogIndexHtml({ title, posts, styleCSS, styleSidebarCSS, scriptJS, playerCSS, playerJS, imageZoomJS, highlightJS, highlightCSS }) {
+  const postItems = posts.map((p, i) => {
+    const dateLabel = p.date.label;
+    const excerptHtml = p.excerpt ? `<p class="blog-excerpt">${escapeHtml(p.excerpt)}</p>` : '';
+    return [
+      '<article class="blog-post-preview">',
+      `  <time datetime="${dateLabel}">${dateLabel}</time>`,
+      `  <h2><a href="${p.slug}">${escapeHtml(p.title)}</a></h2>`,
+      excerptHtml,
+      '</article>',
+    ].join('\n');
+  }).join('\n');
+
+  const headParts = [
+    '<!DOCTYPE html>',
+    '<html lang="en">',
+    '<head>',
+    '  <meta charset="utf-8">',
+    '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
+    `  <title>${escapeHtml(title)}</title>`,
+    '  <style>', styleCSS, '  </style>',
+    '  <style>', styleSidebarCSS, '  </style>',
+  ];
+  if (playerCSS) headParts.push(`  <style>${playerCSS}</style>`);
+  if (highlightCSS) headParts.push(highlightCSS);
+  headParts.push(
+    '  <style>',
+    '    /* Blog index overrides */',
+    '    *, *::before, *::after { box-sizing: border-box; }',
+    '    #sidebar, #icon-btn2, #sidebar-search { display: none !important; }',
+    '    main { max-width: 760px !important; width: 100%; margin: 0 auto !important; padding-inline: 24px !important; float: none !important; }',
+    '    body { margin: 0; padding: 24px 0; }',
+    '    @media (max-width: 600px) { main { padding-inline: 14px !important; } body { padding: 10px 0; } }',
+    '    pre, code, table { overflow-x: auto; max-width: 100%; }',
+    '    .blog-post-preview { margin-bottom: 2.5em; padding-bottom: 1.5em; border-bottom: 1px solid var(--border-color); }',
+    '    .blog-post-preview time { font-size: 0.85em; color: #666; display: block; margin-bottom: 0.2em; }',
+    '    .blog-post-preview h2 { margin: 0 0 0.3em 0; }',
+    '    .blog-post-preview h2 a { color: inherit; text-decoration: none; }',
+    '    .blog-post-preview h2 a:hover { text-decoration: underline; }',
+    '    .blog-excerpt { margin: 0; color: #444; }',
+    '    .blog-header { margin-bottom: 2em; }',
+    '    .blog-header h1 { margin: 0; }',
+    '  </style>',
+    '</head>',
+    '<body>',
+    '  <main>',
+    '    <header class="blog-header">',
+    `      <h1>${escapeHtml(title)}</h1>`,
+    '    </header>',
+    postItems,
+    '  </main>',
+    `  <script>${scriptJS}</script>`,
+  );
+  if (imageZoomJS) headParts.push(`  <script>${imageZoomJS}</script>`);
+  if (playerJS) headParts.push(`  <script>${playerJS}</script>`);
+  if (highlightJS) headParts.push(highlightJS);
+  headParts.push('</body>', '</html>');
+
+  return headParts.join('\n');
+}
+
+/**
+ * Escapes HTML special characters in a string.
+ * @param {string} str
+ * @returns {string}
+ */
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/**
+ * Builds a standalone HTML page inlining all CSS and JS.
+ * Reused for both cli.js-style pages and individual blog posts.
+ */
+function buildStandaloneHtml({ title, content, styleCSS, styleSidebarCSS, scriptJS, playerCSS, playerJS, imageZoomJS, highlightJS, highlightCSS, lang = "en" }) {
+  const headParts = [
+    '<!DOCTYPE html>',
+    `<html lang="${lang}">`,
+    '<head>',
+    '  <meta charset="utf-8">',
+    '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
+    `  <title>${escapeHtml(title)}</title>`,
+    '  <style>', styleCSS, '  </style>',
+    '  <style>', styleSidebarCSS, '  </style>',
+  ];
+  if (highlightCSS) headParts.push(highlightCSS);
+  if (playerCSS) headParts.push(`  <style>${playerCSS}</style>`);
+  headParts.push(
+    '  <style>',
+    '    /* Standalone page: no sidebar → override sidebar-dependent rules */',
+    '    *, *::before, *::after { box-sizing: border-box; }',
+    '    #sidebar, #icon-btn2, #sidebar-search { display: none !important; }',
+    '    main {',
+    '      max-width: 860px !important;',
+    '      width: 100%;',
+    '      margin: 0 auto !important;',
+    '      padding-inline: 24px !important;',
+    '      float: none !important;',
+    '    }',
+    '    pre, code, table { overflow-x: auto; max-width: 100%; }',
+    '    body { margin: 0; padding: 24px 0; }',
+    '    @media (max-width: 600px) {',
+    '      main { padding-inline: 14px !important; }',
+    '      body { padding: 10px 0; }',
+    '    }',
+    '  </style>',
+    '</head>',
+    '<body>',
+    '  <main>', content, '  </main>',
+    `  <script>${scriptJS}</script>`,
+  );
+  if (imageZoomJS) headParts.push(`  <script>${imageZoomJS}</script>`);
+  if (playerJS) headParts.push(`  <script>${playerJS}</script>`);
+  if (highlightJS) headParts.push(highlightJS);
+  headParts.push('</body>', '</html>');
+  return headParts.join('\n');
+}
+
+// ─── Page command: standalone HTML from a single .mmx file ──────────────
+
+/**
+ * Builds a standalone HTML page from a single .mmx file.
+ *
+ * @param {string} inputFile  Path to the .mmx source file
+ * @param {string} outputFile Path for the generated .html file
+ * @param {{ assetsPrefix?: string, minify?: boolean }} [options]
+ */
+export function buildStandalonePage(inputFile, outputFile, options = {}) {
+  const { assetsPrefix = './assets', minify = true } = options;
+
+  if (!fs.existsSync(inputFile)) {
+    console.error(`Error: Input file not found: ${inputFile}`);
+    process.exit(1);
+  }
+
+  // Read the source .mmx file
+  const mmxContent = fs.readFileSync(inputFile, 'utf-8');
+
+  // Extract title from the first H1 heading, or fall back to file name
+  const headerTitle = mmxContent.match(/^# (.+)$/m)?.[1] || path.basename(inputFile, '.mmx');
+
+  // Convert MMX to HTML
+  const htmlContent = mmxToHtml(mmxContent);
+
+  // Detect which media features are needed
+  const media = detectMediaContent(mmxContent);
+
+  // ── Read and inline all assets from intAssets/ ────────────────────────
+  const intAssetsDir = path.join(__dirname, 'intAssets');
+
+  let styleCSS        = fs.readFileSync(path.join(intAssetsDir, 'style.css'), 'utf-8');
+  let styleSidebarCSS = fs.readFileSync(path.join(intAssetsDir, 'styleSidebar.css'), 'utf-8');
+  let scriptJS        = fs.readFileSync(path.join(intAssetsDir, 'script.js'), 'utf-8');
+
+  // Inject MCFGParser into script.js
+  const mcfgParserPath = path.join(__dirname, 'scripts', 'MCFGParser.js');
+  if (fs.existsSync(mcfgParserPath)) {
+    let parserContent = fs.readFileSync(mcfgParserPath, 'utf-8');
+    parserContent = parserContent.replace(/export\s+(function|const|let|var)/g, '$1');
+    const functionMatch = parserContent.match(/\/\*\*[\s\S]*?\*\/\s*(function\s+parseMCFG\([\s\S]*?)$/);
+    if (functionMatch) {
+      parserContent = functionMatch[1];
+    }
+    scriptJS = scriptJS.replace('//MCFGParser', parserContent);
+  }
+
+  // Player assets (only included when the source uses audio/video)
+  let playerCSS = '', playerJS = '';
+  if (media.anyVideo || media.anyAudio) {
+    playerCSS = fs.readFileSync(path.join(intAssetsDir, 'player', 'playerStyle.css'), 'utf-8');
+    playerJS  = fs.readFileSync(path.join(intAssetsDir, 'player', 'playerScript.js'), 'utf-8');
+  }
+
+  // Image zoom (only included when the source uses images)
+  let imageZoomJS = '';
+  if (media.anyImage) {
+    imageZoomJS = fs.readFileSync(path.join(intAssetsDir, 'imageZoom.js'), 'utf-8');
+  }
+
+  // highlight.js (only included when code blocks use the `auto` flag)
+  let highlightJS = '', highlightCSS = '';
+  if (media.anyCodeAuto) {
+    highlightJS  = '<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>';
+    highlightCSS = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">';
+  }
+
+  // ── Optional minification ────────────────────────────────────────────
+  if (minify) {
+    styleCSS        = minifyCss(styleCSS);
+    styleSidebarCSS = minifyCss(styleSidebarCSS);
+    scriptJS        = minifyJs(scriptJS);
+    if (playerCSS)  playerCSS  = minifyCss(playerCSS);
+    if (playerJS)   playerJS   = minifyJs(playerJS);
+    if (imageZoomJS) imageZoomJS = minifyJs(imageZoomJS);
+  }
+
+  // ── Assemble the final HTML using the existing buildStandaloneHtml ────
+  const standaloneHtml = buildStandaloneHtml({
+    title:        headerTitle,
+    content:      htmlContent,
+    styleCSS,
+    styleSidebarCSS,
+    scriptJS,
+    playerCSS,
+    playerJS,
+    imageZoomJS,
+    highlightJS,
+    highlightCSS,
+    lang: 'en',
+  });
+
+  // Rewrite asset references if a custom prefix was given
+  let finalHtml = standaloneHtml;
+  if (assetsPrefix && assetsPrefix !== './assets') {
+    finalHtml = finalHtml.replace(/(src=["'])assets\//g, `$1${assetsPrefix.replace(/\/?$/, '/')}`);
+    finalHtml = finalHtml.replace(/(href=["'])assets\//g, `$1${assetsPrefix.replace(/\/?$/, '/')}`);
+    finalHtml = finalHtml.replace(/(path=["'])assets\//g, `$1${assetsPrefix.replace(/\/?$/, '/')}`);
+  }
+
+  // Write the output file, creating directories as needed
+  const outputDir = path.dirname(outputFile);
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+  fs.writeFileSync(outputFile, finalHtml, 'utf-8');
+
+  console.log(`Generated standalone page: ${outputFile}`);
+  if (!minify) console.log('  (not minified)');
+}
+
+// ─── Editor command ───────────────────────────────────────────────────────
+
+/**
+ * Launches the MMX Visual Editor server.
+ * Dynamically imports the editor module to avoid loading its dependencies
+ * when not needed.
+ *
+ * @param {number} port
+ */
+export async function startEditor(port) {
+  try {
+    const { startServer } = await import('./editor/server.js');
+    await startServer({ port: Number(port) });
+  } catch (err) {
+    console.error('Failed to start the editor server:', err.message);
+    process.exit(1);
   }
 }
 
-main();
+// ─── Serve command ───────────────────────────────────────────────────────
+
+/**
+ * Serves a directory via a simple HTTP static file server.
+ *
+ * @param {string} dir  Absolute path to the directory to serve
+ * @param {number} port Port to listen on
+ */
+export function startServe(dir, port) {
+  port = Number(port) || 8080;
+
+  if (!fs.existsSync(dir)) {
+    console.error(`Error: Directory not found: ${dir}`);
+    process.exit(1);
+  }
+
+  const mimeTypes = {
+    '.html': 'text/html',
+    '.css':  'text/css',
+    '.js':   'application/javascript',
+    '.json': 'application/json',
+    '.png':  'image/png',
+    '.jpg':  'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif':  'image/gif',
+    '.svg':  'image/svg+xml',
+    '.ico':  'image/x-icon',
+    '.webp': 'image/webp',
+    '.mp4':  'video/mp4',
+    '.webm': 'video/webm',
+    '.mp3':  'audio/mpeg',
+    '.wav':  'audio/wav',
+    '.ogg':  'audio/ogg',
+    '.pdf':  'application/pdf',
+    '.zip':  'application/zip',
+    '.xml':  'application/xml',
+    '.txt':  'text/plain',
+    '.woff': 'font/woff',
+    '.woff2':'font/woff2',
+    '.ttf':  'font/ttf',
+  };
+
+  const server = http.createServer((req, res) => {
+    // Sanitize the URL to prevent directory traversal
+    let url = req.url.split('?')[0];
+    if (url.endsWith('/')) url += 'index.html';
+
+    const filePath = path.join(dir, url);
+
+    // Ensure the resolved path stays within the served directory
+    if (!filePath.startsWith(dir)) {
+      res.writeHead(403);
+      res.end('Forbidden');
+      return;
+    }
+
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        if (err.code === 'ENOENT') {
+          res.writeHead(404);
+          res.end('404 Not Found');
+        } else {
+          res.writeHead(500);
+          res.end('Internal Server Error');
+        }
+        return;
+      }
+
+      const ext = path.extname(filePath).toLowerCase();
+      const mime = mimeTypes[ext] || 'application/octet-stream';
+      res.writeHead(200, { 'Content-Type': mime });
+      res.end(data);
+    });
+  });
+
+  server.listen(port, () => {
+    console.log(`\n  Serving: ${dir}`);
+    console.log(`  URL:     http://localhost:${port}\n`);
+  });
+}
+

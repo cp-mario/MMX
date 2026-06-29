@@ -1,9 +1,0 @@
-## This text is shown on a folder, you can put an h1 but its already one in the page so its better h2 like this or,h3...
-
-With the purpose of explaining the folder content
-
-> the tags work normally
-
-- [Admonitions example](pages/Examples/Admonitions%20example.html) — all five admonition blocks (note, tip, important, warning, caution), loaded from a file and rendered with inline formatting.
-- [Code example](pages/Examples/Code%20example.html) — every supported class for code blocks applied to the same source file.
-- [Headers example](pages/Examples/Headers%20example.html) — every header level, with and without a tag, followed by sample content.

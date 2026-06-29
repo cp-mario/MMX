@@ -42,9 +42,6 @@ function getProjectConfig() {
   const config = {
     inputPath: "",
     outputPath: "",
-    singleFile: false,
-    singleInputPath: "",
-    singleOutputPath: "",
     minifyScripts: true,
     minifyCss: true,
     _raw: {}, // Raw key-value pairs as they appear in the file (before path resolution)
@@ -67,9 +64,6 @@ function getProjectConfig() {
         }
         if (key === "inputPath") config.inputPath = val;
         else if (key === "outputPath") config.outputPath = val;
-        else if (key === "singleFile") config.singleFile = val === "true";
-        else if (key === "singleInputPath") config.singleInputPath = val;
-        else if (key === "singleOutputPath") config.singleOutputPath = val;
         else if (key === "minifyScripts") config.minifyScripts = val === "true";
         else if (key === "minifyCss") config.minifyCss = val === "true";
       }
@@ -1170,72 +1164,89 @@ process.on("SIGTERM", async () => {
   await shutdownServer();
 });
 
-// ─── Start server ────────────────────────────────────────────────────────────
+// ─── Start server (exported for CLI integration) ────────────────────────────
 
-const BOX_W = 42;
-const rpad = (s, n) => s + ' '.repeat(Math.max(0, n - s.length));
+/**
+ * Starts the MMX Visual Editor server on the given port.
+ * Called from `mmx editor` in main.js.
+ *
+ * @param {{ port?: number }} [options]
+ */
+export async function startServer(options = {}) {
+  const PORT = options.port || process.env.PORT || 3031;
+  const BOX_W = 42;
+  const rpad = (s, n) => s + ' '.repeat(Math.max(0, n - s.length));
+  const projectRootDisplay = path.basename(PROJECT_ROOT) || ".";
 
-const projectRootDisplay = path.basename(PROJECT_ROOT) || ".";
+  console.log(
+    '\n' +
+    '╔' + '═'.repeat(BOX_W) + '╗\n' +
+    '║' + rpad('         MMX Visual Editor', BOX_W) + '║\n' +
+    '║' + rpad('', BOX_W) + '║\n' +
+    '║' + rpad('  Running on http://localhost:' + PORT, BOX_W) + '║\n' +
+    '║' + rpad('  Project root: ' + projectRootDisplay, BOX_W) + '║\n' +
+    '║' + rpad('  Stop:         Ctrl+C or /api/shutdown', BOX_W) + '║\n' +
+    '╚' + '═'.repeat(BOX_W) + '╝\n'
+  );
 
-console.log(
-  '\n' +
-  '╔' + '═'.repeat(BOX_W) + '╗\n' +
-  '║' + rpad('         MMX Visual Editor', BOX_W) + '║\n' +
-  '║' + rpad('', BOX_W) + '║\n' +
-  '║' + rpad('  Running on http://localhost:' + PORT, BOX_W) + '║\n' +
-  '║' + rpad('  Project root: ' + projectRootDisplay, BOX_W) + '║\n' +
-  '║' + rpad('  Stop:         Ctrl+C or /api/shutdown', BOX_W) + '║\n' +
-  '╚' + '═'.repeat(BOX_W) + '╝\n'
-);
-
-if (typeof Bun !== "undefined") {
-  // Bun
-  serverInstance = Bun.serve({
-    port: PORT,
-    fetch: handleRequest,
-  });
-  console.log(`  Bun server started on http://localhost:${PORT}`);
-} else {
-  // Node.js
-  const http = await import("http");
-  serverInstance = http.createServer(async (req, res) => {
-    // Collect body for POST/PUT
-    let body = null;
-    if (req.method === "POST" || req.method === "PUT") {
-      const chunks = [];
-      for await (const chunk of req) {
-        chunks.push(chunk);
+  if (typeof Bun !== "undefined") {
+    // Bun
+    serverInstance = Bun.serve({
+      port: PORT,
+      fetch: handleRequest,
+    });
+    console.log(`  Bun server started on http://localhost:${PORT}`);
+  } else {
+    // Node.js
+    const http = await import("http");
+    serverInstance = http.createServer(async (req, res) => {
+      // Collect body for POST/PUT
+      let body = null;
+      if (req.method === "POST" || req.method === "PUT") {
+        const chunks = [];
+        for await (const chunk of req) {
+          chunks.push(chunk);
+        }
+        const rawBody = Buffer.concat(chunks).toString("utf-8");
+        try {
+          body = rawBody ? JSON.parse(rawBody) : null;
+        } catch {
+          body = null;
+        }
       }
-      const rawBody = Buffer.concat(chunks).toString("utf-8");
+
+      // Create a minimal Request-like object
+      const wrappedReq = {
+        url: `http://${req.headers.host || "localhost:3031"}${req.url}`,
+        method: req.method,
+        headers: req.headers,
+        json: async () => body,
+      };
+
       try {
-        body = rawBody ? JSON.parse(rawBody) : null;
-      } catch {
-        body = null;
+        const response = await handleRequest(wrappedReq);
+        const status = response.status || 200;
+        const headers = response.headers || {};
+        const responseBody = await response.text();
+        res.writeHead(status, Object.fromEntries(headers));
+        res.end(responseBody);
+      } catch (e) {
+        console.error("Server error:", e);
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
       }
-    }
+    });
+    serverInstance.listen(PORT, () => {
+      console.log(`  Node.js server listening on http://localhost:${PORT}`);
+    });
+  }
+}
 
-    // Create a minimal Request-like object
-    const wrappedReq = {
-      url: `http://${req.headers.host || "localhost:3031"}${req.url}`,
-      method: req.method,
-      headers: req.headers,
-      json: async () => body,
-    };
-
-    try {
-      const response = await handleRequest(wrappedReq);
-      const status = response.status || 200;
-      const headers = response.headers || {};
-      const responseBody = await response.text();
-      res.writeHead(status, Object.fromEntries(headers));
-      res.end(responseBody);
-    } catch (e) {
-      console.error("Server error:", e);
-      res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: e.message }));
-    }
-  });
-  serverInstance.listen(PORT, () => {
-    console.log(`  Node.js server listening on http://localhost:${PORT}`);
-  });
+// Auto-start when run directly (not imported)
+const isDirectRun = process.argv[1] && (
+  process.argv[1].includes('server.js') ||
+  process.argv[1].endsWith('server.js')
+);
+if (isDirectRun) {
+  startServer();
 }
