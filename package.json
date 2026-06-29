@@ -1,5 +1,5 @@
 {
-  "name": "mmxpage",
+  "name": "mmxsite",
   "version": "0.0.0",
   "description": "A markdown-style documentation generator, blog builder, and standalone page CLI",
   "main": "main.js",

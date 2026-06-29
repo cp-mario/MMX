@@ -87,11 +87,11 @@ jobs:
           COMMIT_DATE=$(date -u +%Y-%m-%d-%H-%M-%S)
           
           # Get latest official version from npm (tag=latest)
-          OFFICIAL_VERSION=$(npm view roxul@latest version 2>/dev/null || echo "0.0.0")
+          OFFICIAL_VERSION=$(npm view mmxsite@latest version 2>/dev/null || echo "0.0.0")
           echo "latest_version=$OFFICIAL_VERSION" >> $GITHUB_OUTPUT
           
           # Get latest experimental version from npm (tag=experimental)
-          EXPERIMENTAL_VERSION=$(npm view roxul@experimental version 2>/dev/null || echo "none")
+          EXPERIMENTAL_VERSION=$(npm view mmxsite@experimental version 2>/dev/null || echo "none")
           echo "experimental_version=$EXPERIMENTAL_VERSION" >> $GITHUB_OUTPUT
           
           echo "commit_count=$COMMIT_COUNT" >> $GITHUB_OUTPUT
@@ -151,7 +151,7 @@ jobs:
           echo "Previous experimental: ${{ steps.commit_info.outputs.experimental_version }}"
           echo "Commit SHA: ${{ github.sha }}"
           echo "Commit short: ${{ github.sha_short }}"
-          echo "Install with: npm install @mariocp/roxul@experimental"
+          echo "Install with: npm install mmxsite@experimental"
           echo "Reference: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
       
       - name: Reset package.json version

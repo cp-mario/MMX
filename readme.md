@@ -32,12 +32,23 @@ bun --version
 git clone https://github.com/cp-mario/MMX.git
 cd MMX
 
-# 2. (Optional) Edit config.mcfg so inputPath / outputPath match your project
-# 3. Run the generator
-bun main.js
+# 2. Build your documentation from a source folder
+mmx build .
 ```
 
-That is it — there is no `bun install` step because MMX has **zero runtime dependencies**. Bun reads the source files directly via ESM.
+That's it — no `bun install` needed. MMX has **zero runtime dependencies**.
+
+The default output goes to `./output`. You can change it:
+
+```bash
+mmx build ./mi-proyecto -o ./site
+```
+
+Or use two positional args:
+
+```bash
+mmx build ./mi-proyecto ./site
+```
 
 ### Using the npm scripts
 
@@ -47,6 +58,94 @@ bun run dev       # build with `--watch`, regenerates on file change
 bun run build     # same as `bun run main`
 bun run start     # same as `bun run main`
 bun run node      # force Node even if Bun is installed
+bun run mmx       # run the mmx CLI
+```
+
+### Using the CLI directly
+
+If installed globally or via `npx`:
+
+```bash
+mmx build .
+mmx build ./src -o ./output
+mmx blog ./posts
+mmx page article.mmx -o article.html
+mmx editor
+mmx serve ./output 8080
+```
+
+---
+
+## CLI Commands
+
+```
+mmx <command> [options]
+```
+
+### `build [input] [output]`
+
+Generate a full documentation site from a folder. If the folder contains a `config.mcfg`, its settings are used.
+
+| Arg | Description | Default |
+|-----|-------------|---------|
+| `input` | Source folder with `.mmx` files | `.` (current dir) |
+| `output` | Output directory for the generated site | `./output` |
+
+Flags:
+- `-o, --output <path>` — output directory (overrides positional arg)
+- `-f, --force` — force rebuild all files (skip incremental check)
+- `-nm, --no-minify` — disable minification
+
+```bash
+mmx build                          # . → ./output
+mmx build ./src                    # ./src → ./output
+mmx build ./src ./site             # ./src → ./site
+mmx build ./src -o ./public/site   # ./src → ./public/site
+```
+
+### `blog [input] [output]`
+
+Convert a folder of `.mmx` blog post files into a blog with a chronological index page. Blog posts use filenames like `2024-01-15-title.mmx` to determine the post date.
+
+| Arg | Description | Default |
+|-----|-------------|---------|
+| `input` | Folder with `.mmx` blog posts | `.` (current dir) |
+| `output` | Output directory | `../blog` relative to posts |
+
+```bash
+mmx blog ./posts              # ./posts → ./blog
+mmx blog ./posts ./my-blog
+```
+
+### `page [options] <file>`
+
+Generate a standalone HTML page from a single `.mmx` file. All styles and scripts are inlined — no sidebar, index, or navigation.
+
+```bash
+mmx page article.mmx -o article.html
+mmx page article.mmx --assets ./assets
+```
+
+Flags:
+- `-o, --output <path>` — output file path (default: same name as input with `.html`)
+- `-a, --assets <path>` — path prefix for assets directory (default: `./assets`)
+
+### `editor [port]`
+
+Launch the MMX Visual Editor server with a live preview, file explorer, and toolbar.
+
+```bash
+mmx editor          # default port 3031
+mmx editor 4000
+```
+
+### `serve [dir] [port]`
+
+Serve a documentation directory via HTTP.
+
+```bash
+mmx serve            # serves ./output on port 8080
+mmx serve ./site 3000
 ```
 
 ---
@@ -57,6 +156,8 @@ MMX includes a built-in **visual editor** that provides a comfortable environmen
 
 ```bash
 # Start the editor
+mmx editor
+# Or directly:
 bun editor/server.js
 ```
 
@@ -82,7 +183,8 @@ For a complete walkthrough of all features, see the [Visual Editor](1Example/inp
 
 ```
 MMX/
-├── main.js                 # Entry point (run with `bun main.js`)
+├── cli.js                  # CLI entry point (`mmx build`, `mmx blog`, etc.)
+├── main.js                 # Library module (used by cli.js)
 ├── config.mcfg             # Generator configuration
 ├── template.html           # HTML template used for every page
 ├── bunfig.toml             # Bun runtime configuration
@@ -103,6 +205,9 @@ MMX/
 │   ├── imageZoom.js
 │   ├── player/
 │   └── search/
+├── editor/                 # Visual Editor server
+│   ├── server.js
+│   └── public/
 └── 1Example/
     ├── input/              # Example project source
     │   ├── config.mcfg
@@ -110,7 +215,7 @@ MMX/
     │   ├── assets/
     │   └── pages/
     └── output/             # Generated site (gitignored normally)
-```
+
 
 ---
 
@@ -122,7 +227,7 @@ Open `config.mcfg` and set:
 # Multi-page mode (default)
 singleFile = false
 inputPath  = "./1Example/input"
-outputPath = "./1Example/output/"
+outputPath = "./1Example/output"
 
 # Single document mode — produces ONE HTML file
 # singleFile = true
