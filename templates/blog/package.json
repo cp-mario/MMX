@@ -1,0 +1,17 @@
+{
+  "name": "mmx-blog",
+  "version": "1.0.0",
+  "description": "MMX blog project",
+  "type": "module",
+  "scripts": {
+    "build": "mmx blog ./src -o ./public",
+    "dev": "bun --watch \"$(bun which mmx)\" blog ./src -o ./public",
+    "start": "mmx serve ./public 8080"
+  },
+  "keywords": ["mmx", "blog"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "mmxsite": "^0.0.0"
+  }
+}

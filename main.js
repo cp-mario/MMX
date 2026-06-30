@@ -878,12 +878,28 @@ function calculatePrefix(outputPath, outputRoot) {
  * @param {string} prefix - Relative path prefix
  * @returns {string} HTML with corrected paths
  */
+/**
+ * Prefixes all recognised asset/page URLs in HTML with a relative path prefix.
+ * Handles:
+ *  - src="assets/..." → src="<prefix>assets/..."
+ *  - src="intAssets/..." → src="<prefix>intAssets/..."
+ *  - href="pages/..." → href="<prefix>pages/..." (normalised via normalizePageHref)
+ *  - href="assets/..." → href="<prefix>assets/..."
+ *  - path="assets/..." → path="<prefix>assets/..."
+ *  - Any other relative href/src (bare filename like "index.html", "archive.html")
+ *    that does NOT start with http, https, //, #, /, data:, mailto:, tel:, ./, ../
+ *    → <prefix>
+ *
+ * @param {string} html - HTML content
+ * @param {string} prefix - Relative path prefix (e.g. "./" or "../../")
+ * @returns {string} HTML with corrected paths
+ */
 function applyPathPrefix(html, prefix) {
-  const normalizedHtml = html.replace(/(href=)(["'])([^"']*pages\/[^"']+)\2/g, (match, prefix, quote, href) => {
-    return `${prefix}${quote}${normalizePageHref(href)}${quote}`;
+  const normalizedHtml = html.replace(/(href=)(["'])([^"']*pages\/[^"']+)\2/g, (match, pfx, quote, href) => {
+    return `${pfx}${quote}${normalizePageHref(href)}${quote}`;
   });
 
-  return normalizedHtml
+  let result = normalizedHtml
     .replace(/(src=["'])(assets\/[^"']+)/g, `$1${prefix}$2`)
     .replace(/(src=["'])(intAssets\/[^"']+)/g, `$1${prefix}$2`)
     .replace(/<a\s+target="_blank"\s+href=["'](pages\/[^"']+)["']/g,
@@ -895,6 +911,16 @@ function applyPathPrefix(html, prefix) {
     .replace(/(href=["'])(pages\/[^"']+)/g, `$1${prefix}$2`)
     .replace(/(href=["'])(assets\/[^"']+)/g, `$1${prefix}$2`)
     .replace(/(path=["'])(assets\/[^"']+)/g, `$1${prefix}$2`);
+
+  // Prefix any remaining relative href/src/path values that are bare filenames
+  // (not starting with http, https, //, #, /, data:, mailto:, tel:, ./, ../)
+  // This ensures nav/footer links like href="index.html" get the correct prefix.
+  result = result.replace(
+    /(\b(?:href|src|path)=["'])(?!https?:\/\/|\/\/|#|\/|data:|mailto:|tel:|\.\/|\.\.\/)([^"']+)/g,
+    `$1${prefix}$2`
+  );
+
+  return result;
 }
 
 /**
@@ -1162,17 +1188,118 @@ export function buildBlog(postsDir, outputDir, options = {}) {
     }
   }
 
-  // Read, parse, and convert every .mmx file (skip companion files)
+  // ── Resolve project root ─────────────────────────────────────────────
+  // When the user runs `mmx blog ./src`, shared files (config, nav, footer, etc.)
+  // can live inside ./src/, in ./theme/, or in the project root.
+  // Detect if postsDir IS the project root (has theme/ or config.mcfg) or a
+  // subdirectory (like src/).
+  const projectRoot = (
+    fs.existsSync(path.join(postsDir, "theme")) ||
+    fs.existsSync(path.join(postsDir, "config.mcfg"))
+  ) ? postsDir : path.resolve(postsDir, "..");
+
+  /**
+   * Resolve a blog asset file by checking in order:
+   *   1. postsDir (e.g. ./src/)
+   *   2. projectRoot/theme/  (e.g. ./theme/)
+   *   3. projectRoot         (e.g. ./)
+   * Returns the file content if found, or null otherwise.
+   * @param {string} filename
+   * @returns {string|null}
+   */
+  function resolveAsset(filename) {
+    const local = path.join(postsDir, filename);
+    if (fs.existsSync(local)) return fs.readFileSync(local, "utf-8");
+    const theme = path.join(projectRoot, "theme", filename);
+    if (fs.existsSync(theme)) return fs.readFileSync(theme, "utf-8");
+    const parent = path.join(projectRoot, filename);
+    if (fs.existsSync(parent)) return fs.readFileSync(parent, "utf-8");
+    return null;
+  }
+
+  // ── Read config.mcfg ────────────────────────────────────────────────
+  let sourceConfig = null;
+  const configRaw = resolveAsset("config.mcfg");
+  if (configRaw) {
+    try {
+      sourceConfig = parseMCFG(configRaw);
+    } catch (e) {
+      console.warn(`Warning: Could not parse config.mcfg: ${e.message}`);
+    }
+  }
+
+  const blogTitle = sourceConfig?.title || "Blog";
+  const defaultLang = sourceConfig?.lang || "en";
+  const blogDescription = sourceConfig?.description || "";
+  const blogAuthor = sourceConfig?.author || "";
+  const blogKeywords = sourceConfig?.keywords || "";
+  const blogBaseUrl = sourceConfig?.baseUrl || "";
+  const blogOgImage = sourceConfig?.ogImage || "";
+  const blogTwitterCreator = sourceConfig?.twitterCreator || "";
+
+  // Build SEO meta tags
+  const seoMeta = buildSeoMetaTags({
+    description: blogDescription,
+    author: blogAuthor,
+    keywords: blogKeywords,
+    baseUrl: blogBaseUrl,
+    ogImage: blogOgImage,
+    twitterCreator: blogTwitterCreator,
+  });
+
+  // ── Read nav.html, footer.html, styles.css (from either location) ───
+  let navHtml = "", footerHtml = "", customCSS = "";
+  const navRaw = resolveAsset("nav.html");
+  if (navRaw) { navHtml = navRaw; log(`  Using nav.html`); }
+
+  const footerRaw = resolveAsset("footer.html");
+  if (footerRaw) { footerHtml = footerRaw; log(`  Using footer.html`); }
+
+  const cssRaw = resolveAsset("styles.css");
+  if (cssRaw) { customCSS = cssRaw; log(`  Using styles.css`); }
+
+  // ── Check for optional index.html or index.mmx (user-provided blog home) ─
+  let indexContentRaw = null;
+  let indexContentHtml = null;
+  let indexIsHtml = false;
+  let indexLang = defaultLang;
+
+  // Prefer index.html over index.mmx (served as-is)
+  const indexHtmlPath = path.join(postsDir, "index.html");
+  const indexMmxPath = path.join(postsDir, "index.mmx");
+
+  if (fs.existsSync(indexHtmlPath)) {
+    indexIsHtml = true;
+    log(`  Using index.html (copied as-is)`);
+  } else if (fs.existsSync(indexMmxPath)) {
+    indexContentRaw = fs.readFileSync(indexMmxPath, "utf-8");
+    // Detect per-file lang in index.mmx too
+    const langResult = extractPerFileLang(indexContentRaw);
+    indexContentRaw = langResult.content;
+    indexLang = langResult.lang || defaultLang;
+    // Parse to HTML
+    indexContentHtml = mmxToHtml(indexContentRaw);
+    log(`  Using index.mmx`);
+  }
+
+  // Read, parse, and convert every .mmx file (skip companion files and index.mmx)
   const posts = [];
   const files = fs.readdirSync(postsDir).filter(f =>
     f.endsWith('.mmx') &&
     f.toLowerCase() !== 'indextext.mmx' &&
+    f.toLowerCase() !== 'index.mmx' &&
     !f.startsWith('__')
   );
 
   for (const file of files) {
     const srcPath = path.join(postsDir, file);
-    const raw = fs.readFileSync(srcPath, 'utf-8');
+    let raw = fs.readFileSync(srcPath, 'utf-8');
+
+    // Detect per-file language: first line can be `#lang: <code>`
+    const langResult = extractPerFileLang(raw);
+    raw = langResult.content;
+    const fileLang = langResult.lang || defaultLang;
+
     const title = raw.match(/^# (.+)$/m)?.[1] || path.basename(file, '.mmx');
 
     // Extract first paragraph as excerpt
@@ -1190,19 +1317,29 @@ export function buildBlog(postsDir, outputDir, options = {}) {
     const date = extractPostDate(file, srcPath);
 
     // Build filename for the output page (kebab-case)
-    const slug = file
+    let slug = file
       .replace(/\.mmx$/i, '')
       .replace(/^\d{4}-\d{2}-\d{2}-/, '')  // strip date prefix for the slug
       .replace(/\s+/g, '-')
       .toLowerCase();
 
+    // Append language code to filename if it differs from blog default
+    if (fileLang && fileLang !== defaultLang) {
+      slug += '.' + fileLang;
+    }
+
+    // Build page title: blog title - post title
+    const pageTitle = blogTitle ? `${blogTitle} - ${title}` : title;
+
     posts.push({
       title,
+      pageTitle,
       slug: slug + '.html',
       date,
       content: htmlContent,
       excerpt: firstPara,
       srcPath,
+      lang: fileLang,
     });
   }
 
@@ -1225,6 +1362,10 @@ export function buildBlog(postsDir, outputDir, options = {}) {
     scriptJS = scriptJS.replace('//MCFGParser', pc);
   }
 
+  // Strip redirectIndexHtml from scriptJS (it breaks relative URLs in blog pages
+  // by redirecting /output/index.html → /output without trailing slash)
+  scriptJS = scriptJS.replace(/\(\s*function\s+redirectIndexHtml\s*\([\s\S]*?\}\s*\)\s*\(\s*\)\s*;?\s*/g, '');
+
   if (CONFIG.minifyScripts) scriptJS = minifyJs(scriptJS);
   if (CONFIG.minifyCss) { styleCSS = minifyCss(styleCSS); styleSidebarCSS = minifyCss(styleSidebarCSS); }
 
@@ -1246,6 +1387,11 @@ export function buildBlog(postsDir, outputDir, options = {}) {
   if (CONFIG.minifyScripts) { if (imageZoomJS) imageZoomJS = minifyJs(imageZoomJS); if (playerJS) playerJS = minifyJs(playerJS); }
   if (CONFIG.minifyCss) { if (playerCSS) playerCSS = minifyCss(playerCSS); }
 
+  // If customCSS is present, optionally minify it
+  if (customCSS && CONFIG.minifyCss) {
+    customCSS = minifyCss(customCSS);
+  }
+
   // ── Render each post page (incremental: skip if output is newer) ──
   let built = 0, skipped = 0;
   for (const post of posts) {
@@ -1261,13 +1407,19 @@ export function buildBlog(postsDir, outputDir, options = {}) {
       }
     }
 
+    const postPrefix = calculatePrefix(outPath, outputDir);
     const pageHtml = buildStandaloneHtml({
-      title: post.title,
+      title: post.pageTitle,
       content: post.content,
       styleCSS, styleSidebarCSS, scriptJS,
       playerCSS, playerJS, imageZoomJS,
       highlightJS, highlightCSS,
-      lang: "en",
+      lang: post.lang,
+      seoMeta,
+      navHtml,
+      footerHtml,
+      customCSS,
+      prefix: postPrefix,
     });
     fs.writeFileSync(outPath, pageHtml, "utf-8");
     log(`  ${post.slug}  ← ${path.basename(post.srcPath)}`);
@@ -1275,15 +1427,53 @@ export function buildBlog(postsDir, outputDir, options = {}) {
   }
 
   // ── Render blog index ──────────────────────────────────
-  const indexHtml = buildBlogIndexHtml({
-    title: "Blog",
-    posts,
-    styleCSS, styleSidebarCSS, scriptJS,
-    playerCSS, playerJS, imageZoomJS,
-    highlightJS, highlightCSS,
-  });
-  fs.writeFileSync(path.join(outputDir, "index.html"), indexHtml, "utf-8");
-  log(`  index.html  (${posts.length} posts)`);
+  if (indexIsHtml) {
+    // index.html exists — copy it directly to output
+    const srcIndexHtml = fs.readFileSync(indexHtmlPath, "utf-8");
+    fs.writeFileSync(path.join(outputDir, "index.html"), srcIndexHtml, "utf-8");
+    log(`  index.html  (copied)`);
+  } else {
+    // Generate index page (auto or from index.mmx)
+    const showRecent = !!indexContentHtml; // limit post list when index.mmx is used
+    const indexPrefix = calculatePrefix(path.join(outputDir, "index.html"), outputDir);
+    const indexHtml = buildBlogIndexHtml({
+      title: blogTitle,
+      posts,
+      styleCSS, styleSidebarCSS, scriptJS,
+      playerCSS, playerJS, imageZoomJS,
+      highlightJS, highlightCSS,
+      seoMeta,
+      navHtml,
+      footerHtml,
+      customCSS,
+      indexContent: indexContentHtml,
+      lang: indexLang,
+      showRecent,
+      prefix: indexPrefix,
+    });
+    fs.writeFileSync(path.join(outputDir, "index.html"), indexHtml, "utf-8");
+
+    // ── Render archive page (all posts) ─────────────────
+    const archivePrefix = calculatePrefix(path.join(outputDir, "archive.html"), outputDir);
+    const archiveHtml = buildBlogIndexHtml({
+      title: `${blogTitle} - Archive`,
+      posts,
+      styleCSS, styleSidebarCSS, scriptJS,
+      playerCSS, playerJS, imageZoomJS,
+      highlightJS, highlightCSS,
+      seoMeta,
+      navHtml,
+      footerHtml,
+      customCSS,
+      lang: defaultLang,
+      isArchive: true,
+      prefix: archivePrefix,
+    });
+    fs.writeFileSync(path.join(outputDir, "archive.html"), archiveHtml, "utf-8");
+
+    log(`  index.html  (${posts.length} posts)`);
+    log(`  archive.html`);
+  }
 
   const summary = built > 0 ? `${built} built` : "none built";
   const skipNote = skipped > 0 ? `, ${skipped} up to date` : "";
@@ -1291,29 +1481,257 @@ export function buildBlog(postsDir, outputDir, options = {}) {
 }
 
 /**
+ * Extracts a per-file language directive from .mmx content.
+ * If the first non-blank line matches `#lang: <code>`, the directive is
+ * removed from the content and the language code is returned.
+ *
+ * @param {string} raw - Raw .mmx content
+ * @returns {{ content: string, lang: string|null }} Cleaned content and extracted lang (or null)
+ */
+function extractPerFileLang(raw) {
+  const lines = raw.split('\n');
+  let lang = null;
+  let found = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (!trimmed) continue; // skip blank lines
+
+    const match = trimmed.match(/^#lang:\s*(\S+)/i);
+    if (match) {
+      lang = match[1];
+      lines.splice(i, 1); // remove the directive line
+      found = true;
+    }
+    break; // only check the first non-blank line
+  }
+
+  return { content: lines.join('\n'), lang };
+}
+
+/**
+ * Builds an HTML string of SEO <meta> tags from a config object.
+ *
+ * @param {Object} cfg - SEO configuration
+ * @param {string} [cfg.description]
+ * @param {string} [cfg.author]
+ * @param {string} [cfg.keywords]
+ * @param {string} [cfg.baseUrl]
+ * @param {string} [cfg.ogImage]
+ * @param {string} [cfg.twitterCreator]
+ * @returns {string} HTML meta tags (empty string if none provided)
+ */
+function buildSeoMetaTags(cfg) {
+  if (!cfg) return "";
+  const tags = [];
+  const { description, author, keywords, baseUrl, ogImage, twitterCreator } = cfg;
+
+  if (description) {
+    tags.push(`  <meta name="description" content="${escapeHtml(description)}">`);
+    tags.push(`  <meta property="og:description" content="${escapeHtml(description)}">`);
+  }
+  if (author) {
+    tags.push(`  <meta name="author" content="${escapeHtml(author)}">`);
+  }
+  if (keywords) {
+    tags.push(`  <meta name="keywords" content="${escapeHtml(keywords)}">`);
+  }
+  if (baseUrl) {
+    tags.push(`  <link rel="canonical" href="${escapeHtml(baseUrl)}">`);
+    tags.push(`  <meta property="og:url" content="${escapeHtml(baseUrl)}">`);
+  }
+  if (ogImage) {
+    tags.push(`  <meta property="og:image" content="${escapeHtml(ogImage)}">`);
+  }
+  if (twitterCreator) {
+    tags.push(`  <meta name="twitter:creator" content="@${escapeHtml(twitterCreator.replace(/^@/, ''))}">`);
+  }
+
+  // Add basic Open Graph / Twitter card defaults
+  tags.push(`  <meta property="og:type" content="website">`);
+  tags.push(`  <meta name="twitter:card" content="summary_large_image">`);
+
+  return tags.join('\n');
+}
+
+// ─── init blog ─────────────────────────────────────────────────────────────
+
+/**
+ * Scaffolds a new blog project in the given directory by copying the
+ * blog template files (templates/blog/) from the MMX installation folder.
+ *
+ * @param {string} targetDir - Absolute path where the blog project is created
+ */
+export function initBlog(targetDir) {
+  const log = (msg) => console.log(msg);
+  const templateDir = path.join(__dirname, "templates", "blog");
+
+  if (!fs.existsSync(templateDir)) {
+    console.error(`Error: Blog template not found at ${templateDir}`);
+    process.exit(1);
+  }
+
+  if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0) {
+    console.error(`Error: Target directory is not empty: ${targetDir}`);
+    process.exit(1);
+  }
+
+  log(`\nCreating blog project in: ${targetDir}\n`);
+
+  // Copy template directory recursively
+  copyTemplateRecursive(templateDir, targetDir, log);
+
+  log(`\nBlog project created successfully!\n`);
+  log(`  cd ${targetDir}`);
+  log(`  Customise theme/:  theme/config.mcfg  theme/nav.html  theme/footer.html  theme/styles.css`);
+  log(`  Add posts in:      src/`);
+  log(`  Build:             mmx blog ./src -o ./output`);
+  log(`  Serve:             mmx serve ./output 8080\n`);
+}
+
+// ─── init doc ──────────────────────────────────────────────────────────────
+
+/**
+ * Scaffolds a new documentation project in the given directory by copying the
+ * doc template files (templates/doc/) from the MMX installation folder.
+ *
+ * @param {string} targetDir - Absolute path where the doc project is created
+ */
+export function initDoc(targetDir) {
+  const log = (msg) => console.log(msg);
+  const templateDir = path.join(__dirname, "templates", "doc");
+
+  if (!fs.existsSync(templateDir)) {
+    console.error(`Error: Doc template not found at ${templateDir}`);
+    process.exit(1);
+  }
+
+  if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0) {
+    console.error(`Error: Target directory is not empty: ${targetDir}`);
+    process.exit(1);
+  }
+
+  log(`\nCreating documentation project in: ${targetDir}\n`);
+
+  // Copy template directory recursively
+  copyTemplateRecursive(templateDir, targetDir, log);
+
+  log(`\nDocumentation project created successfully!\n`);
+  log(`  cd ${targetDir}`);
+  log(`  mmx build . -o ./output`);
+  log(`  mmx serve ./output 8080\n`);
+}
+
+/**
+ * Recursively copies a source directory to a destination, creating
+ * directories as needed. Logs each file created.
+ *
+ * @param {string} src - Source directory
+ * @param {string} dest - Destination directory
+ * @param {function} log - Logging function
+ */
+function copyTemplateRecursive(src, dest, log) {
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+
+  const items = fs.readdirSync(src);
+  for (const item of items) {
+    const srcPath = path.join(src, item);
+    const destPath = path.join(dest, item);
+    const stat = fs.statSync(srcPath);
+
+    if (stat.isDirectory()) {
+      copyTemplateRecursive(srcPath, destPath, log);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+      log(`  Created: ${destPath}`);
+    }
+  }
+}
+
+/**
  * Builds a blog index HTML page listing all posts chronologically.
  * Uses the same CSS/JS inlining as standalone pages.
  */
-function buildBlogIndexHtml({ title, posts, styleCSS, styleSidebarCSS, scriptJS, playerCSS, playerJS, imageZoomJS, highlightJS, highlightCSS }) {
-  const postItems = posts.map((p, i) => {
+function buildBlogIndexHtml({ title, posts, styleCSS, styleSidebarCSS, scriptJS, playerCSS, playerJS, imageZoomJS, highlightJS, highlightCSS, seoMeta = "", navHtml = "", footerHtml = "", customCSS = "", indexContent = null, lang = "en", showRecent = false, isArchive = false, prefix = "./" }) {
+  // ── Render a single post preview ──────────────────────────
+  const renderPost = (p) => {
     const dateLabel = p.date.label;
     const excerptHtml = p.excerpt ? `<p class="blog-excerpt">${escapeHtml(p.excerpt)}</p>` : '';
+    const langBadge = p.lang && p.lang !== lang ? ` <span class="post-lang">${escapeHtml(p.lang)}</span>` : '';
     return [
       '<article class="blog-post-preview">',
       `  <time datetime="${dateLabel}">${dateLabel}</time>`,
-      `  <h2><a href="${p.slug}">${escapeHtml(p.title)}</a></h2>`,
+      `  <h2><a href="${prefix}${p.slug}">${escapeHtml(p.title)}</a>${langBadge}</h2>`,
       excerptHtml,
       '</article>',
     ].join('\n');
-  }).join('\n');
+  };
+
+  const allPostItems = posts.map(p => renderPost(p)).join('\n');
+
+  // ── Assemble main content according to mode ────────────────
+  let mainContent = "";
+
+  if (isArchive) {
+    // Archive page: show all posts with search
+    mainContent += `    <header class="blog-header">\n      <h1>${escapeHtml(title)}</h1>\n    </header>\n`;
+    mainContent += [
+      '    <div class="blog-search-wrap">',
+      '      <input type="text" id="blog-search" placeholder="Search posts…" oninput="filterPosts(this.value)">',
+      '    </div>',
+    ].join('\n') + '\n';
+    mainContent += allPostItems;
+
+  } else if (showRecent && indexContent) {
+    // Enhanced index with custom index.mmx: user content + search + recent + view all
+    mainContent += `<div class="blog-index-user-content">\n${indexContent}\n</div>\n`;
+    // Search bar
+    mainContent += [
+      '    <div class="blog-search-wrap">',
+      '      <input type="text" id="blog-search" placeholder="Search posts…" oninput="filterPosts(this.value)">',
+      '    </div>',
+    ].join('\n');
+    // Recent posts (up to 5)
+    const recentPosts = posts.slice(0, 5).map(p => renderPost(p)).join('\n');
+    mainContent += `    <div id="blog-recent-posts">\n${recentPosts}\n    </div>\n`;
+    // View all button
+    mainContent += [
+      '    <div class="blog-view-all-wrap">',
+      `      <button class="blog-view-all-btn" id="blog-view-all-btn" onclick="toggleAllPosts()">View all posts (${posts.length})</button>`,
+      '    </div>',
+    ].join('\n');
+    // All posts (hidden initially)
+    mainContent += `    <div class="blog-all-posts" id="blog-all-posts">\n${allPostItems}\n    </div>\n`;
+
+  } else if (indexContent) {
+    // index.mmx but no recent limit (fallback — should not normally happen)
+    mainContent += `<div class="blog-index-user-content">\n${indexContent}\n</div>\n`;
+    mainContent += allPostItems;
+
+  } else {
+    // Auto-generated index (no custom index file)
+    mainContent += `    <header class="blog-header">\n      <h1>${escapeHtml(title)}</h1>\n    </header>\n`;
+    mainContent += allPostItems;
+  }
 
   const headParts = [
     '<!DOCTYPE html>',
-    '<html lang="en">',
+    `<html lang="${lang}">`,
     '<head>',
     '  <meta charset="utf-8">',
     '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
     `  <title>${escapeHtml(title)}</title>`,
+    '  <script>',
+    "    (function(){",
+    "      var p=location.pathname;",
+    "      var b=document.createElement('base');",
+    "      if(p.endsWith('/')){b.href=p}else{b.href=p.substring(0,p.lastIndexOf('/')+1)}",
+    "      document.head.appendChild(b);",
+    "    })();",
+    '  </script>',
+    seoMeta,
     '  <style>', styleCSS, '  </style>',
     '  <style>', styleSidebarCSS, '  </style>',
   ];
@@ -1323,28 +1741,78 @@ function buildBlogIndexHtml({ title, posts, styleCSS, styleSidebarCSS, scriptJS,
     '  <style>',
     '    /* Blog index overrides */',
     '    *, *::before, *::after { box-sizing: border-box; }',
-    '    #sidebar, #icon-btn2, #sidebar-search { display: none !important; }',
+'    #sidebar, #icon-btn2, #sidebar-search { display: none !important; }',
+    '    #header-navigator, #header-navigator-title, #header-navigator-toggle, #header-navigator-dropdown { display: none !important; }',
     '    main { max-width: 760px !important; width: 100%; margin: 0 auto !important; padding-inline: 24px !important; float: none !important; }',
-    '    body { margin: 0; padding: 24px 0; }',
-    '    @media (max-width: 600px) { main { padding-inline: 14px !important; } body { padding: 10px 0; } }',
+    '    body { margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; background: var(--bg-color, #000); color: var(--text-color, #fff); justify-content: flex-start; }',
+    '    main { flex: 1; }',
+    '    @media (max-width: 600px) { main { padding-inline: 14px !important; } }',
     '    pre, code, table { overflow-x: auto; max-width: 100%; }',
+    '    code, .inline-code { background: #2a2a2a !important; color: #e0e0e0 !important; border-radius: 3px; padding-inline: 3px; }',
     '    .blog-post-preview { margin-bottom: 2.5em; padding-bottom: 1.5em; border-bottom: 1px solid var(--border-color); }',
-    '    .blog-post-preview time { font-size: 0.85em; color: #666; display: block; margin-bottom: 0.2em; }',
+    '    .blog-post-preview time { font-size: 0.85em; color: #999; display: block; margin-bottom: 0.2em; }',
     '    .blog-post-preview h2 { margin: 0 0 0.3em 0; }',
-    '    .blog-post-preview h2 a { color: inherit; text-decoration: none; }',
+    '    .blog-post-preview h2 a { color: var(--text-color, #fff); text-decoration: none; }',
     '    .blog-post-preview h2 a:hover { text-decoration: underline; }',
-    '    .blog-excerpt { margin: 0; color: #444; }',
+    '    .blog-excerpt { margin: 0; color: #ccc; }',
     '    .blog-header { margin-bottom: 2em; }',
     '    .blog-header h1 { margin: 0; }',
+    '    .blog-index-user-content { margin-bottom: 2em; }',
+    '    .post-lang { display: inline-block; font-size: 0.7em; font-weight: 600; background: var(--link-color, #66b0ff); color: #fff; padding: 1px 5px; border-radius: 3px; vertical-align: middle; margin-left: 4px; text-transform: uppercase; letter-spacing: 0.5px; }',
+    customCSS,
+    '    /* Search bar */',
+    '    #blog-search {',
+    '      width: 100%; padding: 10px 14px; margin-bottom: 1.5rem;',
+    '      background: var(--sidebar-bg, #111); color: var(--text-color, #fff);',
+    '      border: 1px solid var(--border-color, #333); border-radius: 6px;',
+    '      font-size: 1rem; outline: none; box-sizing: border-box;',
+    '    }',
+    '    #blog-search:focus { border-color: var(--link-color, #66b0ff); }',
+    '    /* View all button */',
+    '    .blog-view-all-btn {',
+    '      display: inline-block; padding: 8px 20px; margin-top: 1rem;',
+    '      background: var(--link-color, #66b0ff); color: #fff;',
+    '      border: none; border-radius: 6px; font-size: 0.95rem;',
+    '      cursor: pointer; transition: background 0.2s;',
+    '    }',
+    '    .blog-view-all-btn:hover { background: var(--link-hover-color, #99ccff); }',
+    '    .blog-all-posts { display: none; margin-top: 2rem; }',
+    '    .blog-all-posts.visible { display: block; }',
+    '    .blog-view-all-wrap { text-align: center; }',
+    '    .blog-search-wrap { margin-top: 1rem; }',
     '  </style>',
+    '  <script>',
+    '    function filterPosts(q) {',
+    '      q = q.toLowerCase();',
+    '      document.querySelectorAll(".blog-post-preview").forEach(el => {',
+    '        const title = el.querySelector("h2 a")?.textContent?.toLowerCase() || "";',
+    '        const excerpt = el.querySelector(".blog-excerpt")?.textContent?.toLowerCase() || "";',
+    '        const time = el.querySelector("time")?.textContent?.toLowerCase() || "";',
+    '        el.style.display = (title.includes(q) || excerpt.includes(q) || time.includes(q)) ? "" : "none";',
+    '      });',
+    '    }',
+    '    function toggleAllPosts() {',
+    '      const allPosts = document.getElementById("blog-all-posts");',
+    '      const btn = document.getElementById("blog-view-all-btn");',
+    '      if (!allPosts || !btn) return;',
+    '      const isHidden = !allPosts.classList.contains("visible");',
+    '      allPosts.classList.toggle("visible", isHidden);',
+    '      btn.textContent = isHidden ? "Show less" : "View all posts (' + posts.length + ')";',
+    '      // Reveal matching posts in the all-posts section',
+    '      if (isHidden) {',
+    '        const q = document.getElementById("blog-search")?.value || "";',
+    '        if (q) filterPosts(q);',
+    '      }',
+    '    }',
+    '  </script>',
     '</head>',
     '<body>',
+    navHtml,
     '  <main>',
-    '    <header class="blog-header">',
-    `      <h1>${escapeHtml(title)}</h1>`,
-    '    </header>',
-    postItems,
+    mainContent,
     '  </main>',
+    footerHtml,
+    `  <script>const prefix="${prefix}";</script>`,
     `  <script>${scriptJS}</script>`,
   );
   if (imageZoomJS) headParts.push(`  <script>${imageZoomJS}</script>`);
@@ -1352,7 +1820,9 @@ function buildBlogIndexHtml({ title, posts, styleCSS, styleSidebarCSS, scriptJS,
   if (highlightJS) headParts.push(highlightJS);
   headParts.push('</body>', '</html>');
 
-  return headParts.join('\n');
+  let html = headParts.join('\n');
+  html = applyPathPrefix(html, prefix);
+  return html;
 }
 
 /**
@@ -1368,7 +1838,7 @@ function escapeHtml(str) {
  * Builds a standalone HTML page inlining all CSS and JS.
  * Reused for both cli.js-style pages and individual blog posts.
  */
-function buildStandaloneHtml({ title, content, styleCSS, styleSidebarCSS, scriptJS, playerCSS, playerJS, imageZoomJS, highlightJS, highlightCSS, lang = "en" }) {
+function buildStandaloneHtml({ title, content, styleCSS, styleSidebarCSS, scriptJS, playerCSS, playerJS, imageZoomJS, highlightJS, highlightCSS, lang = "en", seoMeta = "", navHtml = "", footerHtml = "", customCSS = "", prefix = "./" }) {
   const headParts = [
     '<!DOCTYPE html>',
     `<html lang="${lang}">`,
@@ -1376,6 +1846,15 @@ function buildStandaloneHtml({ title, content, styleCSS, styleSidebarCSS, script
     '  <meta charset="utf-8">',
     '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
     `  <title>${escapeHtml(title)}</title>`,
+    '  <script>',
+    "    (function(){",
+    "      var p=location.pathname;",
+    "      var b=document.createElement('base');",
+    "      if(p.endsWith('/')){b.href=p}else{b.href=p.substring(0,p.lastIndexOf('/')+1)}",
+    "      document.head.appendChild(b);",
+    "    })();",
+    '  </script>',
+    seoMeta,
     '  <style>', styleCSS, '  </style>',
     '  <style>', styleSidebarCSS, '  </style>',
   ];
@@ -1385,7 +1864,8 @@ function buildStandaloneHtml({ title, content, styleCSS, styleSidebarCSS, script
     '  <style>',
     '    /* Standalone page: no sidebar → override sidebar-dependent rules */',
     '    *, *::before, *::after { box-sizing: border-box; }',
-    '    #sidebar, #icon-btn2, #sidebar-search { display: none !important; }',
+'    #sidebar, #icon-btn2, #sidebar-search { display: none !important; }',
+    '    #header-navigator, #header-navigator-title, #header-navigator-toggle, #header-navigator-dropdown { display: none !important; }',
     '    main {',
     '      max-width: 860px !important;',
     '      width: 100%;',
@@ -1394,22 +1874,29 @@ function buildStandaloneHtml({ title, content, styleCSS, styleSidebarCSS, script
     '      float: none !important;',
     '    }',
     '    pre, code, table { overflow-x: auto; max-width: 100%; }',
-    '    body { margin: 0; padding: 24px 0; }',
+    '    code, .inline-code { background: #2a2a2a !important; color: #e0e0e0 !important; border-radius: 3px; padding-inline: 3px; }',
+    '    body { margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; background: var(--bg-color, #000); color: var(--text-color, #fff); justify-content: flex-start; }',
+    '    main { flex: 1; }',
     '    @media (max-width: 600px) {',
     '      main { padding-inline: 14px !important; }',
-    '      body { padding: 10px 0; }',
     '    }',
+    customCSS,
     '  </style>',
     '</head>',
     '<body>',
+    navHtml,
     '  <main>', content, '  </main>',
+    footerHtml,
+    `  <script>const prefix="${prefix}";</script>`,
     `  <script>${scriptJS}</script>`,
   );
   if (imageZoomJS) headParts.push(`  <script>${imageZoomJS}</script>`);
   if (playerJS) headParts.push(`  <script>${playerJS}</script>`);
   if (highlightJS) headParts.push(highlightJS);
   headParts.push('</body>', '</html>');
-  return headParts.join('\n');
+  let html = headParts.join('\n');
+  html = applyPathPrefix(html, prefix);
+  return html;
 }
 
 // ─── Page command: standalone HTML from a single .mmx file ──────────────

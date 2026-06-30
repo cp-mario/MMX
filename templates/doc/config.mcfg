@@ -1,0 +1,12 @@
+# Docs config
+title = Docs
+lang = en
+version = 1.0.0
+inputPath = ./
+outputPath = ./output
+description = My project docs
+author = Your Name
+baseUrl =
+keywords = docs
+minifyScripts = true
+minifyCss = true

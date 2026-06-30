@@ -1,0 +1,17 @@
+{
+  "name": "mmx-docs",
+  "version": "1.0.0",
+  "description": "MMX docs project",
+  "type": "module",
+  "scripts": {
+    "build": "mmx build . -o ./output",
+    "dev": "bun --watch \"$(bun which mmx)\" build . -o ./output",
+    "start": "mmx serve ./output 8080"
+  },
+  "keywords": ["mmx", "docs"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "mmxsite": "^0.0.0"
+  }
+}

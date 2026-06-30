@@ -13,6 +13,7 @@
     "template.html",
     "intAssets/",
     "scripts/",
+    "templates/",
     "LICENSE",
     "readme.md"
   ],

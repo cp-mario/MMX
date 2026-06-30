@@ -1,0 +1,11 @@
+# Blog config
+title = My Blog
+lang = en
+description = My blog description
+author = Your Name
+baseUrl =
+keywords = blog
+ogImage =
+twitterCreator =
+minifyScripts = true
+minifyCss = true

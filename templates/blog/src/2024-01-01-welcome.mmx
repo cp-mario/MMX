@@ -1,0 +1,19 @@
+#lang: en
+# Welcome to My Blog!
+
+This is your very first post. Edit this file or add more `.mmx` files inside the `src/` folder to start building your blog.
+
+## What can you do?
+
+- **Write posts** in MMX format — a simple markup language that converts to HTML.
+- **Customise the theme** by editing files inside `theme/` (nav, footer, styles, config).
+- **Add per‑file language** with `#lang: es` on the first line — the output filename will include the language code (e.g. `post.es.html`).
+
+## Next steps
+
+1. Open `src/2024-01-01-welcome.mmx` and change this text.
+2. Create new `.mmx` files with filenames like `YYYY-MM-DD-title.mmx`.
+3. Run `mmx blog ./src -o ./output` to build.
+4. Run `mmx serve ./output 8080` to preview.
+
+Happy blogging!

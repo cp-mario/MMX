@@ -1,0 +1,307 @@
+/* ============================================================
+   CUSTOM BLOG STYLES — styles.css
+   ============================================================
+   Override the default MMX blog colours, fonts, spacing, and
+   layout.  Every rule here is appended AFTER the built‑in MMX
+   styles, so your values win.
+
+   Edit the :root variables below to customise the colour scheme.
+   ============================================================ */
+
+/* ── Dark colour palette (overrides the MMX defaults) ─────── */
+:root {
+  --primary-color:    #66b0ff;
+  --bg-color:         #000000;
+  --text-color:       #ffffff;
+  --border-color:     #333333;
+  --sidebar-bg:      #1a1a1a;
+  --nav-bg:          #0d0d0d;
+  --link-color:       var(--primary-color);
+  --link-hover-color: #99ccff;
+  --code-bg:          #1a1a1a;
+  --accent-color:     #ff6b6b;
+}
+
+/* ── Global resets for blog pages ─────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-color, #000000);
+  color: var(--text-color, #ffffff);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* ── Navigation bar (full‐width, top) ─────────────────────── */
+#blog-nav {
+  background: var(--nav-bg, #0d0d0d);
+  border-bottom: 1px solid var(--border-color, #333333);
+  padding: 0.85rem 1.5rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+}
+
+.nav-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.nav-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+}
+
+.nav-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.nav-site-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-color, #ffffff);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.nav-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-link-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.nav-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #ccc;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.4rem 0.7rem;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.nav-links a:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--link-color, #66b0ff);
+  text-decoration: none;
+}
+
+.nav-links a:active {
+  background: rgba(255,255,255,0.12);
+}
+
+/* ── Main content area ────────────────────────────────────── */
+main {
+  flex: 1;
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+main a {
+  color: var(--link-color, #66b0ff);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+main a:hover {
+  color: var(--link-hover-color, #99ccff);
+  border-bottom-color: currentColor;
+}
+
+/* ── Footer (full‐width, bottom) ──────────────────────────── */
+#blog-footer {
+  background: var(--nav-bg, #0d0d0d);
+  border-top: 1px solid var(--border-color, #333333);
+  padding: 1.5rem;
+  width: 100%;
+  margin-top: auto;
+}
+
+.footer-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: #888;
+}
+
+.footer-copy {
+  margin: 0;
+}
+
+.footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.footer-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #999;
+  text-decoration: none;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.footer-links a:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--link-color, #66b0ff);
+  text-decoration: none;
+}
+
+/* ── Blog index tweaks ────────────────────────────────────── */
+.blog-post-preview time {
+  font-size: 0.85em;
+  color: #888;
+  display: block;
+  margin-bottom: 0.2em;
+}
+
+.blog-post-preview {
+  margin-bottom: 2.5em;
+  padding-bottom: 1.5em;
+  border-bottom: 1px solid var(--border-color, #333333);
+}
+
+.blog-post-preview h2 {
+  margin: 0 0 0.3em 0;
+}
+
+.blog-post-preview h2 a {
+  color: var(--text-color, #ffffff);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.blog-post-preview h2 a:hover {
+  color: var(--link-color, #66b0ff);
+  text-decoration: none;
+}
+
+.blog-excerpt {
+  margin: 0;
+  color: #aaa;
+}
+
+/* ── Blog search bar ──────────────────────────────────────── */
+#blog-search {
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 1.5rem;
+  background: var(--nav-bg, #0d0d0d);
+  color: var(--text-color, #ffffff);
+  border: 1px solid var(--border-color, #333333);
+  border-radius: 6px;
+  font-size: 1rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+#blog-search:focus {
+  border-color: var(--link-color, #66b0ff);
+}
+
+#blog-search::placeholder {
+  color: #666;
+}
+
+/* ── View all / archive toggle ────────────────────────────── */
+.blog-view-all-btn {
+  display: inline-block;
+  padding: 8px 20px;
+  margin-top: 1rem;
+  background: var(--link-color, #66b0ff);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s;
+  font-weight: 600;
+}
+
+.blog-view-all-btn:hover {
+  background: var(--link-hover-color, #99ccff);
+  transform: translateY(-1px);
+}
+
+.blog-view-all-btn:active {
+  transform: translateY(0);
+}
+
+.blog-all-posts {
+  display: none;
+  margin-top: 2rem;
+}
+
+.blog-all-posts.visible {
+  display: block;
+}
+
+/* ── User content from index.mmx ──────────────────────────── */
+.blog-index-user-content a {
+  color: var(--link-color, #66b0ff);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.blog-index-user-content a:hover {
+  color: var(--link-hover-color, #99ccff);
+  border-bottom-color: currentColor;
+}
+
+/* ── Responsive helpers ───────────────────────────────────── */
+@media (max-width: 600px) {
+  .nav-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  main {
+    padding: 14px;
+  }
+}

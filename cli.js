@@ -29,6 +29,8 @@ import {
   buildStandalonePage,
   startEditor,
   startServe,
+  initBlog,
+  initDoc,
 } from "./main.js";
 
 // ─── Help ──────────────────────────────────────────────────────────────────
@@ -50,7 +52,17 @@ COMMANDS
   buildBlog [path]      Convert a folder of .mmx files into a blog with
                         a chronological index page. Filenames like
                         "2024-01-15-title.mmx" determine the post date.
-                        Default output: ../blog relative to the posts folder
+                        Default path: ./src (or current dir if ./src
+                        doesn't exist). Default output: ./output
+
+  init blog [dir]       Scaffold a new blog project in the given directory
+                        (default: current directory). Creates theme/ with
+                        config.mcfg, nav.html, footer.html, styles.css,
+                        and src/ with index.mmx and example posts.
+  init doc [dir]        Scaffold a new documentation project in the given
+                        directory (default: current directory). Creates
+                        pages/ with config.mcfg, index.mmx, and example
+                        documentation pages.
 
   page [options] <file> Generate a standalone HTML page from a single .mmx
                         file. All styles and scripts are inlined. No sidebar,
@@ -78,10 +90,13 @@ BUILD / BLOG FLAGS
 EXAMPLES
   mmx build ./my-project -o ./site
   mmx blog ./posts -o ./my-blog
+  mmx blog ./src
   mmx page article.mmx -o article.html
   mmx editor
   mmx editor 4000
   mmx serve ./docs 3000
+  mmx init blog ./my-blog
+  mmx init doc ./my-docs
 `);
 }
 
@@ -185,11 +200,15 @@ function main() {
 
   // ── blog / buildBlog ─────────────────────────────────────────────────
   } else if (command === "buildBlog" || command === "blog") {
-    const cmdInput = rest.find(a => !a.startsWith("-")) || process.cwd();
+    const cmdInput = rest.find(a => !a.startsWith("-"));
+    // Default to ./src when no path given (matches blog template structure)
+    const resolvedInput = cmdInput
+      ? path.resolve(cmdInput)
+      : (fs.existsSync(path.resolve("src")) ? path.resolve("src") : process.cwd());
     const explicitOutput = flagValue("-o", "--output");
     const force = hasFlag("-f", "--force");
-    const postsDir = path.resolve(cmdInput);
-    const outputDir = explicitOutput ? path.resolve(explicitOutput) : path.resolve(postsDir, "..", "blog");
+    const postsDir = resolvedInput;
+    const outputDir = explicitOutput ? path.resolve(explicitOutput) : path.resolve("output");
     buildBlog(postsDir, outputDir, { force });
 
   // ── page ─────────────────────────────────────────────────────────────
@@ -239,6 +258,21 @@ function main() {
     const dir = path.resolve(nonFlagArgs[0] || "./docs");
     const port = parseInt(nonFlagArgs[1], 10) || parseInt(flagValue("-p", "--port"), 10) || 8080;
     startServe(dir, port);
+
+  // ── init blog / init doc ────────────────────────────────────────────
+  } else if (command === "init") {
+    const subcommand = rest[0];
+    const targetDir = rest[1] || process.cwd();
+
+    if (subcommand === "blog") {
+      initBlog(path.resolve(targetDir));
+    } else if (subcommand === "doc") {
+      initDoc(path.resolve(targetDir));
+    } else {
+      console.error(`Unknown init subcommand: "${subcommand}"`);
+      console.error('Usage: mmx init <blog|doc> [target-dir]');
+      process.exit(1);
+    }
 
   } else {
     console.error(`Unknown command: ${command}`);
