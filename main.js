@@ -444,6 +444,7 @@ const PAGES_INDEX_REDIRECT_HTML = `<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecting...</title>
+    {{favicon}}
 </head>
 <body>
 
@@ -499,14 +500,15 @@ const PAGES_INDEX_REDIRECT_HTML = `<!DOCTYPE html>
  *
  * @param {string} pagesDestDir - Absolute path to the output `pages/` dir
  */
-function generatePagesIndexHtml(pagesDestDir) {
+function generatePagesIndexHtml(pagesDestDir, favicon = "") {
   if (!fs.existsSync(pagesDestDir)) return;
   const target = path.join(pagesDestDir, 'index.html');
   // Don't overwrite a user-provided pages/index.html that came in via
   // a non-.mmx file in the source (the copy step in processPagesRecursive
   // would have placed it here). We only write when no file exists yet.
   if (fs.existsSync(target)) return;
-  fs.writeFileSync(target, PAGES_INDEX_REDIRECT_HTML, 'utf-8');
+  const html = PAGES_INDEX_REDIRECT_HTML.replace("{{favicon}}", favicon);
+  fs.writeFileSync(target, html, 'utf-8');
 }
 
 /**
@@ -659,6 +661,32 @@ export function processProjectStructure(sourceDir, outputDir, options = {}) {
     log(`assets/ copied`);
   }
 
+  // Detect and copy theme icon (icon.*) to output
+  let iconFile = null;
+  const themeDir = path.join(sourceDir, 'theme');
+  if (fs.existsSync(themeDir)) {
+    const themeFiles = fs.readdirSync(themeDir);
+    iconFile = themeFiles.find(f => f.toLowerCase().startsWith('icon.') && !fs.statSync(path.join(themeDir, f)).isDirectory());
+  }
+  if (!iconFile && fs.existsSync(sourceDir)) {
+    const rootFiles = fs.readdirSync(sourceDir);
+    iconFile = rootFiles.find(f => f.toLowerCase().startsWith('icon.') && !fs.statSync(path.join(sourceDir, f)).isDirectory());
+  }
+  if (iconFile) {
+    const iconSource = path.join(themeDir, iconFile);
+    const iconDest = path.join(outputDir, iconFile);
+    fs.copyFileSync(iconSource, iconDest);
+    log(`  Copied theme icon: ${iconFile}`);
+    // Store icon filename in project cache for favicon injection
+    const pdata = getProjectCache(sourceDir);
+    pdata.iconFile = iconFile;
+  }
+
+  // Generate favicon HTML for template injection
+  const faviconHTML = iconFile
+    ? `<link rel="icon" href="${iconFile}">`
+    : "";
+
   // Process pages directory
   const pagesSource = path.join(sourceDir, 'pages');
   const pagesDest = path.join(outputDir, 'pages');
@@ -677,7 +705,7 @@ export function processProjectStructure(sourceDir, outputDir, options = {}) {
   const configDefaultNoIndex = !!(projectData && projectData.noDefaultIndex);
   const tempIndexFiles = generateFolderIndexPages(pagesSource, configDefaultNoIndex);
 
-  processPagesRecursive(pagesSource, pagesDest, stats, { deleteOriginals, log, outputRoot: outputDir });
+  processPagesRecursive(pagesSource, pagesDest, stats, { deleteOriginals, log, outputRoot: outputDir, favicon: faviconHTML });
 
   // Remove the temp `__index.mmx` files from the source dir so they
   // don't pollute the user's project after the build.
@@ -685,14 +713,14 @@ export function processProjectStructure(sourceDir, outputDir, options = {}) {
 
   // Write a small redirect page at `pages/index.html` so anyone who
   // lands on the bare `pages/` URL gets sent back to the project root.
-  generatePagesIndexHtml(pagesDest);
+  generatePagesIndexHtml(pagesDest, faviconHTML);
 
   // Process root index.mmx
   const rootIndexMmx = path.join(sourceDir, "index.mmx");
   if (fs.existsSync(rootIndexMmx)) {
     const rootIndexHtml = path.join(outputDir, "index.html");
     log(`index.mmx → index.html`);
-    convertMmxFile(rootIndexMmx, rootIndexHtml, outputDir);
+    convertMmxFile(rootIndexMmx, rootIndexHtml, outputDir, faviconHTML);
     stats.processed++;
   }
 
@@ -809,7 +837,7 @@ function collectFiles(sourceDir, outputDir) {
  * @param {Object} options - Configuration options
  */
 function processPagesRecursive(sourceDir, outputDir, stats, options) {
-  const { deleteOriginals = false, log, outputRoot } = options;
+  const { deleteOriginals = false, log, outputRoot, favicon } = options;
 
   // Phase 1: collect all work
   const { mmxFiles, dirs, others } = collectFiles(sourceDir, outputDir);
@@ -835,7 +863,7 @@ function processPagesRecursive(sourceDir, outputDir, stats, options) {
       try {
         const htmlName = path.basename(destPath);
         log(`${relItem} → ${htmlName}`);
-        convertMmxFile(srcPath, destPath, outputRoot);
+        convertMmxFile(srcPath, destPath, outputRoot, favicon);
         if (deleteOriginals) fs.unlinkSync(srcPath);
         return { ok: true };
       } catch (error) {
@@ -1019,7 +1047,7 @@ function applyDefaultCodeHighlight(mmxContent) {
  * @param {string} outputPath - HTML output file path
  * @param {string} outputRoot - Root directory for path calculations
  */
-function convertMmxFile(inputPath, outputPath, outputRoot) {
+function convertMmxFile(inputPath, outputPath, outputRoot, favicon = "") {
   const content = fs.readFileSync(inputPath, "utf8");
 
   // Resolve project directory once via cache
@@ -1104,7 +1132,8 @@ function convertMmxFile(inputPath, outputPath, outputRoot) {
     .replaceAll("{{searchScript}}", searchScript)
     .replaceAll("{{highlightJS}}", highlightJS)
     .replaceAll("{{highlightCSSTheme}}", highlightCSSTheme)
-    .replaceAll("{{sidebarBottomText}}", sidebarBottomText);
+    .replaceAll("{{sidebarBottomText}}", sidebarBottomText)
+    .replaceAll("{{favicon}}", favicon);
 
   finalTemplate = applyPathPrefix(finalTemplate, prefix);
 
@@ -1258,6 +1287,31 @@ export function buildBlog(postsDir, outputDir, options = {}) {
   const cssRaw = resolveAsset("styles.css");
   if (cssRaw) { customCSS = cssRaw; log(`  Using styles.css`); }
 
+  // Detect and copy theme icon (icon.*) to output
+  let iconFile = null;
+  const themeDir = path.join(projectRoot, 'theme');
+  if (fs.existsSync(themeDir)) {
+    const themeFiles = fs.readdirSync(themeDir);
+    iconFile = themeFiles.find(f => f.toLowerCase().startsWith('icon.') && !fs.statSync(path.join(themeDir, f)).isDirectory());
+  }
+  if (!iconFile && fs.existsSync(projectRoot)) {
+    const rootFiles = fs.readdirSync(projectRoot);
+    iconFile = rootFiles.find(f => f.toLowerCase().startsWith('icon.') && !fs.statSync(path.join(projectRoot, f)).isDirectory());
+  }
+  if (iconFile) {
+    const iconSource = fs.existsSync(path.join(themeDir, iconFile)) 
+      ? path.join(themeDir, iconFile) 
+      : path.join(projectRoot, iconFile);
+    const iconDest = path.join(outputDir, iconFile);
+    fs.copyFileSync(iconSource, iconDest);
+    log(`  Copied theme icon: ${iconFile}`);
+  }
+
+  // Generate favicon HTML for template injection
+  const faviconHTML = iconFile
+    ? `<link rel="icon" href="${iconFile}">`
+    : "";
+
   // ── Check for optional index.html or index.mmx (user-provided blog home) ─
   let indexContentRaw = null;
   let indexContentHtml = null;
@@ -1408,9 +1462,17 @@ export function buildBlog(postsDir, outputDir, options = {}) {
     }
 
     const postPrefix = calculatePrefix(outPath, outputDir);
+    // Inject language badge next to title (inside <h1>)
+    let postContent = post.content;
+    if (post.lang) {
+      const langBadge = `<span class="post-lang">${escapeHtml(post.lang)}</span>`;
+      postContent = postContent.replace('</h1>', ` ${langBadge}</h1>`);
+    }
+    // Ensure .post-lang styling is available on individual post pages
+    const postCss = customCSS + '\n.post-lang { display: inline-block; font-size: 0.65em; font-weight: 600; background: var(--link-color, #66b0ff); color: #fff; padding: 1px 5px; border-radius: 3px; vertical-align: middle; margin-left: 4px; text-transform: uppercase; letter-spacing: 0.5px; }';
     const pageHtml = buildStandaloneHtml({
       title: post.pageTitle,
-      content: post.content,
+      content: postContent,
       styleCSS, styleSidebarCSS, scriptJS,
       playerCSS, playerJS, imageZoomJS,
       highlightJS, highlightCSS,
@@ -1418,8 +1480,9 @@ export function buildBlog(postsDir, outputDir, options = {}) {
       seoMeta,
       navHtml,
       footerHtml,
-      customCSS,
+      customCSS: postCss,
       prefix: postPrefix,
+      favicon: faviconHTML,
     });
     fs.writeFileSync(outPath, pageHtml, "utf-8");
     log(`  ${post.slug}  ← ${path.basename(post.srcPath)}`);
@@ -1428,10 +1491,12 @@ export function buildBlog(postsDir, outputDir, options = {}) {
 
   // ── Render blog index ──────────────────────────────────
   if (indexIsHtml) {
-    // index.html exists — copy it directly to output
+    // index.html exists — copy it directly to output and inject favicon
     const srcIndexHtml = fs.readFileSync(indexHtmlPath, "utf-8");
-    fs.writeFileSync(path.join(outputDir, "index.html"), srcIndexHtml, "utf-8");
-    log(`  index.html  (copied)`);
+    const faviconTag = faviconHTML ? `<link rel="icon" href="${iconFile}">` : "";
+    const indexHtmlWithFavicon = srcIndexHtml.replace('</head>', `${faviconTag}\n</head>`);
+    fs.writeFileSync(path.join(outputDir, "index.html"), indexHtmlWithFavicon, "utf-8");
+    log(`  index.html  (copied with favicon)`);
   } else {
     // Generate index page (auto or from index.mmx)
     const showRecent = !!indexContentHtml; // limit post list when index.mmx is used
@@ -1450,6 +1515,7 @@ export function buildBlog(postsDir, outputDir, options = {}) {
       lang: indexLang,
       showRecent,
       prefix: indexPrefix,
+      favicon: faviconHTML,
     });
     fs.writeFileSync(path.join(outputDir, "index.html"), indexHtml, "utf-8");
 
@@ -1468,6 +1534,7 @@ export function buildBlog(postsDir, outputDir, options = {}) {
       lang: defaultLang,
       isArchive: true,
       prefix: archivePrefix,
+      favicon: faviconHTML,
     });
     fs.writeFileSync(path.join(outputDir, "archive.html"), archiveHtml, "utf-8");
 
@@ -1648,16 +1715,16 @@ function copyTemplateRecursive(src, dest, log) {
  * Builds a blog index HTML page listing all posts chronologically.
  * Uses the same CSS/JS inlining as standalone pages.
  */
-function buildBlogIndexHtml({ title, posts, styleCSS, styleSidebarCSS, scriptJS, playerCSS, playerJS, imageZoomJS, highlightJS, highlightCSS, seoMeta = "", navHtml = "", footerHtml = "", customCSS = "", indexContent = null, lang = "en", showRecent = false, isArchive = false, prefix = "./" }) {
+function buildBlogIndexHtml({ title, posts, styleCSS, styleSidebarCSS, scriptJS, playerCSS, playerJS, imageZoomJS, highlightJS, highlightCSS, seoMeta = "", navHtml = "", footerHtml = "", customCSS = "", indexContent = null, lang = "en", showRecent = false, isArchive = false, prefix = "./", favicon = "" }) {
   // ── Render a single post preview ──────────────────────────
   const renderPost = (p) => {
     const dateLabel = p.date.label;
     const excerptHtml = p.excerpt ? `<p class="blog-excerpt">${escapeHtml(p.excerpt)}</p>` : '';
-    const langBadge = p.lang && p.lang !== lang ? ` <span class="post-lang">${escapeHtml(p.lang)}</span>` : '';
+    const langBadge = p.lang ? ` <span class="post-lang">${escapeHtml(p.lang)}</span>` : '';
     return [
       '<article class="blog-post-preview">',
-      `  <time datetime="${dateLabel}">${dateLabel}</time>`,
-      `  <h2><a href="${prefix}${p.slug}">${escapeHtml(p.title)}</a>${langBadge}</h2>`,
+      `  <time datetime="${dateLabel}">${dateLabel}${langBadge}</time>`,
+      `  <h2><a href="${prefix}${p.slug}">${escapeHtml(p.title)}</a></h2>`,
       excerptHtml,
       '</article>',
     ].join('\n');
@@ -1726,6 +1793,7 @@ function buildBlogIndexHtml({ title, posts, styleCSS, styleSidebarCSS, scriptJS,
     "    })();",
     '  </script>',
     seoMeta,
+    favicon ? `  ${favicon}` : '',
     '  <style>', styleCSS, '  </style>',
     '  <style>', styleSidebarCSS, '  </style>',
   ];
@@ -1832,7 +1900,7 @@ function escapeHtml(str) {
  * Builds a standalone HTML page inlining all CSS and JS.
  * Reused for both cli.js-style pages and individual blog posts.
  */
-function buildStandaloneHtml({ title, content, styleCSS, styleSidebarCSS, scriptJS, playerCSS, playerJS, imageZoomJS, highlightJS, highlightCSS, lang = "en", seoMeta = "", navHtml = "", footerHtml = "", customCSS = "", prefix = "./" }) {
+function buildStandaloneHtml({ title, content, styleCSS, styleSidebarCSS, scriptJS, playerCSS, playerJS, imageZoomJS, highlightJS, highlightCSS, lang = "en", seoMeta = "", navHtml = "", footerHtml = "", customCSS = "", prefix = "./", favicon = "" }) {
   const headParts = [
     '<!DOCTYPE html>',
     `<html lang="${lang}">`,
@@ -1852,6 +1920,7 @@ function buildStandaloneHtml({ title, content, styleCSS, styleSidebarCSS, script
     '  <style>', styleCSS, '  </style>',
     '  <style>', styleSidebarCSS, '  </style>',
   ];
+  if (favicon) headParts.push(`  ${favicon}`);
   if (highlightCSS) headParts.push(highlightCSS);
   if (playerCSS) headParts.push(`  <style>${playerCSS}</style>`);
   headParts.push(
