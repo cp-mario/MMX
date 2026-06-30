@@ -1571,14 +1571,9 @@ export function initBlog(targetDir) {
     process.exit(1);
   }
 
-  if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0) {
-    console.error(`Error: Target directory is not empty: ${targetDir}`);
-    process.exit(1);
-  }
-
   log(`\nCreating blog project in: ${targetDir}\n`);
 
-  // Copy template directory recursively
+  // Copy template directory recursively (skips existing files)
   copyTemplateRecursive(templateDir, targetDir, log);
 
   log(`\nBlog project created successfully!\n`);
@@ -1606,14 +1601,9 @@ export function initDoc(targetDir) {
     process.exit(1);
   }
 
-  if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0) {
-    console.error(`Error: Target directory is not empty: ${targetDir}`);
-    process.exit(1);
-  }
-
   log(`\nCreating documentation project in: ${targetDir}\n`);
 
-  // Copy template directory recursively
+  // Copy template directory recursively (skips existing files)
   copyTemplateRecursive(templateDir, targetDir, log);
 
   log(`\nDocumentation project created successfully!\n`);
@@ -1644,8 +1634,12 @@ function copyTemplateRecursive(src, dest, log) {
     if (stat.isDirectory()) {
       copyTemplateRecursive(srcPath, destPath, log);
     } else {
-      fs.copyFileSync(srcPath, destPath);
-      log(`  Created: ${destPath}`);
+      if (fs.existsSync(destPath)) {
+        log(`  Skipped (already exists): ${destPath}`);
+      } else {
+        fs.copyFileSync(srcPath, destPath);
+        log(`  Created: ${destPath}`);
+      }
     }
   }
 }

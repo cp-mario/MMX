@@ -12,6 +12,6 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "mmxsite": "^0.0.0"
+    "mmxsite": "latest"
   }
 }
