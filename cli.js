@@ -10,8 +10,6 @@
  * Commands:
  *   build / buildDoc [input] [output]   Build documentation from a folder.
  *                                       Default output: ./output
- *   blog  / buildBlog [path]            Build a blog from a folder of .mmx files
- *   page [options] <file>               Generate a standalone HTML page
  *   editor [port]                       Launch the MMX Visual Editor
  *   serve [dir] [port]                  Serve a docs directory via HTTP
  */
@@ -25,8 +23,6 @@ import {
   CONFIG,
   processProjectStructure,
   clearOutputDir,
-  buildBlog,
-  buildStandalonePage,
   startEditor,
   startServe,
 } from "./main.js";
@@ -35,7 +31,7 @@ import {
 
 function showMainHelp() {
   console.log(`
-MMX Documentation Generator & Blog Builder
+MMX Documentation Generator
 
 USAGE
   mmx [command] [options]
@@ -45,16 +41,6 @@ COMMANDS
   buildDoc [input] [output]  Generate a full documentation site from the
                         given folder. If the folder contains a config.mcfg
                         its settings are used. Default output: ./output
-
-  blog [path]           Alias for buildBlog
-  buildBlog [path]      Convert a folder of .mmx files into a blog with
-                        a chronological index page. Filenames like
-                        "2024-01-15-title.mmx" determine the post date.
-                        Default output: ../blog relative to the posts folder
-
-  page [options] <file> Generate a standalone HTML page from a single .mmx
-                        file. All styles and scripts are inlined. No sidebar,
-                        index, or navigation.
 
   editor [port]         Launch the MMX Visual Editor server
                         (default port: 3031)
@@ -67,18 +53,12 @@ COMMANDS
 GLOBAL FLAGS
   -nm, --no-minify      Disable minification (minified by default)
 
-PAGE FLAGS
-  -o, --output <path>   Output file path (default: input name with .html)
-  -a, --assets <path>   Path prefix for assets directory (default: "./assets")
-
-BUILD / BLOG FLAGS
+BUILD FLAGS
   -o, --output <path>   Output directory
   -f, --force           Force rebuild all files (skip incremental check)
 
 EXAMPLES
   mmx build ./my-project -o ./site
-  mmx blog ./posts -o ./my-blog
-  mmx page article.mmx -o article.html
   mmx editor
   mmx editor 4000
   mmx serve ./docs 3000
@@ -181,50 +161,6 @@ function main() {
       deleteOriginals: false,
       verbose: true,
       outputRoot: outputDir,
-    });
-
-  // ── blog / buildBlog ─────────────────────────────────────────────────
-  } else if (command === "buildBlog" || command === "blog") {
-    const cmdInput = rest.find(a => !a.startsWith("-")) || process.cwd();
-    const explicitOutput = flagValue("-o", "--output");
-    const force = hasFlag("-f", "--force");
-    const postsDir = path.resolve(cmdInput);
-    const outputDir = explicitOutput ? path.resolve(explicitOutput) : path.resolve(postsDir, "..", "blog");
-    buildBlog(postsDir, outputDir, { force });
-
-  // ── page ─────────────────────────────────────────────────────────────
-  } else if (command === "page") {
-    const pageArgs = rest;
-    const pageOptions = {
-      input: null,
-      output: null,
-      assets: "./assets",
-      minify: !hasFlag("-nm", "--no-minify"),
-    };
-
-    for (let i = 0; i < pageArgs.length; i++) {
-      const arg = pageArgs[i];
-      if (arg === "--output" || arg === "-o") {
-        pageOptions.output = pageArgs[++i];
-      } else if (arg === "--assets" || arg === "-a") {
-        pageOptions.assets = pageArgs[++i];
-      } else if (!arg.startsWith("-")) {
-        pageOptions.input = arg;
-      }
-    }
-
-    if (!pageOptions.input) {
-      console.error("Error: No input file specified for the page command.");
-      console.error("Usage: mmx page [options] <file.mmx>");
-      process.exit(1);
-    }
-    if (!pageOptions.output) {
-      const parsed = path.parse(pageOptions.input);
-      pageOptions.output = path.join(parsed.dir, parsed.name + ".html");
-    }
-    buildStandalonePage(pageOptions.input, pageOptions.output, {
-      assetsPrefix: pageOptions.assets,
-      minify: pageOptions.minify,
     });
 
   // ── editor ───────────────────────────────────────────────────────────

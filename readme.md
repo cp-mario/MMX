@@ -68,8 +68,6 @@ If installed globally or via `npx`:
 ```bash
 mmx build .
 mmx build ./src -o ./output
-mmx blog ./posts
-mmx page article.mmx -o article.html
 mmx editor
 mmx serve ./output 8080
 ```
@@ -102,33 +100,6 @@ mmx build ./src                    # ./src → ./output
 mmx build ./src ./site             # ./src → ./site
 mmx build ./src -o ./public/site   # ./src → ./public/site
 ```
-
-### `blog [input] [output]`
-
-Convert a folder of `.mmx` blog post files into a blog with a chronological index page. Blog posts use filenames like `2024-01-15-title.mmx` to determine the post date.
-
-| Arg | Description | Default |
-|-----|-------------|---------|
-| `input` | Folder with `.mmx` blog posts | `.` (current dir) |
-| `output` | Output directory | `../blog` relative to posts |
-
-```bash
-mmx blog ./posts              # ./posts → ./blog
-mmx blog ./posts ./my-blog
-```
-
-### `page [options] <file>`
-
-Generate a standalone HTML page from a single `.mmx` file. All styles and scripts are inlined — no sidebar, index, or navigation.
-
-```bash
-mmx page article.mmx -o article.html
-mmx page article.mmx --assets ./assets
-```
-
-Flags:
-- `-o, --output <path>` — output file path (default: same name as input with `.html`)
-- `-a, --assets <path>` — path prefix for assets directory (default: `./assets`)
 
 ### `editor [port]`
 
@@ -183,7 +154,7 @@ For a complete walkthrough of all features, see the [Visual Editor](1Example/inp
 
 ```
 MMX/
-├── cli.js                  # CLI entry point (`mmx build`, `mmx blog`, etc.)
+├── cli.js                  # CLI entry point (`mmx build`, etc.)
 ├── main.js                 # Library module (used by cli.js)
 ├── config.mcfg             # Generator configuration
 ├── template.html           # HTML template used for every page
@@ -224,15 +195,8 @@ MMX/
 Open `config.mcfg` and set:
 
 ```
-# Multi-page mode (default)
-singleFile = false
 inputPath  = "./1Example/input"
 outputPath = "./1Example/output"
-
-# Single document mode — produces ONE HTML file
-# singleFile = true
-# singleInputPath  = "./path/to/page.mmx"
-# singleOutputPath = "./output/page.html"
 
 # Optional minification (keep as `true` for production)
 minifyScripts = true

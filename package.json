@@ -1,7 +1,7 @@
 {
   "name": "mmxsite",
   "version": "0.0.0",
-  "description": "A markdown-style documentation generator, blog builder, and standalone page CLI",
+  "description": "A markdown-style documentation generator",
   "main": "main.js",
   "type": "module",
   "bin": {
@@ -27,7 +27,6 @@
     "markdown",
     "docs",
     "static-site",
-    "blog",
     "mmx",
     "cli"
   ],
